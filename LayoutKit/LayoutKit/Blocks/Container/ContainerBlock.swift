@@ -44,8 +44,8 @@ public final class ContainerBlock: BlockWithLayout {
 
   private struct CachedSizes {
     var intrinsicWidth: CGFloat?
-    var nonResizableWidth: CGFloat?
     var intrinsicHeight: (width: CGFloat, height: CGFloat)?
+    var nonResizableSize: (width: CGFloat, height: CGFloat?)?
   }
 
   public let layoutDirection: LayoutDirection
@@ -103,6 +103,25 @@ public final class ContainerBlock: BlockWithLayout {
   }
 
   private func validateLayoutTraits() throws {
+    if layoutMode == .wrap {
+      switch layoutDirection {
+      case .horizontal:
+        guard (children.map { $0.content }.allVerticallyNonResizable) else {
+          throw Error
+            .inconsistentChildLayoutTraits(
+              details: "failed to build horizontal wrap container with vertically resizable children"
+            )
+        }
+      case .vertical:
+        guard (children.map { $0.content }.allHorizontallyNonResizable) else {
+          throw Error
+            .inconsistentChildLayoutTraits(
+              details: "failed to build vertical wrap container with horizontally resizable children"
+            )
+        }
+      }
+    }
+    
     if widthTrait == .intrinsic {
       switch layoutDirection {
       case .horizontal:
@@ -151,6 +170,10 @@ public final class ContainerBlock: BlockWithLayout {
   public var isVerticallyResizable: Bool { heightTrait.isResizable }
   public var isHorizontallyResizable: Bool { widthTrait.isResizable }
 
+  public var calculateWidthFirst: Bool {
+    layoutDirection != .vertical || layoutMode != .wrap
+  }
+
   public var isVerticallyConstrained: Bool { heightTrait.isConstrained }
   public var isHorizontallyConstrained: Bool { widthTrait.isConstrained }
 
@@ -189,23 +212,12 @@ public final class ContainerBlock: BlockWithLayout {
       let result: CGFloat
       switch layoutDirection {
       case .horizontal:
-        let childrenContents = children.map { $0.content }
-        let widthAvailableForResizableBlocks = width -
-          widthsOfHorizontallyNonResizableBlocksIn(childrenContents).reduce(0, +) - gaps
-          .reduce(0, +)
-        let resizableBlockWeights = childrenContents.filter { $0.isHorizontallyResizable }
-          .map { $0.weightOfHorizontallyResizableBlock.rawValue }
-        let widthAvailablePerWeightUnit = max(0, widthAvailableForResizableBlocks) /
-          resizableBlockWeights.reduce(0, +)
-        let verticallyNonResizableBlocks = childrenContents.filter { !$0.isVerticallyResizable }
-        let widthsOfVerticallyNonResizableBlocks = verticallyNonResizableBlocks.map {
-          $0.isHorizontallyResizable
-            ? floor($0.weightOfHorizontallyResizableBlock.rawValue * widthAvailablePerWeightUnit)
-            : $0.widthOfHorizontallyNonResizableBlock
+        switch layoutMode {
+        case .noWrap:
+          result = noWrapHorizontalHeight(forWidth: width)
+        case .wrap:
+          result = wrapHorizontalHeight(forWidth: width)
         }
-        result = zip(verticallyNonResizableBlocks, widthsOfVerticallyNonResizableBlocks).map {
-          $0.0.heightOfVerticallyNonResizableBlock(forWidth: $0.1)
-        }.max() ?? 0
       case .vertical:
         let childrenHeights = children.map { $0.content }.intrinsicHeights(forWidth: width)
         result = (childrenHeights + gaps).reduce(0, +)
@@ -214,6 +226,38 @@ public final class ContainerBlock: BlockWithLayout {
       cached.intrinsicHeight = (width: width, height: result)
       return result
     }
+  }
+
+  private func noWrapHorizontalHeight(forWidth width: CGFloat) -> CGFloat {
+    let childrenContents = children.map { $0.content }
+    let widthAvailableForResizableBlocks = width -
+      widthsOfHorizontallyNonResizableBlocksIn(childrenContents).reduce(0, +) - gaps
+      .reduce(0, +)
+    let resizableBlockWeights = childrenContents.filter { $0.isHorizontallyResizable }
+      .map { $0.weightOfHorizontallyResizableBlock.rawValue }
+    let widthAvailablePerWeightUnit = max(0, widthAvailableForResizableBlocks) /
+      resizableBlockWeights.reduce(0, +)
+    let verticallyNonResizableBlocks = childrenContents.filter { !$0.isVerticallyResizable }
+    let widthsOfVerticallyNonResizableBlocks = verticallyNonResizableBlocks.map {
+      $0.isHorizontallyResizable
+        ? floor($0.weightOfHorizontallyResizableBlock.rawValue * widthAvailablePerWeightUnit)
+        : $0.widthOfHorizontallyNonResizableBlock
+    }
+    return zip(verticallyNonResizableBlocks, widthsOfVerticallyNonResizableBlocks).map {
+      $0.0.heightOfVerticallyNonResizableBlock(forWidth: $0.1)
+    }.max() ?? 0
+  }
+
+  private func wrapHorizontalHeight(forWidth width: CGFloat) -> CGFloat {
+    let layout = ContainerBlockLayout(
+      children: children,
+      gaps: gaps,
+      layoutDirection: layoutDirection,
+      layoutMode: layoutMode,
+      axialAlignment: axialAlignment,
+      size: CGSize(width: width, height: .zero)
+    )
+    return layout.blockFrames.map { $0.maxY }.max()!
   }
 
   public var widthOfHorizontallyNonResizableBlock: CGFloat {
@@ -225,8 +269,8 @@ public final class ContainerBlock: BlockWithLayout {
       fatalError()
     }
 
-    if let cached = cached.nonResizableWidth {
-      return cached
+    if let cached = cached.nonResizableSize, cached.height == nil {
+      return cached.width
     }
 
     let result: CGFloat
@@ -242,7 +286,43 @@ public final class ContainerBlock: BlockWithLayout {
         .map { $0.content.widthOfHorizontallyNonResizableBlock }.max()!
     }
 
-    cached.nonResizableWidth = result
+    cached.nonResizableSize = (width: result, height: nil)
+    return result
+  }
+
+  public var heightOfVerticallyNonResizableBlock: CGFloat {
+    assert(layoutMode == .wrap && layoutDirection == .vertical,
+           "First height calculation should only be used for vertical container with wrap layout mode")
+    return heightOfVerticallyNonResizableBlock(forWidth: .zero)
+  }
+
+  public func widthOfHorizontallyNonResizableBlock(forHeight height: CGFloat) -> CGFloat {
+    assert(layoutMode == .wrap && layoutDirection == .vertical,
+           "First height calculation should only be used for vertical container with wrap layout mode")
+    if case let .fixed(value) = widthTrait {
+      return value
+    }
+
+    guard widthTrait == .intrinsic else {
+      fatalError()
+    }
+
+    if let cached = cached.nonResizableSize, let cachedHeight = cached.height,
+       cachedHeight.isApproximatelyEqualTo(height) {
+      return cached.width
+    }
+
+    let result: CGFloat
+    let layout = ContainerBlockLayout(
+      children: children,
+      gaps: gaps,
+      layoutDirection: layoutDirection,
+      layoutMode: layoutMode,
+      axialAlignment: axialAlignment,
+      size: CGSize(width: .zero, height: height)
+    )
+    result = layout.blockFrames.map { $0.maxX }.max()!
+    cached.nonResizableSize = (width: result, height: height)
     return result
   }
 
