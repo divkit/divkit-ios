@@ -86,8 +86,8 @@ extension DivState: DivBlockModeling {
       defaultStateAlignment
 
     return LayeredBlock(
-      widthTrait: makeContentWidthTrait(with: expressionResolver),
-      heightTrait: makeContentHeightTrait(with: expressionResolver),
+      widthTrait: makeContentWidthTrait(with: context),
+      heightTrait: makeContentHeightTrait(with: context),
       children: [
         LayeredBlock.Child(
           content: TransitioningBlock(
@@ -135,7 +135,7 @@ extension DivState: DivBlockModeling {
   }
 }
 
-private let stub: Block = SeparatorBlock(size: .zero)
+private let stub: Block = EmptyBlock.zeroSized
 
 extension DivBlockModelingContext {
   fileprivate func makeContextForState(

@@ -15,6 +15,7 @@ public struct DivBlockModelingContext {
   public let visibilityCounter: DivVisibilityCounting
   public var galleryResizableInsets: InsetMode.Resizable?
   public let imageHolderFactory: ImageHolderFactory
+  public let highPriorityImageHolderFactory: ImageHolderFactory?
   public let divCustomBlockFactory: DivCustomBlockFactory
   public let fontSpecifiers: FontSpecifiers
   public let flagsInfo: DivFlagsInfo
@@ -25,6 +26,8 @@ public struct DivBlockModelingContext {
   public var childrenA11yDescription: String?
   public weak var parentScrollView: ScrollView?
   let expressionErrorsStorage = ExpressionErrorsStorage()
+  var overridenWidth: DivOverridenSize? = nil
+  var overridenHeight: DivOverridenSize? = nil
 
   public init(
     cardId: DivCardID,
@@ -36,6 +39,7 @@ public struct DivBlockModelingContext {
     visibilityCounter: DivVisibilityCounting = DivVisibilityCounter(),
     galleryResizableInsets: InsetMode.Resizable? = nil,
     imageHolderFactory: ImageHolderFactory,
+    highPriorityImageHolderFactory: ImageHolderFactory? = nil,
     divCustomBlockFactory: DivCustomBlockFactory = EmptyDivCustomBlockFactory(),
     fontSpecifiers: FontSpecifiers = BaseUI.fontSpecifiers,
     flagsInfo: DivFlagsInfo = .default,
@@ -55,6 +59,7 @@ public struct DivBlockModelingContext {
     self.visibilityCounter = visibilityCounter
     self.galleryResizableInsets = galleryResizableInsets
     self.imageHolderFactory = imageHolderFactory
+    self.highPriorityImageHolderFactory = highPriorityImageHolderFactory
     self.divCustomBlockFactory = divCustomBlockFactory
     self.flagsInfo = flagsInfo
     self.fontSpecifiers = fontSpecifiers
@@ -112,5 +117,25 @@ public struct DivBlockModelingContext {
 
   public func getStateInterceptor(for divState: DivState) -> DivStateInterceptor? {
     divState.extensions?.compactMap { stateInterceptors[$0.id] }.first
+  }
+
+  func override(width: DivSize) -> DivSize {
+    guard let overridenWidth = overridenWidth else {
+      return width
+    }
+    if overridenWidth.original == width {
+      return overridenWidth.overriden
+    }
+    return width
+  }
+
+  func override(height: DivSize) -> DivSize {
+    guard let overridenHeight = overridenHeight else {
+      return height
+    }
+    if overridenHeight.original == height {
+      return overridenHeight.overriden
+    }
+    return height
   }
 }
