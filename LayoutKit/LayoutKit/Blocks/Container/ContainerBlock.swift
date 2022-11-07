@@ -36,6 +36,25 @@ public final class ContainerBlock: BlockWithLayout {
     }
   }
 
+  public struct Separator: Equatable {
+    public let style: Child
+    public let showAtEnd: Bool
+    public let showAtStart: Bool
+    public let showBetween: Bool
+
+    public init(
+      style: Child,
+      showAtEnd: Bool = false,
+      showAtStart: Bool = false,
+      showBetween: Bool = false
+    ) {
+      self.style = style
+      self.showAtEnd = showAtEnd
+      self.showAtStart = showAtStart
+      self.showBetween = showBetween
+    }
+  }
+
   public enum Error: BlockError, Equatable {
     case noChildrenProvided
     case childAndGapCountMismatch
@@ -56,6 +75,8 @@ public final class ContainerBlock: BlockWithLayout {
   public let axialAlignment: Alignment
   public let gaps: [CGFloat]
   public let children: [Child]
+  public let separator: Separator?
+  public let lineSeparator: Separator?
   public let contentAnimation: BlockAnimation?
   public let anchorPoint: AnchorPoint
   public let childrenTransform: CGAffineTransform
@@ -72,6 +93,8 @@ public final class ContainerBlock: BlockWithLayout {
     axialAlignment: Alignment = .leading,
     gaps: [CGFloat]? = nil,
     children: [Child],
+    separator: Separator? = nil,
+    lineSeparator: Separator? = nil,
     contentAnimation: BlockAnimation? = nil,
     anchorPoint: AnchorPoint = ContainerBlock.defaultAnchorPoint,
     childrenTransform: CGAffineTransform = .identity,
@@ -88,12 +111,22 @@ public final class ContainerBlock: BlockWithLayout {
     }
 
     self.layoutDirection = layoutDirection
-      self.layoutMode = layoutMode
+    self.layoutMode = layoutMode
     self.widthTrait = widthTrait
     self.heightTrait = heightTrait
     self.axialAlignment = axialAlignment
-    self.gaps = gaps
-    self.children = children
+    self.gaps = makeGapsWithSeparators(
+      gaps: gaps,
+      separator: separator,
+      layoutMode: layoutMode
+    )
+    self.children = makeChildrenWithSeparators(
+      children: children,
+      separator: separator,
+      layoutMode: layoutMode
+    )
+    self.separator = separator
+    self.lineSeparator = lineSeparator
     self.contentAnimation = contentAnimation
     self.anchorPoint = anchorPoint
     self.childrenTransform = childrenTransform
@@ -252,6 +285,8 @@ public final class ContainerBlock: BlockWithLayout {
   private func wrapHorizontalHeight(forWidth width: CGFloat) -> CGFloat {
     let layout = ContainerBlockLayout(
       children: children,
+      separator: separator,
+      lineSeparator: lineSeparator,
       gaps: gaps,
       layoutDirection: layoutDirection,
       layoutMode: layoutMode,
@@ -316,6 +351,8 @@ public final class ContainerBlock: BlockWithLayout {
     let result: CGFloat
     let layout = ContainerBlockLayout(
       children: children,
+      separator: separator,
+      lineSeparator: lineSeparator,
       gaps: gaps,
       layoutDirection: layoutDirection,
       layoutMode: layoutMode,
@@ -360,6 +397,8 @@ public final class ContainerBlock: BlockWithLayout {
   func laidOutHierarchy(for size: CGSize) -> (ContainerBlock, Layout) {
     let layout = ContainerBlockLayout(
       children: children,
+      separator: separator,
+      lineSeparator: lineSeparator,
       gaps: gaps,
       layoutDirection: layoutDirection,
       layoutMode: layoutMode,
@@ -375,6 +414,63 @@ public final class ContainerBlock: BlockWithLayout {
   }
 }
 
+private func makeGapsWithSeparators(
+  gaps: [CGFloat],
+  separator: ContainerBlock.Separator?,
+  layoutMode: ContainerBlock.LayoutMode
+) -> [CGFloat] {
+  guard layoutMode == .noWrap, let separator = separator else {
+    return gaps
+  }
+  return Array<CGFloat>.build {
+    for (index, gap) in gaps.enumerated() {
+      switch index {
+      case 0:
+        gap
+        if separator.showAtStart {
+          0
+        }
+      case gaps.count - 1:
+        if separator.showAtEnd {
+          0
+        }
+        gap
+      default:
+        if separator.showBetween {
+          gap/2
+          gap/2
+        } else {
+          gap
+        }
+      }
+    }
+  }
+}
+
+private func makeChildrenWithSeparators(
+  children: [ContainerBlock.Child],
+  separator: ContainerBlock.Separator?,
+  layoutMode: ContainerBlock.LayoutMode
+) -> [ContainerBlock.Child] {
+  guard layoutMode == .noWrap, let separator = separator else {
+    return children
+  }
+  return Array<ContainerBlock.Child>.build {
+    if separator.showAtStart {
+      separator.style
+    }
+    for (index, child) in children.enumerated() {
+      if separator.showBetween && index > 0 {
+        separator.style
+      }
+      child
+    }
+    if separator.showAtEnd {
+      separator.style
+    }
+  }
+}
+
 extension ContainerBlock: Equatable {
   public static func ==(lhs: ContainerBlock, rhs: ContainerBlock) -> Bool {
     lhs.layoutDirection == rhs.layoutDirection &&
@@ -386,6 +482,8 @@ extension ContainerBlock: Equatable {
       lhs.contentAnimation == rhs.contentAnimation &&
       lhs.anchorPoint == rhs.anchorPoint &&
       lhs.childrenTransform == rhs.childrenTransform &&
+      lhs.separator == rhs.separator &&
+      lhs.lineSeparator == rhs.lineSeparator &&
       lhs.accessibilityElement == rhs.accessibilityElement
   }
 }

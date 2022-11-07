@@ -51,13 +51,19 @@ extension DivContainer: DivBlockModeling {
 
   private func getFallbackWidth(
     orientation: Orientation,
-    layoutMode: LayoutMode = .noWrap
+    layoutMode: LayoutMode = .noWrap,
+    context: DivBlockModelingContext
   ) -> DivOverridenSize? {
     if layoutMode == .wrap {
       switch orientation {
       case .vertical:
         if items.hasHorizontallyMatchParent {
-          DivKitLogger.error("Vertical DivContainer with wrap layout mode contains item with match_parent width")
+          context.warningsStorage.add(
+            DivBlockModelingWarning(
+              "Vertical DivContainer with wrap layout mode contains item with match_parent width",
+              path: context.parentPath
+            )
+          )
           return defaultFallbackSize
         }
       case .horizontal, .overlap:
@@ -69,12 +75,22 @@ extension DivContainer: DivBlockModeling {
       switch orientation {
       case .horizontal:
         if items.hasHorizontallyMatchParent {
-          DivKitLogger.error("Horizontal DivContainer with wrap_content width contains item with match_parent width")
+          context.warningsStorage.add(
+            DivBlockModelingWarning(
+              "Horizontal DivContainer with wrap_content width contains item with match_parent width",
+              path: context.parentPath
+            )
+          )
           return defaultFallbackSize
         }
       case .vertical, .overlap:
         if items.allHorizontallyMatchParent {
-          DivKitLogger.error("All items in DivContainer with wrap_content width has match_parent width")
+          context.warningsStorage.add(
+            DivBlockModelingWarning(
+              "All items in DivContainer with wrap_content width has match_parent width",
+              path: context.parentPath
+            )
+          )
           return defaultFallbackSize
         }
       }
@@ -85,13 +101,19 @@ extension DivContainer: DivBlockModeling {
 
   private func getFallbackHeight(
     orientation: Orientation,
-    layoutMode: LayoutMode = .noWrap
+    layoutMode: LayoutMode = .noWrap,
+    context: DivBlockModelingContext
   ) -> DivOverridenSize? {
     if layoutMode == .wrap {
       switch orientation {
       case .horizontal:
         if items.hasVerticallyMatchParent {
-          DivKitLogger.error("Horizontal DivContainer with wrap layout mode contains item with match_parent height")
+          context.warningsStorage.add(
+            DivBlockModelingWarning(
+              "Horizontal DivContainer with wrap layout mode contains item with match_parent height",
+              path: context.parentPath
+            )
+          )
           return defaultFallbackSize
         }
       case .vertical, .overlap:
@@ -103,12 +125,22 @@ extension DivContainer: DivBlockModeling {
       switch orientation {
       case .horizontal, .overlap:
         if items.allVerticallyMatchParent {
-          DivKitLogger.error("All items in DivContainer with wrap_content height has match_parent height")
+          context.warningsStorage.add(
+            DivBlockModelingWarning(
+              "All items in DivContainer with wrap_content height has match_parent height",
+              path: context.parentPath
+            )
+          )
           return defaultFallbackSize
         }
       case .vertical:
         if items.hasVerticallyMatchParent {
-          DivKitLogger.error("Vertical DivContainer with wrap_content height contains item with match_parent height")
+          context.warningsStorage.add(
+            DivBlockModelingWarning(
+              "Vertical DivContainer with wrap_content height contains item with match_parent height",
+              path: context.parentPath
+            )
+          )
           return defaultFallbackSize
         }
       }
@@ -126,8 +158,8 @@ extension DivContainer: DivBlockModeling {
       vertical: resolveContentAlignmentVertical(childContext.expressionResolver).alignment
     )
 
-    let fallbackWidth = getFallbackWidth(orientation: orientation)
-    let fallbackHeight = getFallbackHeight(orientation: orientation)
+    let fallbackWidth = getFallbackWidth(orientation: orientation, context: childContext)
+    let fallbackHeight = getFallbackHeight(orientation: orientation, context: childContext)
     
     let children = try items.makeBlocks(
       context: childContext,
@@ -181,8 +213,16 @@ extension DivContainer: DivBlockModeling {
       .alignment
     }
 
-    let fallbackWidth = getFallbackWidth(orientation: orientation, layoutMode: layoutMode)
-    let fallbackHeight = getFallbackHeight(orientation: orientation, layoutMode: layoutMode)
+    let fallbackWidth = getFallbackWidth(
+      orientation: orientation,
+      layoutMode: layoutMode,
+      context: childContext
+    )
+    let fallbackHeight = getFallbackHeight(
+      orientation: orientation,
+      layoutMode: layoutMode,
+      context: childContext
+    )
 
     let children = try items.makeBlocks(
       context: childContext,
@@ -210,7 +250,47 @@ extension DivContainer: DivBlockModeling {
       widthTrait: makeContentWidthTrait(with: childContext),
       heightTrait: makeContentHeightTrait(with: childContext),
       axialAlignment: axialAlignment,
-      children: children
+      children: children,
+      separator: makeSeparator(with: childContext),
+      lineSeparator: makeLineSeparator(with: childContext)
+    )
+  }
+
+  private func makeSeparator(
+    with context: DivBlockModelingContext
+  ) throws -> ContainerBlock.Separator? {
+    guard let separator = separator else {
+      return nil
+    }
+    let separatorBlock = try separator.style.makeBlock(context: context, corners: .all)
+    let style = ContainerBlock.Child(
+      content: separatorBlock,
+      crossAlignment: .center
+    )
+    return ContainerBlock.Separator(
+      style: style,
+      showAtEnd: separator.resolveShowAtEnd(context.expressionResolver),
+      showAtStart: separator.resolveShowAtStart(context.expressionResolver),
+      showBetween: separator.resolveShowBetween(context.expressionResolver)
+    )
+  }
+
+  private func makeLineSeparator(
+    with context: DivBlockModelingContext
+  ) throws -> ContainerBlock.Separator? {
+    guard let lineSeparator = lineSeparator else {
+      return nil
+    }
+    let lineSeparatorBlock = try lineSeparator.style.makeBlock(context: context, corners: .all)
+    let style = ContainerBlock.Child(
+      content: lineSeparatorBlock,
+      crossAlignment: .center
+    )
+    return ContainerBlock.Separator(
+      style: style,
+      showAtEnd: lineSeparator.resolveShowAtEnd(context.expressionResolver),
+      showAtStart: lineSeparator.resolveShowAtStart(context.expressionResolver),
+      showBetween: lineSeparator.resolveShowBetween(context.expressionResolver)
     )
   }
 }
