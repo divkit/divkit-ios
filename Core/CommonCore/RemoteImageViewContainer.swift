@@ -1,11 +1,16 @@
-// Copyright 2015 Yandex LLC. All rights reserved.
+// Copyright 2022 Yandex LLC. All rights reserved.
 
 import UIKit
 
 import Base
 
 public final class RemoteImageViewContainer: UIView {
-  public var contentView: RemoteImageViewContentProtocol
+  public var contentView: RemoteImageViewContentProtocol {
+    didSet {
+      oldValue.removeFromSuperview()
+      addSubview(contentView)
+    }
+  }
 
   var imageRequest: Cancellable?
   public var imageHolder: ImageHolder? {
@@ -32,7 +37,7 @@ public final class RemoteImageViewContainer: UIView {
     }
   }
 
-  public init(contentView: RemoteImageViewContentProtocol) {
+  public init(contentView: RemoteImageViewContentProtocol = RemoteImageView()) {
     self.contentView = contentView
     super.init(frame: .zero)
     addSubview(contentView)

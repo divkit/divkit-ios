@@ -1,4 +1,4 @@
-// Copyright 2015 Yandex LLC. All rights reserved.
+// Copyright 2022 Yandex LLC. All rights reserved.
 
 import UIKit
 
@@ -19,7 +19,7 @@ public final class RemoteImageView: UIView, RemoteImageViewContentProtocol {
   private func updateContent() {
     let content = Content(
       image: image,
-      imageRedrawingColor: imageRedrawingColor
+      imageRedrawingColor: imageRedrawingStyle?.tintColor
     )
 
     let gravity = imageContentMode
@@ -45,6 +45,7 @@ public final class RemoteImageView: UIView, RemoteImageViewContentProtocol {
       }
     }
     setNeedsLayout()
+    layoutIfNeeded()
   }
 
   public func setImage(_ image: UIImage?, animated: Bool?) {
@@ -62,11 +63,13 @@ public final class RemoteImageView: UIView, RemoteImageViewContentProtocol {
     } else {
       updateContent()
     }
+    setNeedsLayout()
+    layoutIfNeeded()
   }
 
   private var image: UIImage?
 
-  public var imageRedrawingColor: Color? {
+  public var imageRedrawingStyle: ImageRedrawingStyle? {
     didSet { updateContent() }
   }
 

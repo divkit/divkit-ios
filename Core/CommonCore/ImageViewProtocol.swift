@@ -2,9 +2,11 @@
 
 import UIKit
 
+import Base
+
 public protocol ImageViewProtocol {
   var appearanceAnimation: ImageViewAnimation? { get set }
-  var imageRedrawingColor: Color? { get set }
+  var imageRedrawingStyle: ImageRedrawingStyle? { get set }
   var imageContentMode: ImageContentMode { get set }
 }
 

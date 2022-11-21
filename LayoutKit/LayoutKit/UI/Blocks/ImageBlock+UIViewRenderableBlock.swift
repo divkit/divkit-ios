@@ -4,7 +4,7 @@ import UIKit
 import CommonCore
 
 extension ImageBlock {
-  public static func makeBlockView() -> BlockView { RemoteImageViewContainer(contentView: RemoteImageView()) }
+  public static func makeBlockView() -> BlockView { RemoteImageViewContainer() }
 
   public func configureBlockView(
     _ view: BlockView,
@@ -13,12 +13,17 @@ extension ImageBlock {
     renderingDelegate _: RenderingDelegate?
   ) {
     let remoteImageViewContainer = view as! RemoteImageViewContainer
+    if metalImageRenderingEnabled && !remoteImageViewContainer.contentView.isKind(of: MetalImageView.self)  {
+      remoteImageViewContainer.contentView = MetalImageView()
+    }
     remoteImageViewContainer.contentView.appearanceAnimation = appearanceAnimation?.cast()
     if remoteImageViewContainer.imageHolder !== imageHolder {
       remoteImageViewContainer.imageHolder = imageHolder
     }
     remoteImageViewContainer.contentView.imageContentMode = contentMode
-    remoteImageViewContainer.contentView.imageRedrawingColor = tintColor
+    remoteImageViewContainer.contentView.imageRedrawingStyle = ImageRedrawingStyle(tintColor: tintColor,
+                                                                                   tintMode: tintMode,
+                                                                                   effects: effects)
     remoteImageViewContainer.contentView.isUserInteractionEnabled = false
     remoteImageViewContainer.isUserInteractionEnabled = false
     remoteImageViewContainer.applyAccessibility(accessibilityElement)

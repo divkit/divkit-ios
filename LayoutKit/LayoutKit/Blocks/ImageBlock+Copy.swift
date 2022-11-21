@@ -8,6 +8,9 @@ extension ImageBlock {
       height: height,
       contentMode: contentMode,
       tintColor: tintColor,
+      tintMode: tintMode,
+      effects: effects,
+      metalImageRenderingEnabled: metalImageRenderingEnabled,
       accessibilityElement: accessibilityElement
     )
   }
