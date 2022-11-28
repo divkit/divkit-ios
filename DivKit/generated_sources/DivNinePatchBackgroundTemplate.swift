@@ -40,11 +40,11 @@ public final class DivNinePatchBackgroundTemplate: TemplateValue, TemplateDeseri
     let imageUrlValue = parent?.imageUrl?.resolveValue(context: context, transform: URL.init(string:)) ?? .noValue
     let insetsValue = parent?.insets?.resolveOptionalValue(context: context, useOnlyLinks: true) ?? .noValue
     var errors = mergeErrors(
-      imageUrlValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "image_url", level: .error)) },
-      insetsValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "insets", level: .warning)) }
+      imageUrlValue.errorsOrWarnings?.map { .nestedObjectError(field: "image_url", error: $0) },
+      insetsValue.errorsOrWarnings?.map { .nestedObjectError(field: "insets", error: $0) }
     )
     if case .noValue = imageUrlValue {
-      errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "image_url")))
+      errors.append(.requiredFieldIsMissing(field: "image_url"))
     }
     guard
       let imageUrlNonNil = imageUrlValue.value
@@ -81,11 +81,11 @@ public final class DivNinePatchBackgroundTemplate: TemplateValue, TemplateDeseri
       insetsValue = insetsValue.merged(with: parent.insets?.resolveOptionalValue(context: context, useOnlyLinks: true))
     }
     var errors = mergeErrors(
-      imageUrlValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "image_url", level: .error)) },
-      insetsValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "insets", level: .warning)) }
+      imageUrlValue.errorsOrWarnings?.map { .nestedObjectError(field: "image_url", error: $0) },
+      insetsValue.errorsOrWarnings?.map { .nestedObjectError(field: "insets", error: $0) }
     )
     if case .noValue = imageUrlValue {
-      errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "image_url")))
+      errors.append(.requiredFieldIsMissing(field: "image_url"))
     }
     guard
       let imageUrlNonNil = imageUrlValue.value

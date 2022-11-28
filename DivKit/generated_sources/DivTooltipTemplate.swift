@@ -59,22 +59,22 @@ public final class DivTooltipTemplate: TemplateValue, TemplateDeserializable {
     let offsetValue = parent?.offset?.resolveOptionalValue(context: context, validator: ResolvedValue.offsetValidator, useOnlyLinks: true) ?? .noValue
     let positionValue = parent?.position?.resolveValue(context: context) ?? .noValue
     var errors = mergeErrors(
-      animationInValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "animation_in", level: .warning)) },
-      animationOutValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "animation_out", level: .warning)) },
-      divValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "div", level: .error)) },
-      durationValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "duration", level: .warning)) },
-      idValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "id", level: .error)) },
-      offsetValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "offset", level: .warning)) },
-      positionValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "position", level: .error)) }
+      animationInValue.errorsOrWarnings?.map { .nestedObjectError(field: "animation_in", error: $0) },
+      animationOutValue.errorsOrWarnings?.map { .nestedObjectError(field: "animation_out", error: $0) },
+      divValue.errorsOrWarnings?.map { .nestedObjectError(field: "div", error: $0) },
+      durationValue.errorsOrWarnings?.map { .nestedObjectError(field: "duration", error: $0) },
+      idValue.errorsOrWarnings?.map { .nestedObjectError(field: "id", error: $0) },
+      offsetValue.errorsOrWarnings?.map { .nestedObjectError(field: "offset", error: $0) },
+      positionValue.errorsOrWarnings?.map { .nestedObjectError(field: "position", error: $0) }
     )
     if case .noValue = divValue {
-      errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "div")))
+      errors.append(.requiredFieldIsMissing(field: "div"))
     }
     if case .noValue = idValue {
-      errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "id")))
+      errors.append(.requiredFieldIsMissing(field: "id"))
     }
     if case .noValue = positionValue {
-      errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "position")))
+      errors.append(.requiredFieldIsMissing(field: "position"))
     }
     guard
       let divNonNil = divValue.value,
@@ -146,22 +146,22 @@ public final class DivTooltipTemplate: TemplateValue, TemplateDeserializable {
       offsetValue = offsetValue.merged(with: parent.offset?.resolveOptionalValue(context: context, validator: ResolvedValue.offsetValidator, useOnlyLinks: true))
     }
     var errors = mergeErrors(
-      animationInValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "animation_in", level: .warning)) },
-      animationOutValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "animation_out", level: .warning)) },
-      divValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "div", level: .error)) },
-      durationValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "duration", level: .warning)) },
-      idValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "id", level: .error)) },
-      offsetValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "offset", level: .warning)) },
-      positionValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "position", level: .error)) }
+      animationInValue.errorsOrWarnings?.map { .nestedObjectError(field: "animation_in", error: $0) },
+      animationOutValue.errorsOrWarnings?.map { .nestedObjectError(field: "animation_out", error: $0) },
+      divValue.errorsOrWarnings?.map { .nestedObjectError(field: "div", error: $0) },
+      durationValue.errorsOrWarnings?.map { .nestedObjectError(field: "duration", error: $0) },
+      idValue.errorsOrWarnings?.map { .nestedObjectError(field: "id", error: $0) },
+      offsetValue.errorsOrWarnings?.map { .nestedObjectError(field: "offset", error: $0) },
+      positionValue.errorsOrWarnings?.map { .nestedObjectError(field: "position", error: $0) }
     )
     if case .noValue = divValue {
-      errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "div")))
+      errors.append(.requiredFieldIsMissing(field: "div"))
     }
     if case .noValue = idValue {
-      errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "id")))
+      errors.append(.requiredFieldIsMissing(field: "id"))
     }
     if case .noValue = positionValue {
-      errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "position")))
+      errors.append(.requiredFieldIsMissing(field: "position"))
     }
     guard
       let divNonNil = divValue.value,

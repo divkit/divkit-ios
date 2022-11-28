@@ -40,14 +40,14 @@ public final class NumberVariableTemplate: TemplateValue, TemplateDeserializable
     let nameValue = parent?.name?.resolveValue(context: context, validator: ResolvedValue.nameValidator) ?? .noValue
     let valueValue = parent?.value?.resolveValue(context: context) ?? .noValue
     var errors = mergeErrors(
-      nameValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "name", level: .error)) },
-      valueValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "value", level: .error)) }
+      nameValue.errorsOrWarnings?.map { .nestedObjectError(field: "name", error: $0) },
+      valueValue.errorsOrWarnings?.map { .nestedObjectError(field: "value", error: $0) }
     )
     if case .noValue = nameValue {
-      errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "name")))
+      errors.append(.requiredFieldIsMissing(field: "name"))
     }
     if case .noValue = valueValue {
-      errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "value")))
+      errors.append(.requiredFieldIsMissing(field: "value"))
     }
     guard
       let nameNonNil = nameValue.value,
@@ -82,14 +82,14 @@ public final class NumberVariableTemplate: TemplateValue, TemplateDeserializable
       }
     }
     var errors = mergeErrors(
-      nameValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "name", level: .error)) },
-      valueValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "value", level: .error)) }
+      nameValue.errorsOrWarnings?.map { .nestedObjectError(field: "name", error: $0) },
+      valueValue.errorsOrWarnings?.map { .nestedObjectError(field: "value", error: $0) }
     )
     if case .noValue = nameValue {
-      errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "name")))
+      errors.append(.requiredFieldIsMissing(field: "name"))
     }
     if case .noValue = valueValue {
-      errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "value")))
+      errors.append(.requiredFieldIsMissing(field: "value"))
     }
     guard
       let nameNonNil = nameValue.value,

@@ -39,15 +39,15 @@ public final class DivTriggerTemplate: TemplateValue, TemplateDeserializable {
     let conditionValue = parent?.condition?.resolveValue(context: context) ?? .noValue
     let modeValue = parent?.mode?.resolveOptionalValue(context: context, validator: ResolvedValue.modeValidator) ?? .noValue
     var errors = mergeErrors(
-      actionsValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "actions", level: .error)) },
-      conditionValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "condition", level: .error)) },
-      modeValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "mode", level: .warning)) }
+      actionsValue.errorsOrWarnings?.map { .nestedObjectError(field: "actions", error: $0) },
+      conditionValue.errorsOrWarnings?.map { .nestedObjectError(field: "condition", error: $0) },
+      modeValue.errorsOrWarnings?.map { .nestedObjectError(field: "mode", error: $0) }
     )
     if case .noValue = actionsValue {
-      errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "actions")))
+      errors.append(.requiredFieldIsMissing(field: "actions"))
     }
     if case .noValue = conditionValue {
-      errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "condition")))
+      errors.append(.requiredFieldIsMissing(field: "condition"))
     }
     guard
       let actionsNonNil = actionsValue.value,
@@ -91,15 +91,15 @@ public final class DivTriggerTemplate: TemplateValue, TemplateDeserializable {
       actionsValue = actionsValue.merged(with: parent.actions?.resolveValue(context: context, validator: ResolvedValue.actionsValidator, useOnlyLinks: true))
     }
     var errors = mergeErrors(
-      actionsValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "actions", level: .error)) },
-      conditionValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "condition", level: .error)) },
-      modeValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "mode", level: .warning)) }
+      actionsValue.errorsOrWarnings?.map { .nestedObjectError(field: "actions", error: $0) },
+      conditionValue.errorsOrWarnings?.map { .nestedObjectError(field: "condition", error: $0) },
+      modeValue.errorsOrWarnings?.map { .nestedObjectError(field: "mode", error: $0) }
     )
     if case .noValue = actionsValue {
-      errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "actions")))
+      errors.append(.requiredFieldIsMissing(field: "actions"))
     }
     if case .noValue = conditionValue {
-      errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "condition")))
+      errors.append(.requiredFieldIsMissing(field: "condition"))
     }
     guard
       let actionsNonNil = actionsValue.value,

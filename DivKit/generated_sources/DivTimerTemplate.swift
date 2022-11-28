@@ -52,15 +52,15 @@ public final class DivTimerTemplate: TemplateValue, TemplateDeserializable {
     let tickIntervalValue = parent?.tickInterval?.resolveOptionalValue(context: context, validator: ResolvedValue.tickIntervalValidator) ?? .noValue
     let valueVariableValue = parent?.valueVariable?.resolveOptionalValue(context: context, validator: ResolvedValue.valueVariableValidator) ?? .noValue
     var errors = mergeErrors(
-      durationValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "duration", level: .warning)) },
-      endActionsValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "end_actions", level: .warning)) },
-      idValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "id", level: .error)) },
-      tickActionsValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "tick_actions", level: .warning)) },
-      tickIntervalValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "tick_interval", level: .warning)) },
-      valueVariableValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "value_variable", level: .warning)) }
+      durationValue.errorsOrWarnings?.map { .nestedObjectError(field: "duration", error: $0) },
+      endActionsValue.errorsOrWarnings?.map { .nestedObjectError(field: "end_actions", error: $0) },
+      idValue.errorsOrWarnings?.map { .nestedObjectError(field: "id", error: $0) },
+      tickActionsValue.errorsOrWarnings?.map { .nestedObjectError(field: "tick_actions", error: $0) },
+      tickIntervalValue.errorsOrWarnings?.map { .nestedObjectError(field: "tick_interval", error: $0) },
+      valueVariableValue.errorsOrWarnings?.map { .nestedObjectError(field: "value_variable", error: $0) }
     )
     if case .noValue = idValue {
-      errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "id")))
+      errors.append(.requiredFieldIsMissing(field: "id"))
     }
     guard
       let idNonNil = idValue.value
@@ -122,15 +122,15 @@ public final class DivTimerTemplate: TemplateValue, TemplateDeserializable {
       tickActionsValue = tickActionsValue.merged(with: parent.tickActions?.resolveOptionalValue(context: context, validator: ResolvedValue.tickActionsValidator, useOnlyLinks: true))
     }
     var errors = mergeErrors(
-      durationValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "duration", level: .warning)) },
-      endActionsValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "end_actions", level: .warning)) },
-      idValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "id", level: .error)) },
-      tickActionsValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "tick_actions", level: .warning)) },
-      tickIntervalValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "tick_interval", level: .warning)) },
-      valueVariableValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "value_variable", level: .warning)) }
+      durationValue.errorsOrWarnings?.map { .nestedObjectError(field: "duration", error: $0) },
+      endActionsValue.errorsOrWarnings?.map { .nestedObjectError(field: "end_actions", error: $0) },
+      idValue.errorsOrWarnings?.map { .nestedObjectError(field: "id", error: $0) },
+      tickActionsValue.errorsOrWarnings?.map { .nestedObjectError(field: "tick_actions", error: $0) },
+      tickIntervalValue.errorsOrWarnings?.map { .nestedObjectError(field: "tick_interval", error: $0) },
+      valueVariableValue.errorsOrWarnings?.map { .nestedObjectError(field: "value_variable", error: $0) }
     )
     if case .noValue = idValue {
-      errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "id")))
+      errors.append(.requiredFieldIsMissing(field: "id"))
     }
     guard
       let idNonNil = idValue.value

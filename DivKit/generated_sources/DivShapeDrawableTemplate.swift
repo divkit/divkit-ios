@@ -45,15 +45,15 @@ public final class DivShapeDrawableTemplate: TemplateValue, TemplateDeserializab
     let shapeValue = parent?.shape?.resolveValue(context: context, useOnlyLinks: true) ?? .noValue
     let strokeValue = parent?.stroke?.resolveOptionalValue(context: context, validator: ResolvedValue.strokeValidator, useOnlyLinks: true) ?? .noValue
     var errors = mergeErrors(
-      colorValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "color", level: .error)) },
-      shapeValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "shape", level: .error)) },
-      strokeValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "stroke", level: .warning)) }
+      colorValue.errorsOrWarnings?.map { .nestedObjectError(field: "color", error: $0) },
+      shapeValue.errorsOrWarnings?.map { .nestedObjectError(field: "shape", error: $0) },
+      strokeValue.errorsOrWarnings?.map { .nestedObjectError(field: "stroke", error: $0) }
     )
     if case .noValue = colorValue {
-      errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "color")))
+      errors.append(.requiredFieldIsMissing(field: "color"))
     }
     if case .noValue = shapeValue {
-      errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "shape")))
+      errors.append(.requiredFieldIsMissing(field: "shape"))
     }
     guard
       let colorNonNil = colorValue.value,
@@ -98,15 +98,15 @@ public final class DivShapeDrawableTemplate: TemplateValue, TemplateDeserializab
       strokeValue = strokeValue.merged(with: parent.stroke?.resolveOptionalValue(context: context, validator: ResolvedValue.strokeValidator, useOnlyLinks: true))
     }
     var errors = mergeErrors(
-      colorValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "color", level: .error)) },
-      shapeValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "shape", level: .error)) },
-      strokeValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "stroke", level: .warning)) }
+      colorValue.errorsOrWarnings?.map { .nestedObjectError(field: "color", error: $0) },
+      shapeValue.errorsOrWarnings?.map { .nestedObjectError(field: "shape", error: $0) },
+      strokeValue.errorsOrWarnings?.map { .nestedObjectError(field: "stroke", error: $0) }
     )
     if case .noValue = colorValue {
-      errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "color")))
+      errors.append(.requiredFieldIsMissing(field: "color"))
     }
     if case .noValue = shapeValue {
-      errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "shape")))
+      errors.append(.requiredFieldIsMissing(field: "shape"))
     }
     guard
       let colorNonNil = colorValue.value,

@@ -35,10 +35,10 @@ public final class DivBlurTemplate: TemplateValue, TemplateDeserializable {
   private static func resolveOnlyLinks(context: Context, parent: DivBlurTemplate?) -> DeserializationResult<DivBlur> {
     let radiusValue = parent?.radius?.resolveValue(context: context, validator: ResolvedValue.radiusValidator) ?? .noValue
     var errors = mergeErrors(
-      radiusValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "radius", level: .error)) }
+      radiusValue.errorsOrWarnings?.map { .nestedObjectError(field: "radius", error: $0) }
     )
     if case .noValue = radiusValue {
-      errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "radius")))
+      errors.append(.requiredFieldIsMissing(field: "radius"))
     }
     guard
       let radiusNonNil = radiusValue.value
@@ -66,10 +66,10 @@ public final class DivBlurTemplate: TemplateValue, TemplateDeserializable {
       }
     }
     var errors = mergeErrors(
-      radiusValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "radius", level: .error)) }
+      radiusValue.errorsOrWarnings?.map { .nestedObjectError(field: "radius", error: $0) }
     )
     if case .noValue = radiusValue {
-      errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "radius")))
+      errors.append(.requiredFieldIsMissing(field: "radius"))
     }
     guard
       let radiusNonNil = radiusValue.value

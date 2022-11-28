@@ -32,11 +32,11 @@ public final class DivExtensionTemplate: TemplateValue, TemplateDeserializable {
     let idValue = parent?.id?.resolveValue(context: context, validator: ResolvedValue.idValidator) ?? .noValue
     let paramsValue = parent?.params?.resolveOptionalValue(context: context, validator: ResolvedValue.paramsValidator) ?? .noValue
     var errors = mergeErrors(
-      idValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "id", level: .error)) },
-      paramsValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "params", level: .warning)) }
+      idValue.errorsOrWarnings?.map { .nestedObjectError(field: "id", error: $0) },
+      paramsValue.errorsOrWarnings?.map { .nestedObjectError(field: "params", error: $0) }
     )
     if case .noValue = idValue {
-      errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "id")))
+      errors.append(.requiredFieldIsMissing(field: "id"))
     }
     guard
       let idNonNil = idValue.value
@@ -70,11 +70,11 @@ public final class DivExtensionTemplate: TemplateValue, TemplateDeserializable {
       }
     }
     var errors = mergeErrors(
-      idValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "id", level: .error)) },
-      paramsValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "params", level: .warning)) }
+      idValue.errorsOrWarnings?.map { .nestedObjectError(field: "id", error: $0) },
+      paramsValue.errorsOrWarnings?.map { .nestedObjectError(field: "params", error: $0) }
     )
     if case .noValue = idValue {
-      errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "id")))
+      errors.append(.requiredFieldIsMissing(field: "id"))
     }
     guard
       let idNonNil = idValue.value

@@ -40,11 +40,11 @@ public final class DivLinearGradientTemplate: TemplateValue, TemplateDeserializa
     let angleValue = parent?.angle?.resolveOptionalValue(context: context, validator: ResolvedValue.angleValidator) ?? .noValue
     let colorsValue = parent?.colors?.resolveValue(context: context, transform: Color.color(withHexString:), validator: ResolvedValue.colorsValidator) ?? .noValue
     var errors = mergeErrors(
-      angleValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "angle", level: .warning)) },
-      colorsValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "colors", level: .error)) }
+      angleValue.errorsOrWarnings?.map { .nestedObjectError(field: "angle", error: $0) },
+      colorsValue.errorsOrWarnings?.map { .nestedObjectError(field: "colors", error: $0) }
     )
     if case .noValue = colorsValue {
-      errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "colors")))
+      errors.append(.requiredFieldIsMissing(field: "colors"))
     }
     guard
       let colorsNonNil = colorsValue.value
@@ -78,11 +78,11 @@ public final class DivLinearGradientTemplate: TemplateValue, TemplateDeserializa
       }
     }
     var errors = mergeErrors(
-      angleValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "angle", level: .warning)) },
-      colorsValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "colors", level: .error)) }
+      angleValue.errorsOrWarnings?.map { .nestedObjectError(field: "angle", error: $0) },
+      colorsValue.errorsOrWarnings?.map { .nestedObjectError(field: "colors", error: $0) }
     )
     if case .noValue = colorsValue {
-      errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "colors")))
+      errors.append(.requiredFieldIsMissing(field: "colors"))
     }
     guard
       let colorsNonNil = colorsValue.value

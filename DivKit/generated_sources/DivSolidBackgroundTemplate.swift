@@ -35,10 +35,10 @@ public final class DivSolidBackgroundTemplate: TemplateValue, TemplateDeserializ
   private static func resolveOnlyLinks(context: Context, parent: DivSolidBackgroundTemplate?) -> DeserializationResult<DivSolidBackground> {
     let colorValue = parent?.color?.resolveValue(context: context, transform: Color.color(withHexString:)) ?? .noValue
     var errors = mergeErrors(
-      colorValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "color", level: .error)) }
+      colorValue.errorsOrWarnings?.map { .nestedObjectError(field: "color", error: $0) }
     )
     if case .noValue = colorValue {
-      errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "color")))
+      errors.append(.requiredFieldIsMissing(field: "color"))
     }
     guard
       let colorNonNil = colorValue.value
@@ -66,10 +66,10 @@ public final class DivSolidBackgroundTemplate: TemplateValue, TemplateDeserializ
       }
     }
     var errors = mergeErrors(
-      colorValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "color", level: .error)) }
+      colorValue.errorsOrWarnings?.map { .nestedObjectError(field: "color", error: $0) }
     )
     if case .noValue = colorValue {
-      errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "color")))
+      errors.append(.requiredFieldIsMissing(field: "color"))
     }
     guard
       let colorNonNil = colorValue.value

@@ -37,12 +37,12 @@ public final class DivStrokeTemplate: TemplateValue, TemplateDeserializable {
     let unitValue = parent?.unit?.resolveOptionalValue(context: context, validator: ResolvedValue.unitValidator) ?? .noValue
     let widthValue = parent?.width?.resolveOptionalValue(context: context, validator: ResolvedValue.widthValidator) ?? .noValue
     var errors = mergeErrors(
-      colorValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "color", level: .error)) },
-      unitValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "unit", level: .warning)) },
-      widthValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "width", level: .warning)) }
+      colorValue.errorsOrWarnings?.map { .nestedObjectError(field: "color", error: $0) },
+      unitValue.errorsOrWarnings?.map { .nestedObjectError(field: "unit", error: $0) },
+      widthValue.errorsOrWarnings?.map { .nestedObjectError(field: "width", error: $0) }
     )
     if case .noValue = colorValue {
-      errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "color")))
+      errors.append(.requiredFieldIsMissing(field: "color"))
     }
     guard
       let colorNonNil = colorValue.value
@@ -82,12 +82,12 @@ public final class DivStrokeTemplate: TemplateValue, TemplateDeserializable {
       }
     }
     var errors = mergeErrors(
-      colorValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "color", level: .error)) },
-      unitValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "unit", level: .warning)) },
-      widthValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "width", level: .warning)) }
+      colorValue.errorsOrWarnings?.map { .nestedObjectError(field: "color", error: $0) },
+      unitValue.errorsOrWarnings?.map { .nestedObjectError(field: "unit", error: $0) },
+      widthValue.errorsOrWarnings?.map { .nestedObjectError(field: "width", error: $0) }
     )
     if case .noValue = colorValue {
-      errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "color")))
+      errors.append(.requiredFieldIsMissing(field: "color"))
     }
     guard
       let colorNonNil = colorValue.value

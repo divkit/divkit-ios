@@ -50,13 +50,13 @@ public final class DivRadialGradientTemplate: TemplateValue, TemplateDeserializa
     let colorsValue = parent?.colors?.resolveValue(context: context, transform: Color.color(withHexString:), validator: ResolvedValue.colorsValidator) ?? .noValue
     let radiusValue = parent?.radius?.resolveOptionalValue(context: context, validator: ResolvedValue.radiusValidator, useOnlyLinks: true) ?? .noValue
     var errors = mergeErrors(
-      centerXValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "center_x", level: .warning)) },
-      centerYValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "center_y", level: .warning)) },
-      colorsValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "colors", level: .error)) },
-      radiusValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "radius", level: .warning)) }
+      centerXValue.errorsOrWarnings?.map { .nestedObjectError(field: "center_x", error: $0) },
+      centerYValue.errorsOrWarnings?.map { .nestedObjectError(field: "center_y", error: $0) },
+      colorsValue.errorsOrWarnings?.map { .nestedObjectError(field: "colors", error: $0) },
+      radiusValue.errorsOrWarnings?.map { .nestedObjectError(field: "radius", error: $0) }
     )
     if case .noValue = colorsValue {
-      errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "colors")))
+      errors.append(.requiredFieldIsMissing(field: "colors"))
     }
     guard
       let colorsNonNil = colorsValue.value
@@ -107,13 +107,13 @@ public final class DivRadialGradientTemplate: TemplateValue, TemplateDeserializa
       radiusValue = radiusValue.merged(with: parent.radius?.resolveOptionalValue(context: context, validator: ResolvedValue.radiusValidator, useOnlyLinks: true))
     }
     var errors = mergeErrors(
-      centerXValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "center_x", level: .warning)) },
-      centerYValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "center_y", level: .warning)) },
-      colorsValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "colors", level: .error)) },
-      radiusValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "radius", level: .warning)) }
+      centerXValue.errorsOrWarnings?.map { .nestedObjectError(field: "center_x", error: $0) },
+      centerYValue.errorsOrWarnings?.map { .nestedObjectError(field: "center_y", error: $0) },
+      colorsValue.errorsOrWarnings?.map { .nestedObjectError(field: "colors", error: $0) },
+      radiusValue.errorsOrWarnings?.map { .nestedObjectError(field: "radius", error: $0) }
     )
     if case .noValue = colorsValue {
-      errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "colors")))
+      errors.append(.requiredFieldIsMissing(field: "colors"))
     }
     guard
       let colorsNonNil = colorsValue.value

@@ -33,14 +33,14 @@ public final class DivDataTemplate: TemplateValue, TemplateDeserializable {
       let divValue = parent?.div?.resolveValue(context: context, useOnlyLinks: true) ?? .noValue
       let stateIdValue = parent?.stateId?.resolveValue(context: context) ?? .noValue
       var errors = mergeErrors(
-        divValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "div", level: .error)) },
-        stateIdValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "state_id", level: .error)) }
+        divValue.errorsOrWarnings?.map { .nestedObjectError(field: "div", error: $0) },
+        stateIdValue.errorsOrWarnings?.map { .nestedObjectError(field: "state_id", error: $0) }
       )
       if case .noValue = divValue {
-        errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "div")))
+        errors.append(.requiredFieldIsMissing(field: "div"))
       }
       if case .noValue = stateIdValue {
-        errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "state_id")))
+        errors.append(.requiredFieldIsMissing(field: "state_id"))
       }
       guard
         let divNonNil = divValue.value,
@@ -78,14 +78,14 @@ public final class DivDataTemplate: TemplateValue, TemplateDeserializable {
         divValue = divValue.merged(with: parent.div?.resolveValue(context: context, useOnlyLinks: true))
       }
       var errors = mergeErrors(
-        divValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "div", level: .error)) },
-        stateIdValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "state_id", level: .error)) }
+        divValue.errorsOrWarnings?.map { .nestedObjectError(field: "div", error: $0) },
+        stateIdValue.errorsOrWarnings?.map { .nestedObjectError(field: "state_id", error: $0) }
       )
       if case .noValue = divValue {
-        errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "div")))
+        errors.append(.requiredFieldIsMissing(field: "div"))
       }
       if case .noValue = stateIdValue {
-        errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "state_id")))
+        errors.append(.requiredFieldIsMissing(field: "state_id"))
       }
       guard
         let divNonNil = divValue.value,
@@ -163,18 +163,18 @@ public final class DivDataTemplate: TemplateValue, TemplateDeserializable {
     let variableTriggersValue = parent?.variableTriggers?.resolveOptionalValue(context: context, validator: ResolvedValue.variableTriggersValidator, useOnlyLinks: true) ?? .noValue
     let variablesValue = parent?.variables?.resolveOptionalValue(context: context, validator: ResolvedValue.variablesValidator, useOnlyLinks: true) ?? .noValue
     var errors = mergeErrors(
-      logIdValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "log_id", level: .error)) },
-      statesValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "states", level: .error)) },
-      timersValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "timers", level: .warning)) },
-      transitionAnimationSelectorValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "transition_animation_selector", level: .warning)) },
-      variableTriggersValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "variable_triggers", level: .warning)) },
-      variablesValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "variables", level: .warning)) }
+      logIdValue.errorsOrWarnings?.map { .nestedObjectError(field: "log_id", error: $0) },
+      statesValue.errorsOrWarnings?.map { .nestedObjectError(field: "states", error: $0) },
+      timersValue.errorsOrWarnings?.map { .nestedObjectError(field: "timers", error: $0) },
+      transitionAnimationSelectorValue.errorsOrWarnings?.map { .nestedObjectError(field: "transition_animation_selector", error: $0) },
+      variableTriggersValue.errorsOrWarnings?.map { .nestedObjectError(field: "variable_triggers", error: $0) },
+      variablesValue.errorsOrWarnings?.map { .nestedObjectError(field: "variables", error: $0) }
     )
     if case .noValue = logIdValue {
-      errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "log_id")))
+      errors.append(.requiredFieldIsMissing(field: "log_id"))
     }
     if case .noValue = statesValue {
-      errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "states")))
+      errors.append(.requiredFieldIsMissing(field: "states"))
     }
     guard
       let logIdNonNil = logIdValue.value,
@@ -239,18 +239,18 @@ public final class DivDataTemplate: TemplateValue, TemplateDeserializable {
       variablesValue = variablesValue.merged(with: parent.variables?.resolveOptionalValue(context: context, validator: ResolvedValue.variablesValidator, useOnlyLinks: true))
     }
     var errors = mergeErrors(
-      logIdValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "log_id", level: .error)) },
-      statesValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "states", level: .error)) },
-      timersValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "timers", level: .warning)) },
-      transitionAnimationSelectorValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "transition_animation_selector", level: .warning)) },
-      variableTriggersValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "variable_triggers", level: .warning)) },
-      variablesValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "variables", level: .warning)) }
+      logIdValue.errorsOrWarnings?.map { .nestedObjectError(field: "log_id", error: $0) },
+      statesValue.errorsOrWarnings?.map { .nestedObjectError(field: "states", error: $0) },
+      timersValue.errorsOrWarnings?.map { .nestedObjectError(field: "timers", error: $0) },
+      transitionAnimationSelectorValue.errorsOrWarnings?.map { .nestedObjectError(field: "transition_animation_selector", error: $0) },
+      variableTriggersValue.errorsOrWarnings?.map { .nestedObjectError(field: "variable_triggers", error: $0) },
+      variablesValue.errorsOrWarnings?.map { .nestedObjectError(field: "variables", error: $0) }
     )
     if case .noValue = logIdValue {
-      errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "log_id")))
+      errors.append(.requiredFieldIsMissing(field: "log_id"))
     }
     if case .noValue = statesValue {
-      errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "states")))
+      errors.append(.requiredFieldIsMissing(field: "states"))
     }
     guard
       let logIdNonNil = logIdValue.value,

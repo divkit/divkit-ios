@@ -32,14 +32,14 @@ public final class DivPointTemplate: TemplateValue, TemplateDeserializable {
     let xValue = parent?.x?.resolveValue(context: context, useOnlyLinks: true) ?? .noValue
     let yValue = parent?.y?.resolveValue(context: context, useOnlyLinks: true) ?? .noValue
     var errors = mergeErrors(
-      xValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "x", level: .error)) },
-      yValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "y", level: .error)) }
+      xValue.errorsOrWarnings?.map { .nestedObjectError(field: "x", error: $0) },
+      yValue.errorsOrWarnings?.map { .nestedObjectError(field: "y", error: $0) }
     )
     if case .noValue = xValue {
-      errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "x")))
+      errors.append(.requiredFieldIsMissing(field: "x"))
     }
     if case .noValue = yValue {
-      errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "y")))
+      errors.append(.requiredFieldIsMissing(field: "y"))
     }
     guard
       let xNonNil = xValue.value,
@@ -78,14 +78,14 @@ public final class DivPointTemplate: TemplateValue, TemplateDeserializable {
       yValue = yValue.merged(with: parent.y?.resolveValue(context: context, useOnlyLinks: true))
     }
     var errors = mergeErrors(
-      xValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "x", level: .error)) },
-      yValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "y", level: .error)) }
+      xValue.errorsOrWarnings?.map { .nestedObjectError(field: "x", error: $0) },
+      yValue.errorsOrWarnings?.map { .nestedObjectError(field: "y", error: $0) }
     )
     if case .noValue = xValue {
-      errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "x")))
+      errors.append(.requiredFieldIsMissing(field: "x"))
     }
     if case .noValue = yValue {
-      errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "y")))
+      errors.append(.requiredFieldIsMissing(field: "y"))
     }
     guard
       let xNonNil = xValue.value,

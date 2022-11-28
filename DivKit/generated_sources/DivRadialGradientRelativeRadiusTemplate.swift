@@ -37,10 +37,10 @@ public final class DivRadialGradientRelativeRadiusTemplate: TemplateValue, Templ
   private static func resolveOnlyLinks(context: Context, parent: DivRadialGradientRelativeRadiusTemplate?) -> DeserializationResult<DivRadialGradientRelativeRadius> {
     let valueValue = parent?.value?.resolveValue(context: context) ?? .noValue
     var errors = mergeErrors(
-      valueValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "value", level: .error)) }
+      valueValue.errorsOrWarnings?.map { .nestedObjectError(field: "value", error: $0) }
     )
     if case .noValue = valueValue {
-      errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "value")))
+      errors.append(.requiredFieldIsMissing(field: "value"))
     }
     guard
       let valueNonNil = valueValue.value
@@ -68,10 +68,10 @@ public final class DivRadialGradientRelativeRadiusTemplate: TemplateValue, Templ
       }
     }
     var errors = mergeErrors(
-      valueValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "value", level: .error)) }
+      valueValue.errorsOrWarnings?.map { .nestedObjectError(field: "value", error: $0) }
     )
     if case .noValue = valueValue {
-      errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "value")))
+      errors.append(.requiredFieldIsMissing(field: "value"))
     }
     guard
       let valueNonNil = valueValue.value

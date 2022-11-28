@@ -27,10 +27,10 @@ public final class DivAspectTemplate: TemplateValue, TemplateDeserializable {
   private static func resolveOnlyLinks(context: Context, parent: DivAspectTemplate?) -> DeserializationResult<DivAspect> {
     let ratioValue = parent?.ratio?.resolveValue(context: context, validator: ResolvedValue.ratioValidator) ?? .noValue
     var errors = mergeErrors(
-      ratioValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "ratio", level: .error)) }
+      ratioValue.errorsOrWarnings?.map { .nestedObjectError(field: "ratio", error: $0) }
     )
     if case .noValue = ratioValue {
-      errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "ratio")))
+      errors.append(.requiredFieldIsMissing(field: "ratio"))
     }
     guard
       let ratioNonNil = ratioValue.value
@@ -58,10 +58,10 @@ public final class DivAspectTemplate: TemplateValue, TemplateDeserializable {
       }
     }
     var errors = mergeErrors(
-      ratioValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "ratio", level: .error)) }
+      ratioValue.errorsOrWarnings?.map { .nestedObjectError(field: "ratio", error: $0) }
     )
     if case .noValue = ratioValue {
-      errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "ratio")))
+      errors.append(.requiredFieldIsMissing(field: "ratio"))
     }
     guard
       let ratioNonNil = ratioValue.value

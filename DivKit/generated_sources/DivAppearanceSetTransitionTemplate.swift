@@ -35,10 +35,10 @@ public final class DivAppearanceSetTransitionTemplate: TemplateValue, TemplateDe
   private static func resolveOnlyLinks(context: Context, parent: DivAppearanceSetTransitionTemplate?) -> DeserializationResult<DivAppearanceSetTransition> {
     let itemsValue = parent?.items?.resolveValue(context: context, validator: ResolvedValue.itemsValidator, useOnlyLinks: true) ?? .noValue
     var errors = mergeErrors(
-      itemsValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "items", level: .error)) }
+      itemsValue.errorsOrWarnings?.map { .nestedObjectError(field: "items", error: $0) }
     )
     if case .noValue = itemsValue {
-      errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "items")))
+      errors.append(.requiredFieldIsMissing(field: "items"))
     }
     guard
       let itemsNonNil = itemsValue.value
@@ -69,10 +69,10 @@ public final class DivAppearanceSetTransitionTemplate: TemplateValue, TemplateDe
       itemsValue = itemsValue.merged(with: parent.items?.resolveValue(context: context, validator: ResolvedValue.itemsValidator, useOnlyLinks: true))
     }
     var errors = mergeErrors(
-      itemsValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "items", level: .error)) }
+      itemsValue.errorsOrWarnings?.map { .nestedObjectError(field: "items", error: $0) }
     )
     if case .noValue = itemsValue {
-      errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "items")))
+      errors.append(.requiredFieldIsMissing(field: "items"))
     }
     guard
       let itemsNonNil = itemsValue.value

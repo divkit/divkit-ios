@@ -35,10 +35,10 @@ public final class DivPageSizeTemplate: TemplateValue, TemplateDeserializable {
   private static func resolveOnlyLinks(context: Context, parent: DivPageSizeTemplate?) -> DeserializationResult<DivPageSize> {
     let pageWidthValue = parent?.pageWidth?.resolveValue(context: context, useOnlyLinks: true) ?? .noValue
     var errors = mergeErrors(
-      pageWidthValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "page_width", level: .error)) }
+      pageWidthValue.errorsOrWarnings?.map { .nestedObjectError(field: "page_width", error: $0) }
     )
     if case .noValue = pageWidthValue {
-      errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "page_width")))
+      errors.append(.requiredFieldIsMissing(field: "page_width"))
     }
     guard
       let pageWidthNonNil = pageWidthValue.value
@@ -69,10 +69,10 @@ public final class DivPageSizeTemplate: TemplateValue, TemplateDeserializable {
       pageWidthValue = pageWidthValue.merged(with: parent.pageWidth?.resolveValue(context: context, useOnlyLinks: true))
     }
     var errors = mergeErrors(
-      pageWidthValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "page_width", level: .error)) }
+      pageWidthValue.errorsOrWarnings?.map { .nestedObjectError(field: "page_width", error: $0) }
     )
     if case .noValue = pageWidthValue {
-      errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "page_width")))
+      errors.append(.requiredFieldIsMissing(field: "page_width"))
     }
     guard
       let pageWidthNonNil = pageWidthValue.value

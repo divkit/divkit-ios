@@ -42,13 +42,13 @@ public final class DivShadowTemplate: TemplateValue, TemplateDeserializable {
     let colorValue = parent?.color?.resolveOptionalValue(context: context, transform: Color.color(withHexString:), validator: ResolvedValue.colorValidator) ?? .noValue
     let offsetValue = parent?.offset?.resolveValue(context: context, useOnlyLinks: true) ?? .noValue
     var errors = mergeErrors(
-      alphaValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "alpha", level: .warning)) },
-      blurValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "blur", level: .warning)) },
-      colorValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "color", level: .warning)) },
-      offsetValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "offset", level: .error)) }
+      alphaValue.errorsOrWarnings?.map { .nestedObjectError(field: "alpha", error: $0) },
+      blurValue.errorsOrWarnings?.map { .nestedObjectError(field: "blur", error: $0) },
+      colorValue.errorsOrWarnings?.map { .nestedObjectError(field: "color", error: $0) },
+      offsetValue.errorsOrWarnings?.map { .nestedObjectError(field: "offset", error: $0) }
     )
     if case .noValue = offsetValue {
-      errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "offset")))
+      errors.append(.requiredFieldIsMissing(field: "offset"))
     }
     guard
       let offsetNonNil = offsetValue.value
@@ -97,13 +97,13 @@ public final class DivShadowTemplate: TemplateValue, TemplateDeserializable {
       offsetValue = offsetValue.merged(with: parent.offset?.resolveValue(context: context, useOnlyLinks: true))
     }
     var errors = mergeErrors(
-      alphaValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "alpha", level: .warning)) },
-      blurValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "blur", level: .warning)) },
-      colorValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "color", level: .warning)) },
-      offsetValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "offset", level: .error)) }
+      alphaValue.errorsOrWarnings?.map { .nestedObjectError(field: "alpha", error: $0) },
+      blurValue.errorsOrWarnings?.map { .nestedObjectError(field: "blur", error: $0) },
+      colorValue.errorsOrWarnings?.map { .nestedObjectError(field: "color", error: $0) },
+      offsetValue.errorsOrWarnings?.map { .nestedObjectError(field: "offset", error: $0) }
     )
     if case .noValue = offsetValue {
-      errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "offset")))
+      errors.append(.requiredFieldIsMissing(field: "offset"))
     }
     guard
       let offsetNonNil = offsetValue.value

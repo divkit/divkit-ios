@@ -25,6 +25,7 @@ public final class DivIndicatorTemplate: TemplateValue, TemplateDeserializable {
   public let height: Field<DivSizeTemplate>? // default value: .divWrapContentSize(DivWrapContentSize())
   public let id: Field<String>? // at least 1 char
   public let inactiveItemColor: Field<Expression<Color>>? // default value: #33919cb5
+  public let itemsPlacement: Field<DivIndicatorItemPlacementTemplate>?
   public let margins: Field<DivEdgeInsetsTemplate>?
   public let minimumItemSize: Field<Expression<Double>>? // constraint: number > 0; default value: 0.5
   public let paddings: Field<DivEdgeInsetsTemplate>?
@@ -65,6 +66,7 @@ public final class DivIndicatorTemplate: TemplateValue, TemplateDeserializable {
       height: try dictionary.getOptionalField("height", templateToType: templateToType),
       id: try dictionary.getOptionalField("id"),
       inactiveItemColor: try dictionary.getOptionalExpressionField("inactive_item_color", transform: Color.color(withHexString:)),
+      itemsPlacement: try dictionary.getOptionalField("items_placement", templateToType: templateToType),
       margins: try dictionary.getOptionalField("margins", templateToType: templateToType),
       minimumItemSize: try dictionary.getOptionalExpressionField("minimum_item_size"),
       paddings: try dictionary.getOptionalField("paddings", templateToType: templateToType),
@@ -103,6 +105,7 @@ public final class DivIndicatorTemplate: TemplateValue, TemplateDeserializable {
     height: Field<DivSizeTemplate>? = nil,
     id: Field<String>? = nil,
     inactiveItemColor: Field<Expression<Color>>? = nil,
+    itemsPlacement: Field<DivIndicatorItemPlacementTemplate>? = nil,
     margins: Field<DivEdgeInsetsTemplate>? = nil,
     minimumItemSize: Field<Expression<Double>>? = nil,
     paddings: Field<DivEdgeInsetsTemplate>? = nil,
@@ -138,6 +141,7 @@ public final class DivIndicatorTemplate: TemplateValue, TemplateDeserializable {
     self.height = height
     self.id = id
     self.inactiveItemColor = inactiveItemColor
+    self.itemsPlacement = itemsPlacement
     self.margins = margins
     self.minimumItemSize = minimumItemSize
     self.paddings = paddings
@@ -174,6 +178,7 @@ public final class DivIndicatorTemplate: TemplateValue, TemplateDeserializable {
     let heightValue = parent?.height?.resolveOptionalValue(context: context, validator: ResolvedValue.heightValidator, useOnlyLinks: true) ?? .noValue
     let idValue = parent?.id?.resolveOptionalValue(context: context, validator: ResolvedValue.idValidator) ?? .noValue
     let inactiveItemColorValue = parent?.inactiveItemColor?.resolveOptionalValue(context: context, transform: Color.color(withHexString:), validator: ResolvedValue.inactiveItemColorValidator) ?? .noValue
+    let itemsPlacementValue = parent?.itemsPlacement?.resolveOptionalValue(context: context, validator: ResolvedValue.itemsPlacementValidator, useOnlyLinks: true) ?? .noValue
     let marginsValue = parent?.margins?.resolveOptionalValue(context: context, validator: ResolvedValue.marginsValidator, useOnlyLinks: true) ?? .noValue
     let minimumItemSizeValue = parent?.minimumItemSize?.resolveOptionalValue(context: context, validator: ResolvedValue.minimumItemSizeValidator) ?? .noValue
     let paddingsValue = parent?.paddings?.resolveOptionalValue(context: context, validator: ResolvedValue.paddingsValidator, useOnlyLinks: true) ?? .noValue
@@ -193,39 +198,40 @@ public final class DivIndicatorTemplate: TemplateValue, TemplateDeserializable {
     let visibilityActionsValue = parent?.visibilityActions?.resolveOptionalValue(context: context, validator: ResolvedValue.visibilityActionsValidator, useOnlyLinks: true) ?? .noValue
     let widthValue = parent?.width?.resolveOptionalValue(context: context, validator: ResolvedValue.widthValidator, useOnlyLinks: true) ?? .noValue
     let errors = mergeErrors(
-      accessibilityValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "accessibility", level: .warning)) },
-      activeItemColorValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "active_item_color", level: .warning)) },
-      activeItemSizeValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "active_item_size", level: .warning)) },
-      alignmentHorizontalValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "alignment_horizontal", level: .warning)) },
-      alignmentVerticalValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "alignment_vertical", level: .warning)) },
-      alphaValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "alpha", level: .warning)) },
-      animationValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "animation", level: .warning)) },
-      backgroundValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "background", level: .warning)) },
-      borderValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "border", level: .warning)) },
-      columnSpanValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "column_span", level: .warning)) },
-      extensionsValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "extensions", level: .warning)) },
-      focusValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "focus", level: .warning)) },
-      heightValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "height", level: .warning)) },
-      idValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "id", level: .warning)) },
-      inactiveItemColorValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "inactive_item_color", level: .warning)) },
-      marginsValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "margins", level: .warning)) },
-      minimumItemSizeValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "minimum_item_size", level: .warning)) },
-      paddingsValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "paddings", level: .warning)) },
-      pagerIdValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "pager_id", level: .warning)) },
-      rowSpanValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "row_span", level: .warning)) },
-      selectedActionsValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "selected_actions", level: .warning)) },
-      shapeValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "shape", level: .warning)) },
-      spaceBetweenCentersValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "space_between_centers", level: .warning)) },
-      tooltipsValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "tooltips", level: .warning)) },
-      transformValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "transform", level: .warning)) },
-      transitionChangeValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "transition_change", level: .warning)) },
-      transitionInValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "transition_in", level: .warning)) },
-      transitionOutValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "transition_out", level: .warning)) },
-      transitionTriggersValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "transition_triggers", level: .warning)) },
-      visibilityValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "visibility", level: .warning)) },
-      visibilityActionValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "visibility_action", level: .warning)) },
-      visibilityActionsValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "visibility_actions", level: .warning)) },
-      widthValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "width", level: .warning)) }
+      accessibilityValue.errorsOrWarnings?.map { .nestedObjectError(field: "accessibility", error: $0) },
+      activeItemColorValue.errorsOrWarnings?.map { .nestedObjectError(field: "active_item_color", error: $0) },
+      activeItemSizeValue.errorsOrWarnings?.map { .nestedObjectError(field: "active_item_size", error: $0) },
+      alignmentHorizontalValue.errorsOrWarnings?.map { .nestedObjectError(field: "alignment_horizontal", error: $0) },
+      alignmentVerticalValue.errorsOrWarnings?.map { .nestedObjectError(field: "alignment_vertical", error: $0) },
+      alphaValue.errorsOrWarnings?.map { .nestedObjectError(field: "alpha", error: $0) },
+      animationValue.errorsOrWarnings?.map { .nestedObjectError(field: "animation", error: $0) },
+      backgroundValue.errorsOrWarnings?.map { .nestedObjectError(field: "background", error: $0) },
+      borderValue.errorsOrWarnings?.map { .nestedObjectError(field: "border", error: $0) },
+      columnSpanValue.errorsOrWarnings?.map { .nestedObjectError(field: "column_span", error: $0) },
+      extensionsValue.errorsOrWarnings?.map { .nestedObjectError(field: "extensions", error: $0) },
+      focusValue.errorsOrWarnings?.map { .nestedObjectError(field: "focus", error: $0) },
+      heightValue.errorsOrWarnings?.map { .nestedObjectError(field: "height", error: $0) },
+      idValue.errorsOrWarnings?.map { .nestedObjectError(field: "id", error: $0) },
+      inactiveItemColorValue.errorsOrWarnings?.map { .nestedObjectError(field: "inactive_item_color", error: $0) },
+      itemsPlacementValue.errorsOrWarnings?.map { .nestedObjectError(field: "items_placement", error: $0) },
+      marginsValue.errorsOrWarnings?.map { .nestedObjectError(field: "margins", error: $0) },
+      minimumItemSizeValue.errorsOrWarnings?.map { .nestedObjectError(field: "minimum_item_size", error: $0) },
+      paddingsValue.errorsOrWarnings?.map { .nestedObjectError(field: "paddings", error: $0) },
+      pagerIdValue.errorsOrWarnings?.map { .nestedObjectError(field: "pager_id", error: $0) },
+      rowSpanValue.errorsOrWarnings?.map { .nestedObjectError(field: "row_span", error: $0) },
+      selectedActionsValue.errorsOrWarnings?.map { .nestedObjectError(field: "selected_actions", error: $0) },
+      shapeValue.errorsOrWarnings?.map { .nestedObjectError(field: "shape", error: $0) },
+      spaceBetweenCentersValue.errorsOrWarnings?.map { .nestedObjectError(field: "space_between_centers", error: $0) },
+      tooltipsValue.errorsOrWarnings?.map { .nestedObjectError(field: "tooltips", error: $0) },
+      transformValue.errorsOrWarnings?.map { .nestedObjectError(field: "transform", error: $0) },
+      transitionChangeValue.errorsOrWarnings?.map { .nestedObjectError(field: "transition_change", error: $0) },
+      transitionInValue.errorsOrWarnings?.map { .nestedObjectError(field: "transition_in", error: $0) },
+      transitionOutValue.errorsOrWarnings?.map { .nestedObjectError(field: "transition_out", error: $0) },
+      transitionTriggersValue.errorsOrWarnings?.map { .nestedObjectError(field: "transition_triggers", error: $0) },
+      visibilityValue.errorsOrWarnings?.map { .nestedObjectError(field: "visibility", error: $0) },
+      visibilityActionValue.errorsOrWarnings?.map { .nestedObjectError(field: "visibility_action", error: $0) },
+      visibilityActionsValue.errorsOrWarnings?.map { .nestedObjectError(field: "visibility_actions", error: $0) },
+      widthValue.errorsOrWarnings?.map { .nestedObjectError(field: "width", error: $0) }
     )
     let result = DivIndicator(
       accessibility: accessibilityValue.value,
@@ -243,6 +249,7 @@ public final class DivIndicatorTemplate: TemplateValue, TemplateDeserializable {
       height: heightValue.value,
       id: idValue.value,
       inactiveItemColor: inactiveItemColorValue.value,
+      itemsPlacement: itemsPlacementValue.value,
       margins: marginsValue.value,
       minimumItemSize: minimumItemSizeValue.value,
       paddings: paddingsValue.value,
@@ -284,6 +291,7 @@ public final class DivIndicatorTemplate: TemplateValue, TemplateDeserializable {
     var heightValue: DeserializationResult<DivSize> = .noValue
     var idValue: DeserializationResult<String> = parent?.id?.value(validatedBy: ResolvedValue.idValidator) ?? .noValue
     var inactiveItemColorValue: DeserializationResult<Expression<Color>> = parent?.inactiveItemColor?.value() ?? .noValue
+    var itemsPlacementValue: DeserializationResult<DivIndicatorItemPlacement> = .noValue
     var marginsValue: DeserializationResult<DivEdgeInsets> = .noValue
     var minimumItemSizeValue: DeserializationResult<Expression<Double>> = parent?.minimumItemSize?.value() ?? .noValue
     var paddingsValue: DeserializationResult<DivEdgeInsets> = .noValue
@@ -334,6 +342,8 @@ public final class DivIndicatorTemplate: TemplateValue, TemplateDeserializable {
         idValue = deserialize(__dictValue, validator: ResolvedValue.idValidator).merged(with: idValue)
       case "inactive_item_color":
         inactiveItemColorValue = deserialize(__dictValue, transform: Color.color(withHexString:), validator: ResolvedValue.inactiveItemColorValidator).merged(with: inactiveItemColorValue)
+      case "items_placement":
+        itemsPlacementValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, validator: ResolvedValue.itemsPlacementValidator, type: DivIndicatorItemPlacementTemplate.self).merged(with: itemsPlacementValue)
       case "margins":
         marginsValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, validator: ResolvedValue.marginsValidator, type: DivEdgeInsetsTemplate.self).merged(with: marginsValue)
       case "minimum_item_size":
@@ -400,6 +410,8 @@ public final class DivIndicatorTemplate: TemplateValue, TemplateDeserializable {
         idValue = idValue.merged(with: deserialize(__dictValue, validator: ResolvedValue.idValidator))
       case parent?.inactiveItemColor?.link:
         inactiveItemColorValue = inactiveItemColorValue.merged(with: deserialize(__dictValue, transform: Color.color(withHexString:), validator: ResolvedValue.inactiveItemColorValidator))
+      case parent?.itemsPlacement?.link:
+        itemsPlacementValue = itemsPlacementValue.merged(with: deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, validator: ResolvedValue.itemsPlacementValidator, type: DivIndicatorItemPlacementTemplate.self))
       case parent?.margins?.link:
         marginsValue = marginsValue.merged(with: deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, validator: ResolvedValue.marginsValidator, type: DivEdgeInsetsTemplate.self))
       case parent?.minimumItemSize?.link:
@@ -446,6 +458,7 @@ public final class DivIndicatorTemplate: TemplateValue, TemplateDeserializable {
       extensionsValue = extensionsValue.merged(with: parent.extensions?.resolveOptionalValue(context: context, validator: ResolvedValue.extensionsValidator, useOnlyLinks: true))
       focusValue = focusValue.merged(with: parent.focus?.resolveOptionalValue(context: context, validator: ResolvedValue.focusValidator, useOnlyLinks: true))
       heightValue = heightValue.merged(with: parent.height?.resolveOptionalValue(context: context, validator: ResolvedValue.heightValidator, useOnlyLinks: true))
+      itemsPlacementValue = itemsPlacementValue.merged(with: parent.itemsPlacement?.resolveOptionalValue(context: context, validator: ResolvedValue.itemsPlacementValidator, useOnlyLinks: true))
       marginsValue = marginsValue.merged(with: parent.margins?.resolveOptionalValue(context: context, validator: ResolvedValue.marginsValidator, useOnlyLinks: true))
       paddingsValue = paddingsValue.merged(with: parent.paddings?.resolveOptionalValue(context: context, validator: ResolvedValue.paddingsValidator, useOnlyLinks: true))
       selectedActionsValue = selectedActionsValue.merged(with: parent.selectedActions?.resolveOptionalValue(context: context, validator: ResolvedValue.selectedActionsValidator, useOnlyLinks: true))
@@ -461,39 +474,40 @@ public final class DivIndicatorTemplate: TemplateValue, TemplateDeserializable {
       widthValue = widthValue.merged(with: parent.width?.resolveOptionalValue(context: context, validator: ResolvedValue.widthValidator, useOnlyLinks: true))
     }
     let errors = mergeErrors(
-      accessibilityValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "accessibility", level: .warning)) },
-      activeItemColorValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "active_item_color", level: .warning)) },
-      activeItemSizeValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "active_item_size", level: .warning)) },
-      alignmentHorizontalValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "alignment_horizontal", level: .warning)) },
-      alignmentVerticalValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "alignment_vertical", level: .warning)) },
-      alphaValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "alpha", level: .warning)) },
-      animationValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "animation", level: .warning)) },
-      backgroundValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "background", level: .warning)) },
-      borderValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "border", level: .warning)) },
-      columnSpanValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "column_span", level: .warning)) },
-      extensionsValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "extensions", level: .warning)) },
-      focusValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "focus", level: .warning)) },
-      heightValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "height", level: .warning)) },
-      idValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "id", level: .warning)) },
-      inactiveItemColorValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "inactive_item_color", level: .warning)) },
-      marginsValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "margins", level: .warning)) },
-      minimumItemSizeValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "minimum_item_size", level: .warning)) },
-      paddingsValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "paddings", level: .warning)) },
-      pagerIdValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "pager_id", level: .warning)) },
-      rowSpanValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "row_span", level: .warning)) },
-      selectedActionsValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "selected_actions", level: .warning)) },
-      shapeValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "shape", level: .warning)) },
-      spaceBetweenCentersValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "space_between_centers", level: .warning)) },
-      tooltipsValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "tooltips", level: .warning)) },
-      transformValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "transform", level: .warning)) },
-      transitionChangeValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "transition_change", level: .warning)) },
-      transitionInValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "transition_in", level: .warning)) },
-      transitionOutValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "transition_out", level: .warning)) },
-      transitionTriggersValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "transition_triggers", level: .warning)) },
-      visibilityValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "visibility", level: .warning)) },
-      visibilityActionValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "visibility_action", level: .warning)) },
-      visibilityActionsValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "visibility_actions", level: .warning)) },
-      widthValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "width", level: .warning)) }
+      accessibilityValue.errorsOrWarnings?.map { .nestedObjectError(field: "accessibility", error: $0) },
+      activeItemColorValue.errorsOrWarnings?.map { .nestedObjectError(field: "active_item_color", error: $0) },
+      activeItemSizeValue.errorsOrWarnings?.map { .nestedObjectError(field: "active_item_size", error: $0) },
+      alignmentHorizontalValue.errorsOrWarnings?.map { .nestedObjectError(field: "alignment_horizontal", error: $0) },
+      alignmentVerticalValue.errorsOrWarnings?.map { .nestedObjectError(field: "alignment_vertical", error: $0) },
+      alphaValue.errorsOrWarnings?.map { .nestedObjectError(field: "alpha", error: $0) },
+      animationValue.errorsOrWarnings?.map { .nestedObjectError(field: "animation", error: $0) },
+      backgroundValue.errorsOrWarnings?.map { .nestedObjectError(field: "background", error: $0) },
+      borderValue.errorsOrWarnings?.map { .nestedObjectError(field: "border", error: $0) },
+      columnSpanValue.errorsOrWarnings?.map { .nestedObjectError(field: "column_span", error: $0) },
+      extensionsValue.errorsOrWarnings?.map { .nestedObjectError(field: "extensions", error: $0) },
+      focusValue.errorsOrWarnings?.map { .nestedObjectError(field: "focus", error: $0) },
+      heightValue.errorsOrWarnings?.map { .nestedObjectError(field: "height", error: $0) },
+      idValue.errorsOrWarnings?.map { .nestedObjectError(field: "id", error: $0) },
+      inactiveItemColorValue.errorsOrWarnings?.map { .nestedObjectError(field: "inactive_item_color", error: $0) },
+      itemsPlacementValue.errorsOrWarnings?.map { .nestedObjectError(field: "items_placement", error: $0) },
+      marginsValue.errorsOrWarnings?.map { .nestedObjectError(field: "margins", error: $0) },
+      minimumItemSizeValue.errorsOrWarnings?.map { .nestedObjectError(field: "minimum_item_size", error: $0) },
+      paddingsValue.errorsOrWarnings?.map { .nestedObjectError(field: "paddings", error: $0) },
+      pagerIdValue.errorsOrWarnings?.map { .nestedObjectError(field: "pager_id", error: $0) },
+      rowSpanValue.errorsOrWarnings?.map { .nestedObjectError(field: "row_span", error: $0) },
+      selectedActionsValue.errorsOrWarnings?.map { .nestedObjectError(field: "selected_actions", error: $0) },
+      shapeValue.errorsOrWarnings?.map { .nestedObjectError(field: "shape", error: $0) },
+      spaceBetweenCentersValue.errorsOrWarnings?.map { .nestedObjectError(field: "space_between_centers", error: $0) },
+      tooltipsValue.errorsOrWarnings?.map { .nestedObjectError(field: "tooltips", error: $0) },
+      transformValue.errorsOrWarnings?.map { .nestedObjectError(field: "transform", error: $0) },
+      transitionChangeValue.errorsOrWarnings?.map { .nestedObjectError(field: "transition_change", error: $0) },
+      transitionInValue.errorsOrWarnings?.map { .nestedObjectError(field: "transition_in", error: $0) },
+      transitionOutValue.errorsOrWarnings?.map { .nestedObjectError(field: "transition_out", error: $0) },
+      transitionTriggersValue.errorsOrWarnings?.map { .nestedObjectError(field: "transition_triggers", error: $0) },
+      visibilityValue.errorsOrWarnings?.map { .nestedObjectError(field: "visibility", error: $0) },
+      visibilityActionValue.errorsOrWarnings?.map { .nestedObjectError(field: "visibility_action", error: $0) },
+      visibilityActionsValue.errorsOrWarnings?.map { .nestedObjectError(field: "visibility_actions", error: $0) },
+      widthValue.errorsOrWarnings?.map { .nestedObjectError(field: "width", error: $0) }
     )
     let result = DivIndicator(
       accessibility: accessibilityValue.value,
@@ -511,6 +525,7 @@ public final class DivIndicatorTemplate: TemplateValue, TemplateDeserializable {
       height: heightValue.value,
       id: idValue.value,
       inactiveItemColor: inactiveItemColorValue.value,
+      itemsPlacement: itemsPlacementValue.value,
       margins: marginsValue.value,
       minimumItemSize: minimumItemSizeValue.value,
       paddings: paddingsValue.value,
@@ -557,6 +572,7 @@ public final class DivIndicatorTemplate: TemplateValue, TemplateDeserializable {
       height: height ?? mergedParent.height,
       id: id ?? mergedParent.id,
       inactiveItemColor: inactiveItemColor ?? mergedParent.inactiveItemColor,
+      itemsPlacement: itemsPlacement ?? mergedParent.itemsPlacement,
       margins: margins ?? mergedParent.margins,
       minimumItemSize: minimumItemSize ?? mergedParent.minimumItemSize,
       paddings: paddings ?? mergedParent.paddings,
@@ -598,6 +614,7 @@ public final class DivIndicatorTemplate: TemplateValue, TemplateDeserializable {
       height: merged.height?.tryResolveParent(templates: templates),
       id: merged.id,
       inactiveItemColor: merged.inactiveItemColor,
+      itemsPlacement: merged.itemsPlacement?.tryResolveParent(templates: templates),
       margins: merged.margins?.tryResolveParent(templates: templates),
       minimumItemSize: merged.minimumItemSize,
       paddings: merged.paddings?.tryResolveParent(templates: templates),

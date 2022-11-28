@@ -62,17 +62,17 @@ public final class DivVisibilityActionTemplate: TemplateValue, TemplateDeseriali
     let visibilityDurationValue = parent?.visibilityDuration?.resolveOptionalValue(context: context, validator: ResolvedValue.visibilityDurationValidator) ?? .noValue
     let visibilityPercentageValue = parent?.visibilityPercentage?.resolveOptionalValue(context: context, validator: ResolvedValue.visibilityPercentageValidator) ?? .noValue
     var errors = mergeErrors(
-      downloadCallbacksValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "download_callbacks", level: .warning)) },
-      logIdValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "log_id", level: .error)) },
-      logLimitValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "log_limit", level: .warning)) },
-      payloadValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "payload", level: .warning)) },
-      refererValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "referer", level: .warning)) },
-      urlValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "url", level: .warning)) },
-      visibilityDurationValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "visibility_duration", level: .warning)) },
-      visibilityPercentageValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "visibility_percentage", level: .warning)) }
+      downloadCallbacksValue.errorsOrWarnings?.map { .nestedObjectError(field: "download_callbacks", error: $0) },
+      logIdValue.errorsOrWarnings?.map { .nestedObjectError(field: "log_id", error: $0) },
+      logLimitValue.errorsOrWarnings?.map { .nestedObjectError(field: "log_limit", error: $0) },
+      payloadValue.errorsOrWarnings?.map { .nestedObjectError(field: "payload", error: $0) },
+      refererValue.errorsOrWarnings?.map { .nestedObjectError(field: "referer", error: $0) },
+      urlValue.errorsOrWarnings?.map { .nestedObjectError(field: "url", error: $0) },
+      visibilityDurationValue.errorsOrWarnings?.map { .nestedObjectError(field: "visibility_duration", error: $0) },
+      visibilityPercentageValue.errorsOrWarnings?.map { .nestedObjectError(field: "visibility_percentage", error: $0) }
     )
     if case .noValue = logIdValue {
-      errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "log_id")))
+      errors.append(.requiredFieldIsMissing(field: "log_id"))
     }
     guard
       let logIdNonNil = logIdValue.value
@@ -145,17 +145,17 @@ public final class DivVisibilityActionTemplate: TemplateValue, TemplateDeseriali
       downloadCallbacksValue = downloadCallbacksValue.merged(with: parent.downloadCallbacks?.resolveOptionalValue(context: context, validator: ResolvedValue.downloadCallbacksValidator, useOnlyLinks: true))
     }
     var errors = mergeErrors(
-      downloadCallbacksValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "download_callbacks", level: .warning)) },
-      logIdValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "log_id", level: .error)) },
-      logLimitValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "log_limit", level: .warning)) },
-      payloadValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "payload", level: .warning)) },
-      refererValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "referer", level: .warning)) },
-      urlValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "url", level: .warning)) },
-      visibilityDurationValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "visibility_duration", level: .warning)) },
-      visibilityPercentageValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "visibility_percentage", level: .warning)) }
+      downloadCallbacksValue.errorsOrWarnings?.map { .nestedObjectError(field: "download_callbacks", error: $0) },
+      logIdValue.errorsOrWarnings?.map { .nestedObjectError(field: "log_id", error: $0) },
+      logLimitValue.errorsOrWarnings?.map { .nestedObjectError(field: "log_limit", error: $0) },
+      payloadValue.errorsOrWarnings?.map { .nestedObjectError(field: "payload", error: $0) },
+      refererValue.errorsOrWarnings?.map { .nestedObjectError(field: "referer", error: $0) },
+      urlValue.errorsOrWarnings?.map { .nestedObjectError(field: "url", error: $0) },
+      visibilityDurationValue.errorsOrWarnings?.map { .nestedObjectError(field: "visibility_duration", error: $0) },
+      visibilityPercentageValue.errorsOrWarnings?.map { .nestedObjectError(field: "visibility_percentage", error: $0) }
     )
     if case .noValue = logIdValue {
-      errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "log_id")))
+      errors.append(.requiredFieldIsMissing(field: "log_id"))
     }
     guard
       let logIdNonNil = logIdValue.value

@@ -48,14 +48,14 @@ public final class DivSliderTemplate: TemplateValue, TemplateDeserializable {
       let offsetValue = parent?.offset?.resolveOptionalValue(context: context, validator: ResolvedValue.offsetValidator, useOnlyLinks: true) ?? .noValue
       let textColorValue = parent?.textColor?.resolveOptionalValue(context: context, transform: Color.color(withHexString:), validator: ResolvedValue.textColorValidator) ?? .noValue
       var errors = mergeErrors(
-        fontSizeValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "font_size", level: .error)) },
-        fontSizeUnitValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "font_size_unit", level: .warning)) },
-        fontWeightValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "font_weight", level: .warning)) },
-        offsetValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "offset", level: .warning)) },
-        textColorValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "text_color", level: .warning)) }
+        fontSizeValue.errorsOrWarnings?.map { .nestedObjectError(field: "font_size", error: $0) },
+        fontSizeUnitValue.errorsOrWarnings?.map { .nestedObjectError(field: "font_size_unit", error: $0) },
+        fontWeightValue.errorsOrWarnings?.map { .nestedObjectError(field: "font_weight", error: $0) },
+        offsetValue.errorsOrWarnings?.map { .nestedObjectError(field: "offset", error: $0) },
+        textColorValue.errorsOrWarnings?.map { .nestedObjectError(field: "text_color", error: $0) }
       )
       if case .noValue = fontSizeValue {
-        errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "font_size")))
+        errors.append(.requiredFieldIsMissing(field: "font_size"))
       }
       guard
         let fontSizeNonNil = fontSizeValue.value
@@ -110,14 +110,14 @@ public final class DivSliderTemplate: TemplateValue, TemplateDeserializable {
         offsetValue = offsetValue.merged(with: parent.offset?.resolveOptionalValue(context: context, validator: ResolvedValue.offsetValidator, useOnlyLinks: true))
       }
       var errors = mergeErrors(
-        fontSizeValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "font_size", level: .error)) },
-        fontSizeUnitValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "font_size_unit", level: .warning)) },
-        fontWeightValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "font_weight", level: .warning)) },
-        offsetValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "offset", level: .warning)) },
-        textColorValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "text_color", level: .warning)) }
+        fontSizeValue.errorsOrWarnings?.map { .nestedObjectError(field: "font_size", error: $0) },
+        fontSizeUnitValue.errorsOrWarnings?.map { .nestedObjectError(field: "font_size_unit", error: $0) },
+        fontWeightValue.errorsOrWarnings?.map { .nestedObjectError(field: "font_weight", error: $0) },
+        offsetValue.errorsOrWarnings?.map { .nestedObjectError(field: "offset", error: $0) },
+        textColorValue.errorsOrWarnings?.map { .nestedObjectError(field: "text_color", error: $0) }
       )
       if case .noValue = fontSizeValue {
-        errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "font_size")))
+        errors.append(.requiredFieldIsMissing(field: "font_size"))
       }
       guard
         let fontSizeNonNil = fontSizeValue.value
@@ -365,53 +365,53 @@ public final class DivSliderTemplate: TemplateValue, TemplateDeserializable {
     let visibilityActionsValue = parent?.visibilityActions?.resolveOptionalValue(context: context, validator: ResolvedValue.visibilityActionsValidator, useOnlyLinks: true) ?? .noValue
     let widthValue = parent?.width?.resolveOptionalValue(context: context, validator: ResolvedValue.widthValidator, useOnlyLinks: true) ?? .noValue
     var errors = mergeErrors(
-      accessibilityValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "accessibility", level: .warning)) },
-      alignmentHorizontalValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "alignment_horizontal", level: .warning)) },
-      alignmentVerticalValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "alignment_vertical", level: .warning)) },
-      alphaValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "alpha", level: .warning)) },
-      backgroundValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "background", level: .warning)) },
-      borderValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "border", level: .warning)) },
-      columnSpanValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "column_span", level: .warning)) },
-      extensionsValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "extensions", level: .warning)) },
-      focusValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "focus", level: .warning)) },
-      heightValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "height", level: .warning)) },
-      idValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "id", level: .warning)) },
-      marginsValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "margins", level: .warning)) },
-      maxValueValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "max_value", level: .warning)) },
-      minValueValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "min_value", level: .warning)) },
-      paddingsValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "paddings", level: .warning)) },
-      rowSpanValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "row_span", level: .warning)) },
-      secondaryValueAccessibilityValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "secondary_value_accessibility", level: .warning)) },
-      selectedActionsValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "selected_actions", level: .warning)) },
-      thumbSecondaryStyleValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "thumb_secondary_style", level: .warning)) },
-      thumbSecondaryTextStyleValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "thumb_secondary_text_style", level: .warning)) },
-      thumbSecondaryValueVariableValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "thumb_secondary_value_variable", level: .warning)) },
-      thumbStyleValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "thumb_style", level: .error)) },
-      thumbTextStyleValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "thumb_text_style", level: .warning)) },
-      thumbValueVariableValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "thumb_value_variable", level: .warning)) },
-      tickMarkActiveStyleValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "tick_mark_active_style", level: .warning)) },
-      tickMarkInactiveStyleValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "tick_mark_inactive_style", level: .warning)) },
-      tooltipsValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "tooltips", level: .warning)) },
-      trackActiveStyleValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "track_active_style", level: .error)) },
-      trackInactiveStyleValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "track_inactive_style", level: .error)) },
-      transformValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "transform", level: .warning)) },
-      transitionChangeValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "transition_change", level: .warning)) },
-      transitionInValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "transition_in", level: .warning)) },
-      transitionOutValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "transition_out", level: .warning)) },
-      transitionTriggersValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "transition_triggers", level: .warning)) },
-      visibilityValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "visibility", level: .warning)) },
-      visibilityActionValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "visibility_action", level: .warning)) },
-      visibilityActionsValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "visibility_actions", level: .warning)) },
-      widthValue.errorsOrWarnings?.map { .right($0.asError(deserializing: "width", level: .warning)) }
+      accessibilityValue.errorsOrWarnings?.map { .nestedObjectError(field: "accessibility", error: $0) },
+      alignmentHorizontalValue.errorsOrWarnings?.map { .nestedObjectError(field: "alignment_horizontal", error: $0) },
+      alignmentVerticalValue.errorsOrWarnings?.map { .nestedObjectError(field: "alignment_vertical", error: $0) },
+      alphaValue.errorsOrWarnings?.map { .nestedObjectError(field: "alpha", error: $0) },
+      backgroundValue.errorsOrWarnings?.map { .nestedObjectError(field: "background", error: $0) },
+      borderValue.errorsOrWarnings?.map { .nestedObjectError(field: "border", error: $0) },
+      columnSpanValue.errorsOrWarnings?.map { .nestedObjectError(field: "column_span", error: $0) },
+      extensionsValue.errorsOrWarnings?.map { .nestedObjectError(field: "extensions", error: $0) },
+      focusValue.errorsOrWarnings?.map { .nestedObjectError(field: "focus", error: $0) },
+      heightValue.errorsOrWarnings?.map { .nestedObjectError(field: "height", error: $0) },
+      idValue.errorsOrWarnings?.map { .nestedObjectError(field: "id", error: $0) },
+      marginsValue.errorsOrWarnings?.map { .nestedObjectError(field: "margins", error: $0) },
+      maxValueValue.errorsOrWarnings?.map { .nestedObjectError(field: "max_value", error: $0) },
+      minValueValue.errorsOrWarnings?.map { .nestedObjectError(field: "min_value", error: $0) },
+      paddingsValue.errorsOrWarnings?.map { .nestedObjectError(field: "paddings", error: $0) },
+      rowSpanValue.errorsOrWarnings?.map { .nestedObjectError(field: "row_span", error: $0) },
+      secondaryValueAccessibilityValue.errorsOrWarnings?.map { .nestedObjectError(field: "secondary_value_accessibility", error: $0) },
+      selectedActionsValue.errorsOrWarnings?.map { .nestedObjectError(field: "selected_actions", error: $0) },
+      thumbSecondaryStyleValue.errorsOrWarnings?.map { .nestedObjectError(field: "thumb_secondary_style", error: $0) },
+      thumbSecondaryTextStyleValue.errorsOrWarnings?.map { .nestedObjectError(field: "thumb_secondary_text_style", error: $0) },
+      thumbSecondaryValueVariableValue.errorsOrWarnings?.map { .nestedObjectError(field: "thumb_secondary_value_variable", error: $0) },
+      thumbStyleValue.errorsOrWarnings?.map { .nestedObjectError(field: "thumb_style", error: $0) },
+      thumbTextStyleValue.errorsOrWarnings?.map { .nestedObjectError(field: "thumb_text_style", error: $0) },
+      thumbValueVariableValue.errorsOrWarnings?.map { .nestedObjectError(field: "thumb_value_variable", error: $0) },
+      tickMarkActiveStyleValue.errorsOrWarnings?.map { .nestedObjectError(field: "tick_mark_active_style", error: $0) },
+      tickMarkInactiveStyleValue.errorsOrWarnings?.map { .nestedObjectError(field: "tick_mark_inactive_style", error: $0) },
+      tooltipsValue.errorsOrWarnings?.map { .nestedObjectError(field: "tooltips", error: $0) },
+      trackActiveStyleValue.errorsOrWarnings?.map { .nestedObjectError(field: "track_active_style", error: $0) },
+      trackInactiveStyleValue.errorsOrWarnings?.map { .nestedObjectError(field: "track_inactive_style", error: $0) },
+      transformValue.errorsOrWarnings?.map { .nestedObjectError(field: "transform", error: $0) },
+      transitionChangeValue.errorsOrWarnings?.map { .nestedObjectError(field: "transition_change", error: $0) },
+      transitionInValue.errorsOrWarnings?.map { .nestedObjectError(field: "transition_in", error: $0) },
+      transitionOutValue.errorsOrWarnings?.map { .nestedObjectError(field: "transition_out", error: $0) },
+      transitionTriggersValue.errorsOrWarnings?.map { .nestedObjectError(field: "transition_triggers", error: $0) },
+      visibilityValue.errorsOrWarnings?.map { .nestedObjectError(field: "visibility", error: $0) },
+      visibilityActionValue.errorsOrWarnings?.map { .nestedObjectError(field: "visibility_action", error: $0) },
+      visibilityActionsValue.errorsOrWarnings?.map { .nestedObjectError(field: "visibility_actions", error: $0) },
+      widthValue.errorsOrWarnings?.map { .nestedObjectError(field: "width", error: $0) }
     )
     if case .noValue = thumbStyleValue {
-      errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "thumb_style")))
+      errors.append(.requiredFieldIsMissing(field: "thumb_style"))
     }
     if case .noValue = trackActiveStyleValue {
-      errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "track_active_style")))
+      errors.append(.requiredFieldIsMissing(field: "track_active_style"))
     }
     if case .noValue = trackInactiveStyleValue {
-      errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "track_inactive_style")))
+      errors.append(.requiredFieldIsMissing(field: "track_inactive_style"))
     }
     guard
       let thumbStyleNonNil = thumbStyleValue.value,
@@ -691,53 +691,53 @@ public final class DivSliderTemplate: TemplateValue, TemplateDeserializable {
       widthValue = widthValue.merged(with: parent.width?.resolveOptionalValue(context: context, validator: ResolvedValue.widthValidator, useOnlyLinks: true))
     }
     var errors = mergeErrors(
-      accessibilityValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "accessibility", level: .warning)) },
-      alignmentHorizontalValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "alignment_horizontal", level: .warning)) },
-      alignmentVerticalValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "alignment_vertical", level: .warning)) },
-      alphaValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "alpha", level: .warning)) },
-      backgroundValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "background", level: .warning)) },
-      borderValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "border", level: .warning)) },
-      columnSpanValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "column_span", level: .warning)) },
-      extensionsValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "extensions", level: .warning)) },
-      focusValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "focus", level: .warning)) },
-      heightValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "height", level: .warning)) },
-      idValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "id", level: .warning)) },
-      marginsValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "margins", level: .warning)) },
-      maxValueValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "max_value", level: .warning)) },
-      minValueValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "min_value", level: .warning)) },
-      paddingsValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "paddings", level: .warning)) },
-      rowSpanValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "row_span", level: .warning)) },
-      secondaryValueAccessibilityValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "secondary_value_accessibility", level: .warning)) },
-      selectedActionsValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "selected_actions", level: .warning)) },
-      thumbSecondaryStyleValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "thumb_secondary_style", level: .warning)) },
-      thumbSecondaryTextStyleValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "thumb_secondary_text_style", level: .warning)) },
-      thumbSecondaryValueVariableValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "thumb_secondary_value_variable", level: .warning)) },
-      thumbStyleValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "thumb_style", level: .error)) },
-      thumbTextStyleValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "thumb_text_style", level: .warning)) },
-      thumbValueVariableValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "thumb_value_variable", level: .warning)) },
-      tickMarkActiveStyleValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "tick_mark_active_style", level: .warning)) },
-      tickMarkInactiveStyleValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "tick_mark_inactive_style", level: .warning)) },
-      tooltipsValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "tooltips", level: .warning)) },
-      trackActiveStyleValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "track_active_style", level: .error)) },
-      trackInactiveStyleValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "track_inactive_style", level: .error)) },
-      transformValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "transform", level: .warning)) },
-      transitionChangeValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "transition_change", level: .warning)) },
-      transitionInValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "transition_in", level: .warning)) },
-      transitionOutValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "transition_out", level: .warning)) },
-      transitionTriggersValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "transition_triggers", level: .warning)) },
-      visibilityValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "visibility", level: .warning)) },
-      visibilityActionValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "visibility_action", level: .warning)) },
-      visibilityActionsValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "visibility_actions", level: .warning)) },
-      widthValue.errorsOrWarnings?.map { Either.right($0.asError(deserializing: "width", level: .warning)) }
+      accessibilityValue.errorsOrWarnings?.map { .nestedObjectError(field: "accessibility", error: $0) },
+      alignmentHorizontalValue.errorsOrWarnings?.map { .nestedObjectError(field: "alignment_horizontal", error: $0) },
+      alignmentVerticalValue.errorsOrWarnings?.map { .nestedObjectError(field: "alignment_vertical", error: $0) },
+      alphaValue.errorsOrWarnings?.map { .nestedObjectError(field: "alpha", error: $0) },
+      backgroundValue.errorsOrWarnings?.map { .nestedObjectError(field: "background", error: $0) },
+      borderValue.errorsOrWarnings?.map { .nestedObjectError(field: "border", error: $0) },
+      columnSpanValue.errorsOrWarnings?.map { .nestedObjectError(field: "column_span", error: $0) },
+      extensionsValue.errorsOrWarnings?.map { .nestedObjectError(field: "extensions", error: $0) },
+      focusValue.errorsOrWarnings?.map { .nestedObjectError(field: "focus", error: $0) },
+      heightValue.errorsOrWarnings?.map { .nestedObjectError(field: "height", error: $0) },
+      idValue.errorsOrWarnings?.map { .nestedObjectError(field: "id", error: $0) },
+      marginsValue.errorsOrWarnings?.map { .nestedObjectError(field: "margins", error: $0) },
+      maxValueValue.errorsOrWarnings?.map { .nestedObjectError(field: "max_value", error: $0) },
+      minValueValue.errorsOrWarnings?.map { .nestedObjectError(field: "min_value", error: $0) },
+      paddingsValue.errorsOrWarnings?.map { .nestedObjectError(field: "paddings", error: $0) },
+      rowSpanValue.errorsOrWarnings?.map { .nestedObjectError(field: "row_span", error: $0) },
+      secondaryValueAccessibilityValue.errorsOrWarnings?.map { .nestedObjectError(field: "secondary_value_accessibility", error: $0) },
+      selectedActionsValue.errorsOrWarnings?.map { .nestedObjectError(field: "selected_actions", error: $0) },
+      thumbSecondaryStyleValue.errorsOrWarnings?.map { .nestedObjectError(field: "thumb_secondary_style", error: $0) },
+      thumbSecondaryTextStyleValue.errorsOrWarnings?.map { .nestedObjectError(field: "thumb_secondary_text_style", error: $0) },
+      thumbSecondaryValueVariableValue.errorsOrWarnings?.map { .nestedObjectError(field: "thumb_secondary_value_variable", error: $0) },
+      thumbStyleValue.errorsOrWarnings?.map { .nestedObjectError(field: "thumb_style", error: $0) },
+      thumbTextStyleValue.errorsOrWarnings?.map { .nestedObjectError(field: "thumb_text_style", error: $0) },
+      thumbValueVariableValue.errorsOrWarnings?.map { .nestedObjectError(field: "thumb_value_variable", error: $0) },
+      tickMarkActiveStyleValue.errorsOrWarnings?.map { .nestedObjectError(field: "tick_mark_active_style", error: $0) },
+      tickMarkInactiveStyleValue.errorsOrWarnings?.map { .nestedObjectError(field: "tick_mark_inactive_style", error: $0) },
+      tooltipsValue.errorsOrWarnings?.map { .nestedObjectError(field: "tooltips", error: $0) },
+      trackActiveStyleValue.errorsOrWarnings?.map { .nestedObjectError(field: "track_active_style", error: $0) },
+      trackInactiveStyleValue.errorsOrWarnings?.map { .nestedObjectError(field: "track_inactive_style", error: $0) },
+      transformValue.errorsOrWarnings?.map { .nestedObjectError(field: "transform", error: $0) },
+      transitionChangeValue.errorsOrWarnings?.map { .nestedObjectError(field: "transition_change", error: $0) },
+      transitionInValue.errorsOrWarnings?.map { .nestedObjectError(field: "transition_in", error: $0) },
+      transitionOutValue.errorsOrWarnings?.map { .nestedObjectError(field: "transition_out", error: $0) },
+      transitionTriggersValue.errorsOrWarnings?.map { .nestedObjectError(field: "transition_triggers", error: $0) },
+      visibilityValue.errorsOrWarnings?.map { .nestedObjectError(field: "visibility", error: $0) },
+      visibilityActionValue.errorsOrWarnings?.map { .nestedObjectError(field: "visibility_action", error: $0) },
+      visibilityActionsValue.errorsOrWarnings?.map { .nestedObjectError(field: "visibility_actions", error: $0) },
+      widthValue.errorsOrWarnings?.map { .nestedObjectError(field: "width", error: $0) }
     )
     if case .noValue = thumbStyleValue {
-      errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "thumb_style")))
+      errors.append(.requiredFieldIsMissing(field: "thumb_style"))
     }
     if case .noValue = trackActiveStyleValue {
-      errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "track_active_style")))
+      errors.append(.requiredFieldIsMissing(field: "track_active_style"))
     }
     if case .noValue = trackInactiveStyleValue {
-      errors.append(.left(DeserializationError.requiredFieldIsMissing(fieldName: "track_inactive_style")))
+      errors.append(.requiredFieldIsMissing(field: "track_inactive_style"))
     }
     guard
       let thumbStyleNonNil = thumbStyleValue.value,
