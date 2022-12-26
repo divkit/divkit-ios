@@ -276,7 +276,7 @@ extension DivText.Range {
     range: CFRange,
     resolver: ExpressionResolver
   ) -> BorderAttribute? {
-    guard let border else { return nil }
+    guard let border = border else { return nil }
     let color = border.stroke?.resolveColor(resolver)
     let width = border.stroke?.resolveWidth(resolver)
     let cornerRadius = border.resolveCornerRadius(resolver)
@@ -293,7 +293,7 @@ extension DivText.Range {
     range: CFRange,
     resolver: ExpressionResolver
   ) -> BackgroundAttribute? {
-    guard let background else { return nil }
+    guard let background = background else { return nil }
     switch background {
     case let .divSolidBackground(solid):
       let color = solid.resolveColor(resolver) ?? .clear

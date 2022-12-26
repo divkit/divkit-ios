@@ -340,7 +340,7 @@ final class SliderView: BlockView, VisibleBoundsTrackingLeaf {
                               secondThumbValue: Int?,
                               minValue: Int,
                               maxValue: Int) {
-    if let secondThumbValue {
+    if let secondThumbValue = secondThumbValue {
       let leftThumb = min(firstThumbValue, secondThumbValue)
       let rightThumb = max(firstThumbValue, secondThumbValue)
       makeMarks(

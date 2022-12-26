@@ -993,7 +993,7 @@ extension CTLine {
       if background != nil || border != nil {
         var corners: UIRectCorner = []
 
-        if let border {
+        if let border = border {
           let leftIndex = CTLineGetStringIndexForPosition(self, runPosition - position.x)
           let rightIndex = CTLineGetStringIndexForPosition(
             self,

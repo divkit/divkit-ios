@@ -80,7 +80,7 @@ fileprivate func redrawingImage(
   bounds: CGRect,
   imageRedrawingStyle: ImageRedrawingStyle?
 ) -> CIImage? {
-  guard let image,
+  guard let image = image,
         let cgImage = image.cgImage else {
     return nil
   }
@@ -108,7 +108,7 @@ fileprivate func redrawingImage(
       let scale = max(scaleX, scaleY) * 2
       return ImageBlurType.gaussian(radius: radius / scale).imageFilter
     case let .tint(color: color, mode: mode):
-      guard let mode,
+      guard let mode = mode,
             let coloredImage = ImageGeneratorType.constantColor(color: color.ciColor)
             .imageGenerator()
       else { return nil }
