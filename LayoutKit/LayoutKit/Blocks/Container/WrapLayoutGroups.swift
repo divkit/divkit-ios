@@ -1,4 +1,3 @@
-import CoreGraphics
 import Foundation
 
 struct WrapLayoutGroups {
@@ -42,15 +41,18 @@ struct WrapLayoutGroups {
   private mutating func makeGroups() {
     addStartLineSeparator()
     children.forEach { child in
+      guard !child.isResizable(for: layoutDirection.opposite) else { return }
       if child.isResizable(for: layoutDirection) {
         startNewLine()
         var childSize = child.content.size(forResizableBlockSize: size)
         if let separator = separator {
           if separator.showAtStart {
-            childSize[keyPath: keyPath] = childSize[keyPath: keyPath] - separatorSize[keyPath: keyPath]
+            childSize[keyPath: keyPath] = childSize[keyPath: keyPath] -
+              separatorSize[keyPath: keyPath]
           }
           if separator.showAtEnd {
-            childSize[keyPath: keyPath] = childSize[keyPath: keyPath] - separatorSize[keyPath: keyPath]
+            childSize[keyPath: keyPath] = childSize[keyPath: keyPath] -
+              separatorSize[keyPath: keyPath]
           }
         }
         addChild(child: child, size: childSize)
@@ -192,8 +194,8 @@ extension ContainerBlock.LayoutDirection {
   }
 }
 
-fileprivate extension ContainerBlock.Child {
-  func isResizable(for layoutDirection: ContainerBlock.LayoutDirection) -> Bool {
+extension ContainerBlock.Child {
+  fileprivate func isResizable(for layoutDirection: ContainerBlock.LayoutDirection) -> Bool {
     switch layoutDirection {
     case .horizontal:
       return content.isHorizontallyResizable

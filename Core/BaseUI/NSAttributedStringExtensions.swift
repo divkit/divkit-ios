@@ -261,6 +261,14 @@ extension NSAttributedString {
       }
     }
 
+    if string.last?.isNewline == true {
+      let layout = layoutLine(
+        typesetter: typesetter,
+        range: CFRange(location: offset - 1, length: 1)
+      )
+      lines.append(layout)
+    }
+
     return TextLayout(lines: lines, sourceLength: length)
   }
 
@@ -993,7 +1001,7 @@ extension CTLine {
       if background != nil || border != nil {
         var corners: UIRectCorner = []
 
-        if let border = border {
+        if let border {
           let leftIndex = CTLineGetStringIndexForPosition(self, runPosition - position.x)
           let rightIndex = CTLineGetStringIndexForPosition(
             self,

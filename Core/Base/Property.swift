@@ -208,12 +208,8 @@ extension Property: ExpressibleByIntegerLiteral where T == Int {
   }
 }
 
-extension Property: ExpressibleByUnicodeScalarLiteral where T == String {
-  public typealias UnicodeScalarLiteralType = String
-}
-extension Property: ExpressibleByExtendedGraphemeClusterLiteral where T == String {
-  public typealias ExtendedGraphemeClusterLiteralType = String
-}
+extension Property: ExpressibleByUnicodeScalarLiteral where T == String {}
+extension Property: ExpressibleByExtendedGraphemeClusterLiteral where T == String {}
 
 extension Property: ExpressibleByStringLiteral where T == String {
   public init(stringLiteral value: String) {
