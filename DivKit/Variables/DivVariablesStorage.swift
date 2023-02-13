@@ -46,6 +46,7 @@ public final class DivVariablesStorage {
   }
 
   public struct ChangeEvent {
+    @frozen
     public enum Kind: Equatable {
       case local(DivCardID, Set<DivVariableName>)
       case global(Set<DivVariableName>)
@@ -83,6 +84,14 @@ public final class DivVariablesStorage {
 
   public init() {}
 
+  public func getVariableValue<T>(
+    cardId: DivCardID,
+    name: DivVariableName
+  ) -> T? {
+    let variable = storage.local[cardId]?[name] ?? storage.global[name]
+    return variable?.typedValue()
+  }
+  
   public func set(
     cardId: DivCardID,
     variables: DivVariables
@@ -151,7 +160,9 @@ public final class DivVariablesStorage {
   }
 
   private func update(with event: ChangeEvent) {
-    changeEventsPipe.send(event)
+    onMainThread { [weak self] in
+      self?.changeEventsPipe.send(event)
+    }
   }
 }
 
