@@ -35,7 +35,6 @@ let package = Package(
       name: "CommonCore",
       dependencies: [
         "Base",
-        "BaseUI",
       ],
       path: "Core/CommonCore"
     ),
@@ -78,7 +77,7 @@ let package = Package(
     .target(
       name: "LayoutKitInterface",
       dependencies: [
-        "CommonCore",
+        "Base",
       ],
       path: "LayoutKit/Interface"
     ),
