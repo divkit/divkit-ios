@@ -84,6 +84,7 @@ public final class ContainerBlock: BlockWithLayout {
   public let widthTrait: LayoutTrait
   public let heightTrait: LayoutTrait
   public let axialAlignment: Alignment
+  public let crossAlignment: CrossAlignment
   public let gaps: [CGFloat]
   public let children: [Child]
   public let separator: Separator?
@@ -102,6 +103,7 @@ public final class ContainerBlock: BlockWithLayout {
     widthTrait: LayoutTrait = .resizable,
     heightTrait: LayoutTrait = .intrinsic,
     axialAlignment: Alignment = .leading,
+    crossAlignment: CrossAlignment = .leading,
     gaps: [CGFloat]? = nil,
     children: [Child],
     separator: Separator? = nil,
@@ -126,6 +128,7 @@ public final class ContainerBlock: BlockWithLayout {
     self.widthTrait = widthTrait
     self.heightTrait = heightTrait
     self.axialAlignment = axialAlignment
+    self.crossAlignment = crossAlignment
     self.gaps = makeGapsWithSeparators(
       gaps: gaps,
       separator: separator,
@@ -159,6 +162,7 @@ public final class ContainerBlock: BlockWithLayout {
       layoutDirection: layoutDirection,
       layoutMode: layoutMode,
       axialAlignment: axialAlignment,
+      crossAlignment: crossAlignment,
       size: CGSize(width: width, height: .zero)
     )
     return layout.ascent
@@ -184,7 +188,7 @@ public final class ContainerBlock: BlockWithLayout {
       }
     }
 
-    if widthTrait == .intrinsic {
+    if case .intrinsic = widthTrait {
       switch layoutDirection {
       case .horizontal:
         guard (children.map { $0.content }.allHorizontallyNonResizable) else {
@@ -203,7 +207,7 @@ public final class ContainerBlock: BlockWithLayout {
       }
     }
 
-    if heightTrait == .intrinsic {
+    if case .intrinsic = heightTrait {
       switch layoutDirection {
       case .horizontal:
         break // this is currently a valid case, see `.max() ?? 0` on line 163
@@ -280,6 +284,7 @@ public final class ContainerBlock: BlockWithLayout {
         layoutDirection: layoutDirection,
         layoutMode: layoutMode,
         axialAlignment: axialAlignment,
+        crossAlignment: crossAlignment,
         size: CGSize(width: width, height: .zero)
       )
       result = layout.blockFrames.map { $0.maxY }.max() ?? 0
@@ -301,7 +306,7 @@ public final class ContainerBlock: BlockWithLayout {
       return value
     }
 
-    guard widthTrait == .intrinsic else {
+    guard case .intrinsic = widthTrait else {
       fatalError()
     }
 
@@ -343,7 +348,7 @@ public final class ContainerBlock: BlockWithLayout {
       return value
     }
 
-    guard widthTrait == .intrinsic else {
+    guard case .intrinsic = widthTrait else {
       fatalError()
     }
 
@@ -361,6 +366,7 @@ public final class ContainerBlock: BlockWithLayout {
       layoutDirection: layoutDirection,
       layoutMode: layoutMode,
       axialAlignment: axialAlignment,
+      crossAlignment: crossAlignment,
       size: CGSize(width: .zero, height: height)
     )
     result = layout.blockFrames.map { $0.maxX }.max()!
@@ -369,15 +375,14 @@ public final class ContainerBlock: BlockWithLayout {
   }
 
   public func heightOfVerticallyNonResizableBlock(forWidth width: CGFloat) -> CGFloat {
-    if case let .fixed(value) = heightTrait {
+    switch heightTrait {
+    case let .fixed(value):
       return value
-    }
-
-    guard heightTrait == .intrinsic else {
+    case .intrinsic:
+      return intrinsicContentHeight(forWidth: width)
+    case .weighted:
       fatalError()
     }
-
-    return intrinsicContentHeight(forWidth: width)
   }
 
   public var weightOfVerticallyResizableBlock: LayoutTrait.Weight {
@@ -407,6 +412,7 @@ public final class ContainerBlock: BlockWithLayout {
       layoutDirection: layoutDirection,
       layoutMode: layoutMode,
       axialAlignment: axialAlignment,
+      crossAlignment: crossAlignment,
       size: size
     )
     let newChildren = zip(self.children, layout.blockFrames).map { child, frame -> Child in
@@ -481,6 +487,7 @@ extension ContainerBlock: Equatable {
       lhs.widthTrait == rhs.widthTrait &&
       lhs.heightTrait == rhs.heightTrait &&
       lhs.axialAlignment == rhs.axialAlignment &&
+      lhs.crossAlignment == rhs.crossAlignment &&
       lhs.gaps == rhs.gaps &&
       lhs.children == rhs.children &&
       lhs.contentAnimation == rhs.contentAnimation &&

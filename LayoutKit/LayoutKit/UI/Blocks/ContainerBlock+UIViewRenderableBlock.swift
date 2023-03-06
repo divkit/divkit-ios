@@ -30,6 +30,7 @@ extension ContainerBlock {
       layoutDirection: layoutDirection,
       layoutMode: layoutMode,
       axialAlignment: axialAlignment,
+      crossAlignment: crossAlignment,
       contentAnimation: contentAnimation,
       anchorPoint: anchorPoint,
       layout: layout,
@@ -56,6 +57,7 @@ private final class ContainerBlockView: UIView, BlockViewProtocol, VisibleBounds
     let layoutDirection: ContainerBlock.LayoutDirection
     let layoutMode: ContainerBlock.LayoutMode
     let axialAlignment: Alignment
+    let crossAlignment: ContainerBlock.CrossAlignment
     let contentAnimation: BlockAnimation?
     let anchorPoint: AnchorPoint
     let layout: ContainerBlockLayout?
@@ -144,10 +146,12 @@ private final class ContainerBlockView: UIView, BlockViewProtocol, VisibleBounds
       layoutDirection: model.layoutDirection,
       layoutMode: model.layoutMode,
       axialAlignment: model.axialAlignment,
+      crossAlignment: model.crossAlignment,
       size: bounds.size
     )
 
-    if model.children != layout.childrenWithSeparators {
+    if model.children != layout.childrenWithSeparators ||
+      blockViews.count != layout.blockFrames.count {
       blockViews = blockViews.reused(
         with: layout.childrenWithSeparators.map(\.content),
         attachTo: self,
