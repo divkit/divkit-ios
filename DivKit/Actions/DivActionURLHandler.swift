@@ -1,7 +1,7 @@
 import CoreGraphics
 import Foundation
 
-import CommonCore
+import CommonCorePublic
 import LayoutKit
 
 public final class DivActionURLHandler {
@@ -58,7 +58,7 @@ public final class DivActionURLHandler {
 
   public func handleURL(
     _ url: URL,
-    cardId: DivCardID?,
+    cardId: DivCardID,
     completion: @escaping (Result<Void, Error>) -> Void = { _ in }
   ) -> Bool {
     guard let intent = DivActionIntent(url: url) else {
@@ -71,9 +71,6 @@ public final class DivActionURLHandler {
     case .hideTooltip:
       return false
     case let .download(patchUrl):
-      guard let cardId = cardId else {
-        return false
-      }
       patchProvider.getPatch(
         url: patchUrl,
         completion: { [unowned self] in
@@ -81,9 +78,6 @@ public final class DivActionURLHandler {
         }
       )
     case let .setState(divStatePath, lifetime):
-      guard let cardId = cardId else {
-        return false
-      }
       stateUpdater.set(
         path: divStatePath,
         cardId: cardId,
@@ -91,9 +85,6 @@ public final class DivActionURLHandler {
       )
       updateCard(.state(cardId))
     case let .setVariable(name, value):
-      guard let cardId = cardId else {
-        return false
-      }
       variableUpdater.update(
         cardId: cardId,
         name: DivVariableName(rawValue: name),
@@ -101,14 +92,14 @@ public final class DivActionURLHandler {
       )
     case let .setCurrentItem(id, index):
       setCurrentItem(id: id, index: index)
+      updateCard(.state(cardId))
     case let .setNextItem(id, overflow):
       setNextItem(id: id, overflow: overflow)
+      updateCard(.state(cardId))
     case let .setPreviousItem(id, overflow):
       setPreviousItem(id: id, overflow: overflow)
+      updateCard(.state(cardId))
     case let .timer(timerId, action):
-      guard let cardId = cardId else {
-        return false
-      }
       performTimerAction(cardId, timerId, action)
     }
 
@@ -132,12 +123,11 @@ public final class DivActionURLHandler {
   private func setCurrentItem(id: String, index: Int) {
     switch blockStateStorage.getStateUntyped(id) {
     case let galleryState as GalleryViewState:
-      switch galleryState.contentPosition {
-      case .offset:
-        return
-      case .paging:
-        setGalleryCurrentItem(id: id, index: Int(index))
-      }
+      setGalleryCurrentItem(
+        id: id,
+        index: index,
+        itemsCount: galleryState.itemsCount
+      )
     case let pagerState as PagerViewState:
       setPagerCurrentItem(
         id: id,
@@ -154,12 +144,16 @@ public final class DivActionURLHandler {
   private func setNextItem(id: String, overflow: OverflowMode) {
     switch blockStateStorage.getStateUntyped(id) {
     case let galleryState as GalleryViewState:
-      switch galleryState.contentPosition {
-      case .offset:
-        return
-      case let .paging(index):
-        setGalleryCurrentItem(id: id, index: Int(index) + 1)
-      }
+      let index = getNextIndex(
+        current: galleryState.currentItemIndex,
+        count: galleryState.itemsCount,
+        overflow: overflow
+      )
+      setGalleryCurrentItem(
+        id: id,
+        index: index,
+        itemsCount: galleryState.itemsCount
+      )
     case let pagerState as PagerViewState:
       let nextIndex = getNextIndex(
         current: Int(pagerState.currentPage),
@@ -203,12 +197,16 @@ public final class DivActionURLHandler {
   private func setPreviousItem(id: String, overflow: OverflowMode) {
     switch blockStateStorage.getStateUntyped(id) {
     case let galleryState as GalleryViewState:
-      switch galleryState.contentPosition {
-      case .offset:
-        return
-      case let .paging(index):
-        setGalleryCurrentItem(id: id, index: Int(index) - 1)
-      }
+      let index = getPreviousIndex(
+        current: galleryState.currentItemIndex,
+        count: galleryState.itemsCount,
+        overflow: overflow
+      )
+      setGalleryCurrentItem(
+        id: id,
+        index: index,
+        itemsCount: galleryState.itemsCount
+      )
     case let pagerState as PagerViewState:
       let prevIndex = getPreviousIndex(
         current: Int(pagerState.currentPage),
@@ -249,10 +247,17 @@ public final class DivActionURLHandler {
     }
   }
 
-  private func setGalleryCurrentItem(id: String, index: Int) {
+  private func setGalleryCurrentItem(
+    id: String,
+    index: Int,
+    itemsCount: Int
+  ) {
     blockStateStorage.setState(
       id: id,
-      state: GalleryViewState(contentPageIndex: CGFloat(max(0, index)))
+      state: GalleryViewState(
+        contentPageIndex: CGFloat(max(0, index)),
+        itemsCount: itemsCount
+      )
     )
   }
 
@@ -279,5 +284,16 @@ public final class DivActionURLHandler {
         countOfPages: countOfPages
       )
     )
+  }
+}
+
+extension GalleryViewState {
+  fileprivate var currentItemIndex: Int {
+    switch contentPosition {
+    case let .offset(_, firstVisibleItemsIndex):
+      return firstVisibleItemsIndex
+    case let .paging(index):
+      return Int(index)
+    }
   }
 }

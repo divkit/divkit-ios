@@ -13,44 +13,44 @@ let package = Package(
   ],
   targets: [
     .target(
-      name: "BaseUI",
+      name: "BaseUIPublic",
       dependencies: [
-        "BaseTiny",
+        "BaseTinyPublic",
       ],
-      path: "Core/BaseUI"
+      path: "Core/BaseUIPublic"
     ),
     .target(
-      name: "Base",
+      name: "BasePublic",
       dependencies: [
-        "BaseTiny",
-        "BaseUI",
+        "BaseTinyPublic",
+        "BaseUIPublic",
       ],
-      path: "Core/Base"
+      path: "Core/BasePublic"
     ),
     .target(
-      name: "BaseTiny",
-      path: "Core/BaseTiny"
+      name: "BaseTinyPublic",
+      path: "Core/BaseTinyPublic"
     ),
     .target(
-      name: "CommonCore",
+      name: "CommonCorePublic",
       dependencies: [
-        "Base",
+        "BasePublic",
       ],
-      path: "Core/CommonCore"
+      path: "Core/CommonCorePublic"
     ),
     .target(
-      name: "Networking",
+      name: "NetworkingPublic",
       dependencies: [
-        "Base",
+        "BasePublic",
       ],
-      path: "Core/Networking"
+      path: "Core/NetworkingPublic"
     ),
     .target(
       name: "DivKit",
       dependencies: [
-        "CommonCore",
+        "CommonCorePublic",
         "LayoutKit",
-        "Networking",
+        "NetworkingPublic",
         "Serialization",
         "TemplatesSupport",
       ],
@@ -69,7 +69,7 @@ let package = Package(
     .target(
       name: "LayoutKit",
       dependencies: [
-        "CommonCore",
+        "CommonCorePublic",
         "LayoutKitInterface",
       ],
       path: "LayoutKit/LayoutKit"
@@ -77,21 +77,21 @@ let package = Package(
     .target(
       name: "LayoutKitInterface",
       dependencies: [
-        "Base",
+        "BasePublic",
       ],
       path: "LayoutKit/Interface"
     ),
     .target(
       name: "Serialization",
       dependencies: [
-        "CommonCore",
+        "CommonCorePublic",
       ],
       path: "Serialization"
     ),
     .target(
       name: "TemplatesSupport",
       dependencies: [
-        "CommonCore",
+        "CommonCorePublic",
         "Serialization",
       ],
       path: "TemplatesSupport"

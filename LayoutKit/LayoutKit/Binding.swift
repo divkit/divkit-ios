@@ -1,6 +1,6 @@
 import Foundation
 
-import CommonCore
+import CommonCorePublic
 
 #if os(iOS)
 import UIKit
@@ -45,11 +45,5 @@ public struct Binding<T: Comparable> {
     self.value = getValue(name)
     self.getValue = getValue
     self.userInterfaceActionFactory = userInterfaceActionFactory
-  }
-}
-
-extension Binding where T == String {
-  public static var empty: Self {
-    .init(name: "", getValue: { _ in "" }, userInterfaceActionFactory: { _, _ in nil })
   }
 }

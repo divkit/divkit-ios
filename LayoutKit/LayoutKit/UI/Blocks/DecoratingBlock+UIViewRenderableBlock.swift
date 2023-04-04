@@ -2,8 +2,8 @@ import CoreGraphics
 import Foundation
 import UIKit
 
-import BaseUI
-import CommonCore
+import BaseUIPublic
+import CommonCorePublic
 import LayoutKitInterface
 
 extension DecoratingBlock {
@@ -257,16 +257,11 @@ private final class DecoratingView: UIControl, BlockViewProtocol, VisibleBoundsT
     super.layoutSubviews()
 
     let shouldMakeBorderLayer: Bool
-    if #available(iOS 11, *) {
-      let boundary = model.boundary.makeInfo(for: bounds.size)
-      shouldMakeBorderLayer = boundary.layer != nil
-      layer.cornerRadius = boundary.radius
-      layer.maskedCorners = boundary.corners
-      layer.mask = boundary.layer
-    } else {
-      shouldMakeBorderLayer = true
-      layer.mask = model.boundary.makeMaskLayer(for: bounds.size)
-    }
+    let boundary = model.boundary.makeInfo(for: bounds.size)
+    shouldMakeBorderLayer = boundary.layer != nil
+    layer.cornerRadius = boundary.radius
+    layer.maskedCorners = boundary.corners
+    layer.mask = boundary.layer
 
     if let border = model.border {
       if shouldMakeBorderLayer,

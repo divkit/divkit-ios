@@ -1,5 +1,5 @@
-import BaseUI
-import CommonCore
+import BaseUIPublic
+import CommonCorePublic
 
 extension TextInputBlock: CustomDebugStringConvertible {
   public var debugDescription: String {
@@ -11,7 +11,7 @@ extension TextInputBlock: CustomDebugStringConvertible {
 
     result += "\n  Variable text: \(textValue.wrappedValue)"
 
-    result += "\n  Input type: \(inputType)"
+    result += "\n  Keyboard type: \(keyboardType)"
 
     result += "\n}"
 

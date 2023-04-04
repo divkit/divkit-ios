@@ -1,7 +1,7 @@
 import UIKit
 
-import BaseUI
-import CommonCore
+import BaseUIPublic
+import CommonCorePublic
 import LayoutKitInterface
 
 private typealias CellType = GenericCollectionViewCell
@@ -32,7 +32,7 @@ public final class GalleryView: BlockView {
 
   private var model: GalleryViewModel!
   private var layout: GalleryViewLayouting!
-  private var state: GalleryViewState = .default
+  private var state: GalleryViewState!
   private var layoutFactory: LayoutFactory!
   private var deferredStateSetting = DeferredStateSetting.idle
   private var scrollStartOffset: CGFloat = 0
@@ -202,9 +202,7 @@ public final class GalleryView: BlockView {
     collectionView.register(CellType.self, forCellWithReuseIdentifier: reuseID)
     collectionView.dataSource = dataSource
 
-    if #available(iOS 11, *) {
-      collectionView.disableContentInsetAdjustmentBehavior()
-    }
+    collectionView.disableContentInsetAdjustmentBehavior()
 
     super.init(frame: frame)
     (collectionView as UIScrollView).delegate = compoundScrollDelegate
@@ -251,7 +249,7 @@ public final class GalleryView: BlockView {
     animated: Bool
   ) {
     switch contentPosition {
-    case let .offset(value):
+    case let .offset(value, _):
       setContentOffset(value, animated: false)
     case let .paging(pageIndex):
       let offset = layout.contentOffset(pageIndex: pageIndex)
@@ -283,13 +281,20 @@ extension GalleryView: ScrollDelegate {
     let contentPosition: GalleryViewState.Position
     switch model.scrollMode {
     case .default:
-      contentPosition = .offset(offset)
+      contentPosition = .offset(
+        offset,
+        firstVisibleItemIndex: Int(layout.pageIndex(forContentOffset: CGFloat(offset)))
+      )
     case .fixedPaging, .autoPaging:
       let pageIndex = layout.pageIndex(forContentOffset: offset)
       contentPosition = .paging(index: pageIndex)
     }
 
-    let newState = GalleryViewState(contentPosition: contentPosition, isScrolling: true)
+    let newState = GalleryViewState(
+      contentPosition: contentPosition,
+      itemsCount: model.items.count,
+      isScrolling: true
+    )
     setState(newState, notifyingObservers: true)
     updatesDelegate?.onContentOffsetChanged(offset, in: model)
     visibilityDelegate?.onGalleryVisibilityChanged()
@@ -312,7 +317,11 @@ extension GalleryView: ScrollDelegate {
   }
 
   private func onDidEndScroll(_ scrollView: ScrollView) {
-    let newState = GalleryViewState(contentPosition: state.contentPosition, isScrolling: false)
+    let newState = GalleryViewState(
+      contentPosition: state.contentPosition,
+      itemsCount: model.items.count,
+      isScrolling: false
+    )
     setState(newState, notifyingObservers: true)
     visibilityDelegate?.onGalleryVisibilityChanged()
 

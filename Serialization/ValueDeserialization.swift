@@ -1,6 +1,6 @@
 import CoreFoundation
 
-import CommonCore
+import CommonCorePublic
 
 @inlinable
 public func deserialize<T: ValidSerializationValue>(
@@ -8,22 +8,6 @@ public func deserialize<T: ValidSerializationValue>(
   validator: AnyValueValidator<T>? = nil
 ) -> DeserializationResult<T> {
   deserialize(value, transform: { $0 }, validator: validator)
-}
-
-@inlinable
-public func deserialize(
-  _ value: Any,
-  validator: AnyValueValidator<CFString>? = nil
-) -> DeserializationResult<CFString> {
-  guard let result: CFString = safeCFCast(value as CFTypeRef) else {
-    return .failure(NonEmptyArray(.typeMismatch(expected: "CFString", representation: value)))
-  }
-
-  guard validator?.isValid(result) != false else {
-    return .failure(NonEmptyArray(.invalidValue(result: result, value: value)))
-  }
-
-  return .success(result)
 }
 
 @inlinable
