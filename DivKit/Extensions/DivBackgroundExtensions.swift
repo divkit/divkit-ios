@@ -14,25 +14,17 @@ extension DivBackground {
   ) -> LayoutKit.Background? {
     switch self {
     case let .divLinearGradient(gradient):
-      return .gradient(
-        .linear(
-          Gradient.Linear(
-            colors: gradient.resolveColors(expressionResolver) ?? [],
-            angle: gradient.resolveAngle(expressionResolver)
-          )
-        )
-      )
+      return Gradient.Linear(
+        colors: gradient.resolveColors(expressionResolver) ?? [],
+        angle: gradient.resolveAngle(expressionResolver)
+      ).map { .gradient(.linear($0)) }
     case let .divRadialGradient(gradient):
-      return .gradient(
-        .radial(
-          Gradient.Radial(
-            colors: gradient.resolveColors(expressionResolver) ?? [],
-            end: gradient.resolveRadius(expressionResolver),
-            centerX: gradient.resolveCenterX(expressionResolver),
-            centerY: gradient.resolveCenterY(expressionResolver)
-          )
-        )
-      )
+      return Gradient.Radial(
+        colors: gradient.resolveColors(expressionResolver) ?? [],
+        end: gradient.resolveRadius(expressionResolver),
+        centerX: gradient.resolveCenterX(expressionResolver),
+        centerY: gradient.resolveCenterY(expressionResolver)
+      ).map { .gradient(.radial($0)) }
     case let .divImageBackground(imageBackground):
       let image = BackgroundImage(
         imageHolder: imageHolderFactory.make(
@@ -45,7 +37,7 @@ extension DivBackground {
       )
       return .image(image)
     case let .divSolidBackground(solidBackground):
-      return .solidColor(solidBackground.resolveColor(expressionResolver) ?? .black)
+      return solidBackground.resolveColor(expressionResolver).map { .solidColor($0) }
     case let .divNinePatchBackground(ninePatchBackground):
       let image = NinePatchImage(
         imageHolder: imageHolderFactory.make(

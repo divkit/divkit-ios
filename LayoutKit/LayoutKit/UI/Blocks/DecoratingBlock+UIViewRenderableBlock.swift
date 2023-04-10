@@ -204,21 +204,10 @@ private final class DecoratingView: UIControl, BlockViewProtocol, VisibleBoundsT
     addGestureRecognizer(longPressRecognizer)
 
     tapRecognizer.require(toFail: doubleTapRecognizer)
-
-    #if INTERNAL_BUILD
-    if BlocksDebugEnvironment.showElementPathOnLongPress {
-      let debugLongPressRecognizer = UILongPressGestureRecognizer(
-        target: self,
-        action: #selector(handleDebugLongPress)
-      )
-      debugLongPressRecognizer.minimumPressDuration = 1
-      addGestureRecognizer(debugLongPressRecognizer)
-    }
-    #endif
   }
 
   @available(*, unavailable)
-  required init?(coder _: NSCoder) { fatalError() }
+  required init?(coder _: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
   @objc private func handleTap(recognizer: UITapGestureRecognizer) {
     // Sometimes there are late touches that were performed before layout.
@@ -450,47 +439,6 @@ extension DecoratingView {
     }
   }
 }
-
-#if INTERNAL_BUILD
-extension DecoratingView {
-  @objc func handleDebugLongPress(recognizer: UIGestureRecognizer) {
-    guard recognizer.state == .began else {
-      return
-    }
-
-    if let actions = model.actions {
-      cancelTracking(with: nil)
-      showAction(actions.first)
-    }
-  }
-
-  private func showAction(_ action: UserInterfaceAction) {
-    let text = "Element path: \(action.path.description)"
-    let closeButton = AlertButton(title: "OK")
-    let copyButton = AlertButton(title: "Copy payload") {
-      UIPasteboard.general.string = action.payload.debugDescription
-    }
-    let model = AlertModel(
-      title: text,
-      buttons: [
-        closeButton,
-        copyButton,
-      ]
-    )
-    window?.rootViewController?.topPresented.showAlert(model)
-  }
-}
-
-extension UIViewController {
-  fileprivate var topPresented: UIViewController {
-    var presented = self
-    while let viewController = presented.presentedViewController {
-      presented = viewController
-    }
-    return presented
-  }
-}
-#endif
 
 extension DecoratingView.HighlightState {
   var alpha: CGFloat {
