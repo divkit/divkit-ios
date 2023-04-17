@@ -3,9 +3,8 @@
 import CommonCorePublic
 import Foundation
 import Serialization
-import TemplatesSupport
 
-public final class DivLinearGradientTemplate: TemplateValue, TemplateDeserializable {
+public final class DivLinearGradientTemplate: TemplateValue {
   public static let type: String = "gradient"
   public let parent: String? // at least 1 char
   public let angle: Field<Expression<Int>>? // constraint: number >= 0 && number <= 360; default value: 0
@@ -14,7 +13,7 @@ public final class DivLinearGradientTemplate: TemplateValue, TemplateDeserializa
   static let parentValidator: AnyValueValidator<String> =
     makeStringValidator(minLength: 1)
 
-  public convenience init(dictionary: [String: Any], templateToType: TemplateToType) throws {
+  public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
     do {
       self.init(
         parent: try dictionary.getOptionalField("type", validator: Self.parentValidator),
@@ -36,7 +35,7 @@ public final class DivLinearGradientTemplate: TemplateValue, TemplateDeserializa
     self.colors = colors
   }
 
-  private static func resolveOnlyLinks(context: Context, parent: DivLinearGradientTemplate?) -> DeserializationResult<DivLinearGradient> {
+  private static func resolveOnlyLinks(context: TemplatesContext, parent: DivLinearGradientTemplate?) -> DeserializationResult<DivLinearGradient> {
     let angleValue = parent?.angle?.resolveOptionalValue(context: context, validator: ResolvedValue.angleValidator) ?? .noValue
     let colorsValue = parent?.colors?.resolveValue(context: context, transform: Color.color(withHexString:), validator: ResolvedValue.colorsValidator) ?? .noValue
     var errors = mergeErrors(
@@ -58,7 +57,7 @@ public final class DivLinearGradientTemplate: TemplateValue, TemplateDeserializa
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  public static func resolveValue(context: Context, parent: DivLinearGradientTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivLinearGradient> {
+  public static func resolveValue(context: TemplatesContext, parent: DivLinearGradientTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivLinearGradient> {
     if useOnlyLinks {
       return resolveOnlyLinks(context: context, parent: parent)
     }
@@ -96,7 +95,7 @@ public final class DivLinearGradientTemplate: TemplateValue, TemplateDeserializa
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  private func mergedWithParent(templates: Templates) throws -> DivLinearGradientTemplate {
+  private func mergedWithParent(templates: [TemplateName: Any]) throws -> DivLinearGradientTemplate {
     guard let parent = parent, parent != Self.type else { return self }
     guard let parentTemplate = templates[parent] as? DivLinearGradientTemplate else {
       throw DeserializationError.unknownType(type: parent)
@@ -110,7 +109,7 @@ public final class DivLinearGradientTemplate: TemplateValue, TemplateDeserializa
     )
   }
 
-  public func resolveParent(templates: Templates) throws -> DivLinearGradientTemplate {
+  public func resolveParent(templates: [TemplateName: Any]) throws -> DivLinearGradientTemplate {
     return try mergedWithParent(templates: templates)
   }
 }

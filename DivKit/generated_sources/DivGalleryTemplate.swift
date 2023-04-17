@@ -3,9 +3,8 @@
 import CommonCorePublic
 import Foundation
 import Serialization
-import TemplatesSupport
 
-public final class DivGalleryTemplate: TemplateValue, TemplateDeserializable {
+public final class DivGalleryTemplate: TemplateValue {
   public typealias CrossContentAlignment = DivGallery.CrossContentAlignment
 
   public typealias Orientation = DivGallery.Orientation
@@ -52,7 +51,7 @@ public final class DivGalleryTemplate: TemplateValue, TemplateDeserializable {
   static let parentValidator: AnyValueValidator<String> =
     makeStringValidator(minLength: 1)
 
-  public convenience init(dictionary: [String: Any], templateToType: TemplateToType) throws {
+  public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
     do {
       self.init(
         parent: try dictionary.getOptionalField("type", validator: Self.parentValidator),
@@ -170,7 +169,7 @@ public final class DivGalleryTemplate: TemplateValue, TemplateDeserializable {
     self.width = width
   }
 
-  private static func resolveOnlyLinks(context: Context, parent: DivGalleryTemplate?) -> DeserializationResult<DivGallery> {
+  private static func resolveOnlyLinks(context: TemplatesContext, parent: DivGalleryTemplate?) -> DeserializationResult<DivGallery> {
     let accessibilityValue = parent?.accessibility?.resolveOptionalValue(context: context, validator: ResolvedValue.accessibilityValidator, useOnlyLinks: true) ?? .noValue
     let alignmentHorizontalValue = parent?.alignmentHorizontal?.resolveOptionalValue(context: context, validator: ResolvedValue.alignmentHorizontalValidator) ?? .noValue
     let alignmentVerticalValue = parent?.alignmentVertical?.resolveOptionalValue(context: context, validator: ResolvedValue.alignmentVerticalValidator) ?? .noValue
@@ -288,7 +287,7 @@ public final class DivGalleryTemplate: TemplateValue, TemplateDeserializable {
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  public static func resolveValue(context: Context, parent: DivGalleryTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivGallery> {
+  public static func resolveValue(context: TemplatesContext, parent: DivGalleryTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivGallery> {
     if useOnlyLinks {
       return resolveOnlyLinks(context: context, parent: parent)
     }
@@ -570,7 +569,7 @@ public final class DivGalleryTemplate: TemplateValue, TemplateDeserializable {
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  private func mergedWithParent(templates: Templates) throws -> DivGalleryTemplate {
+  private func mergedWithParent(templates: [TemplateName: Any]) throws -> DivGalleryTemplate {
     guard let parent = parent, parent != Self.type else { return self }
     guard let parentTemplate = templates[parent] as? DivGalleryTemplate else {
       throw DeserializationError.unknownType(type: parent)
@@ -616,7 +615,7 @@ public final class DivGalleryTemplate: TemplateValue, TemplateDeserializable {
     )
   }
 
-  public func resolveParent(templates: Templates) throws -> DivGalleryTemplate {
+  public func resolveParent(templates: [TemplateName: Any]) throws -> DivGalleryTemplate {
     let merged = try mergedWithParent(templates: templates)
 
     return DivGalleryTemplate(

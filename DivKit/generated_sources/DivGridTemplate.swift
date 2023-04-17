@@ -3,9 +3,8 @@
 import CommonCorePublic
 import Foundation
 import Serialization
-import TemplatesSupport
 
-public final class DivGridTemplate: TemplateValue, TemplateDeserializable {
+public final class DivGridTemplate: TemplateValue {
   public static let type: String = "grid"
   public let parent: String? // at least 1 char
   public let accessibility: Field<DivAccessibilityTemplate>?
@@ -49,7 +48,7 @@ public final class DivGridTemplate: TemplateValue, TemplateDeserializable {
   static let itemsValidator: AnyArrayValueValidator<DivTemplate> =
     makeStrictArrayValidator(minItems: 1)
 
-  public convenience init(dictionary: [String: Any], templateToType: TemplateToType) throws {
+  public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
     do {
       self.init(
         parent: try dictionary.getOptionalField("type", validator: Self.parentValidator),
@@ -167,7 +166,7 @@ public final class DivGridTemplate: TemplateValue, TemplateDeserializable {
     self.width = width
   }
 
-  private static func resolveOnlyLinks(context: Context, parent: DivGridTemplate?) -> DeserializationResult<DivGrid> {
+  private static func resolveOnlyLinks(context: TemplatesContext, parent: DivGridTemplate?) -> DeserializationResult<DivGrid> {
     let accessibilityValue = parent?.accessibility?.resolveOptionalValue(context: context, validator: ResolvedValue.accessibilityValidator, useOnlyLinks: true) ?? .noValue
     let actionValue = parent?.action?.resolveOptionalValue(context: context, validator: ResolvedValue.actionValidator, useOnlyLinks: true) ?? .noValue
     let actionAnimationValue = parent?.actionAnimation?.resolveOptionalValue(context: context, validator: ResolvedValue.actionAnimationValidator, useOnlyLinks: true) ?? .noValue
@@ -289,7 +288,7 @@ public final class DivGridTemplate: TemplateValue, TemplateDeserializable {
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  public static func resolveValue(context: Context, parent: DivGridTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivGrid> {
+  public static func resolveValue(context: TemplatesContext, parent: DivGridTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivGrid> {
     if useOnlyLinks {
       return resolveOnlyLinks(context: context, parent: parent)
     }
@@ -580,7 +579,7 @@ public final class DivGridTemplate: TemplateValue, TemplateDeserializable {
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  private func mergedWithParent(templates: Templates) throws -> DivGridTemplate {
+  private func mergedWithParent(templates: [TemplateName: Any]) throws -> DivGridTemplate {
     guard let parent = parent, parent != Self.type else { return self }
     guard let parentTemplate = templates[parent] as? DivGridTemplate else {
       throw DeserializationError.unknownType(type: parent)
@@ -626,7 +625,7 @@ public final class DivGridTemplate: TemplateValue, TemplateDeserializable {
     )
   }
 
-  public func resolveParent(templates: Templates) throws -> DivGridTemplate {
+  public func resolveParent(templates: [TemplateName: Any]) throws -> DivGridTemplate {
     let merged = try mergedWithParent(templates: templates)
 
     return DivGridTemplate(

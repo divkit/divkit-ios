@@ -3,15 +3,14 @@
 import CommonCorePublic
 import Foundation
 import Serialization
-import TemplatesSupport
 
-public final class DivActionTemplate: TemplateValue, TemplateDeserializable {
-  public final class MenuItemTemplate: TemplateValue, TemplateDeserializable {
+public final class DivActionTemplate: TemplateValue {
+  public final class MenuItemTemplate: TemplateValue {
     public let action: Field<DivActionTemplate>?
     public let actions: Field<[DivActionTemplate]>? // at least 1 elements
     public let text: Field<Expression<String>>? // at least 1 char
 
-    public convenience init(dictionary: [String: Any], templateToType: TemplateToType) throws {
+    public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
       do {
         self.init(
           action: try dictionary.getOptionalField("action", templateToType: templateToType),
@@ -33,7 +32,7 @@ public final class DivActionTemplate: TemplateValue, TemplateDeserializable {
       self.text = text
     }
 
-    private static func resolveOnlyLinks(context: Context, parent: MenuItemTemplate?) -> DeserializationResult<DivAction.MenuItem> {
+    private static func resolveOnlyLinks(context: TemplatesContext, parent: MenuItemTemplate?) -> DeserializationResult<DivAction.MenuItem> {
       let actionValue = parent?.action?.resolveOptionalValue(context: context, validator: ResolvedValue.actionValidator, useOnlyLinks: true) ?? .noValue
       let actionsValue = parent?.actions?.resolveOptionalValue(context: context, validator: ResolvedValue.actionsValidator, useOnlyLinks: true) ?? .noValue
       let textValue = parent?.text?.resolveValue(context: context, validator: ResolvedValue.textValidator) ?? .noValue
@@ -58,7 +57,7 @@ public final class DivActionTemplate: TemplateValue, TemplateDeserializable {
       return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
     }
 
-    public static func resolveValue(context: Context, parent: MenuItemTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivAction.MenuItem> {
+    public static func resolveValue(context: TemplatesContext, parent: MenuItemTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivAction.MenuItem> {
       if useOnlyLinks {
         return resolveOnlyLinks(context: context, parent: parent)
       }
@@ -107,11 +106,11 @@ public final class DivActionTemplate: TemplateValue, TemplateDeserializable {
       return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
     }
 
-    private func mergedWithParent(templates: Templates) throws -> MenuItemTemplate {
+    private func mergedWithParent(templates: [TemplateName: Any]) throws -> MenuItemTemplate {
       return self
     }
 
-    public func resolveParent(templates: Templates) throws -> MenuItemTemplate {
+    public func resolveParent(templates: [TemplateName: Any]) throws -> MenuItemTemplate {
       let merged = try mergedWithParent(templates: templates)
 
       return MenuItemTemplate(
@@ -130,7 +129,7 @@ public final class DivActionTemplate: TemplateValue, TemplateDeserializable {
   public let referer: Field<Expression<URL>>?
   public let url: Field<Expression<URL>>?
 
-  public convenience init(dictionary: [String: Any], templateToType: TemplateToType) throws {
+  public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
     do {
       self.init(
         downloadCallbacks: try dictionary.getOptionalField("download_callbacks", templateToType: templateToType),
@@ -164,7 +163,7 @@ public final class DivActionTemplate: TemplateValue, TemplateDeserializable {
     self.url = url
   }
 
-  private static func resolveOnlyLinks(context: Context, parent: DivActionTemplate?) -> DeserializationResult<DivAction> {
+  private static func resolveOnlyLinks(context: TemplatesContext, parent: DivActionTemplate?) -> DeserializationResult<DivAction> {
     let downloadCallbacksValue = parent?.downloadCallbacks?.resolveOptionalValue(context: context, validator: ResolvedValue.downloadCallbacksValidator, useOnlyLinks: true) ?? .noValue
     let logIdValue = parent?.logId?.resolveValue(context: context, validator: ResolvedValue.logIdValidator) ?? .noValue
     let logUrlValue = parent?.logUrl?.resolveOptionalValue(context: context, transform: URL.init(string:), validator: ResolvedValue.logUrlValidator) ?? .noValue
@@ -201,7 +200,7 @@ public final class DivActionTemplate: TemplateValue, TemplateDeserializable {
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  public static func resolveValue(context: Context, parent: DivActionTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivAction> {
+  public static func resolveValue(context: TemplatesContext, parent: DivActionTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivAction> {
     if useOnlyLinks {
       return resolveOnlyLinks(context: context, parent: parent)
     }
@@ -278,11 +277,11 @@ public final class DivActionTemplate: TemplateValue, TemplateDeserializable {
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  private func mergedWithParent(templates: Templates) throws -> DivActionTemplate {
+  private func mergedWithParent(templates: [TemplateName: Any]) throws -> DivActionTemplate {
     return self
   }
 
-  public func resolveParent(templates: Templates) throws -> DivActionTemplate {
+  public func resolveParent(templates: [TemplateName: Any]) throws -> DivActionTemplate {
     let merged = try mergedWithParent(templates: templates)
 
     return DivActionTemplate(

@@ -3,16 +3,15 @@
 import CommonCorePublic
 import Foundation
 import Serialization
-import TemplatesSupport
 
-public final class DivBorderTemplate: TemplateValue, TemplateDeserializable {
+public final class DivBorderTemplate: TemplateValue {
   public let cornerRadius: Field<Expression<Int>>? // constraint: number >= 0
   public let cornersRadius: Field<DivCornersRadiusTemplate>?
   public let hasShadow: Field<Expression<Bool>>? // default value: false
   public let shadow: Field<DivShadowTemplate>?
   public let stroke: Field<DivStrokeTemplate>?
 
-  public convenience init(dictionary: [String: Any], templateToType: TemplateToType) throws {
+  public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
     self.init(
       cornerRadius: try dictionary.getOptionalExpressionField("corner_radius"),
       cornersRadius: try dictionary.getOptionalField("corners_radius", templateToType: templateToType),
@@ -36,7 +35,7 @@ public final class DivBorderTemplate: TemplateValue, TemplateDeserializable {
     self.stroke = stroke
   }
 
-  private static func resolveOnlyLinks(context: Context, parent: DivBorderTemplate?) -> DeserializationResult<DivBorder> {
+  private static func resolveOnlyLinks(context: TemplatesContext, parent: DivBorderTemplate?) -> DeserializationResult<DivBorder> {
     let cornerRadiusValue = parent?.cornerRadius?.resolveOptionalValue(context: context, validator: ResolvedValue.cornerRadiusValidator) ?? .noValue
     let cornersRadiusValue = parent?.cornersRadius?.resolveOptionalValue(context: context, validator: ResolvedValue.cornersRadiusValidator, useOnlyLinks: true) ?? .noValue
     let hasShadowValue = parent?.hasShadow?.resolveOptionalValue(context: context, validator: ResolvedValue.hasShadowValidator) ?? .noValue
@@ -59,7 +58,7 @@ public final class DivBorderTemplate: TemplateValue, TemplateDeserializable {
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  public static func resolveValue(context: Context, parent: DivBorderTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivBorder> {
+  public static func resolveValue(context: TemplatesContext, parent: DivBorderTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivBorder> {
     if useOnlyLinks {
       return resolveOnlyLinks(context: context, parent: parent)
     }
@@ -115,11 +114,11 @@ public final class DivBorderTemplate: TemplateValue, TemplateDeserializable {
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  private func mergedWithParent(templates: Templates) throws -> DivBorderTemplate {
+  private func mergedWithParent(templates: [TemplateName: Any]) throws -> DivBorderTemplate {
     return self
   }
 
-  public func resolveParent(templates: Templates) throws -> DivBorderTemplate {
+  public func resolveParent(templates: [TemplateName: Any]) throws -> DivBorderTemplate {
     let merged = try mergedWithParent(templates: templates)
 
     return DivBorderTemplate(

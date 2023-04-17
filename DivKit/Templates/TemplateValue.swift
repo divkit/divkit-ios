@@ -3,45 +3,64 @@ import Serialization
 
 public protocol TemplateValue {
   associatedtype ResolvedValue
-  func resolveParent(templates: Templates) throws -> Self
-  static func resolveValue(context: Context, parent: Self?, useOnlyLinks: Bool)
-    -> DeserializationResult<ResolvedValue>
+
+  init(
+    dictionary: [String: Any],
+    templateToType: [TemplateName: String]
+  ) throws
+
+  func resolveParent(templates: [TemplateName: Any]) throws -> Self
+
+  static func resolveValue(
+    context: TemplatesContext,
+    parent: Self?,
+    useOnlyLinks: Bool
+  ) -> DeserializationResult<ResolvedValue>
 }
 
 extension TemplateValue {
-  public func tryResolveParent(templates: Templates) -> Self? {
+  @usableFromInline
+  func tryResolveParent(templates: [TemplateName: Any]) -> Self? {
     try? resolveParent(templates: templates)
   }
 
-  public func resolveValue(context: Context, useOnlyLinks: Bool)
-    -> DeserializationResult<ResolvedValue> {
+  @usableFromInline
+  func resolveValue(
+    context: TemplatesContext,
+    useOnlyLinks: Bool
+  ) -> DeserializationResult<ResolvedValue> {
     Self.resolveValue(context: context, parent: self, useOnlyLinks: useOnlyLinks)
   }
 
-  private static func fetchParent(from context: Context) -> Self? {
-    let type = context.templateData["type"] as? String
-    return type.flatMap { context.templates[$0] as? Self }
-  }
-
-  public static func resolveValue(context: Context, useOnlyLinks: Bool)
-    -> DeserializationResult<ResolvedValue> {
+  @usableFromInline
+  static func resolveValue(
+    context: TemplatesContext,
+    useOnlyLinks: Bool
+  ) -> DeserializationResult<ResolvedValue> {
     resolveValue(
       context: context,
-      parent: fetchParent(from: context),
+      parent: fetchParent(context: context),
       useOnlyLinks: useOnlyLinks
     )
+  }
+
+  private static func fetchParent(context: TemplatesContext) -> Self? {
+    let type = context.templateData["type"] as? String
+    return type.flatMap { context.templates[$0] as? Self }
   }
 }
 
 extension Array where Element: TemplateValue {
-  public typealias ResolvedValue = [Element.ResolvedValue]
+  @usableFromInline
+  typealias ResolvedValue = [Element.ResolvedValue]
 
-  public func resolveParent(templates: Templates) throws -> [Element] {
+  func resolveParent(templates: [TemplateName: Any]) throws -> [Element] {
     try resolveParent(templates: templates, validator: nil)
   }
 
-  public func resolveParent(
-    templates: Templates,
+  @usableFromInline
+  func resolveParent(
+    templates: [TemplateName: Any],
     validator: AnyArrayValueValidator<Element.ResolvedValue>?
   ) throws -> [Element] {
     let result: [Element] = try enumerated().compactMap {
@@ -65,8 +84,9 @@ extension Array where Element: TemplateValue {
     return result
   }
 
-  public func resolveValue(
-    context: Context,
+  @usableFromInline
+  func resolveValue(
+    context: TemplatesContext,
     validator: AnyArrayValueValidator<Element.ResolvedValue>?
   ) -> DeserializationResult<[Element.ResolvedValue]> {
     var result: [Element.ResolvedValue] = []

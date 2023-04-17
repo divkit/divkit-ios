@@ -3,9 +3,8 @@
 import CommonCorePublic
 import Foundation
 import Serialization
-import TemplatesSupport
 
-public final class DivBlurTemplate: TemplateValue, TemplateDeserializable {
+public final class DivBlurTemplate: TemplateValue {
   public static let type: String = "blur"
   public let parent: String? // at least 1 char
   public let radius: Field<Expression<Int>>? // constraint: number >= 0
@@ -13,7 +12,7 @@ public final class DivBlurTemplate: TemplateValue, TemplateDeserializable {
   static let parentValidator: AnyValueValidator<String> =
     makeStringValidator(minLength: 1)
 
-  public convenience init(dictionary: [String: Any], templateToType: TemplateToType) throws {
+  public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
     do {
       self.init(
         parent: try dictionary.getOptionalField("type", validator: Self.parentValidator),
@@ -32,7 +31,7 @@ public final class DivBlurTemplate: TemplateValue, TemplateDeserializable {
     self.radius = radius
   }
 
-  private static func resolveOnlyLinks(context: Context, parent: DivBlurTemplate?) -> DeserializationResult<DivBlur> {
+  private static func resolveOnlyLinks(context: TemplatesContext, parent: DivBlurTemplate?) -> DeserializationResult<DivBlur> {
     let radiusValue = parent?.radius?.resolveValue(context: context, validator: ResolvedValue.radiusValidator) ?? .noValue
     var errors = mergeErrors(
       radiusValue.errorsOrWarnings?.map { .nestedObjectError(field: "radius", error: $0) }
@@ -51,7 +50,7 @@ public final class DivBlurTemplate: TemplateValue, TemplateDeserializable {
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  public static func resolveValue(context: Context, parent: DivBlurTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivBlur> {
+  public static func resolveValue(context: TemplatesContext, parent: DivBlurTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivBlur> {
     if useOnlyLinks {
       return resolveOnlyLinks(context: context, parent: parent)
     }
@@ -82,7 +81,7 @@ public final class DivBlurTemplate: TemplateValue, TemplateDeserializable {
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  private func mergedWithParent(templates: Templates) throws -> DivBlurTemplate {
+  private func mergedWithParent(templates: [TemplateName: Any]) throws -> DivBlurTemplate {
     guard let parent = parent, parent != Self.type else { return self }
     guard let parentTemplate = templates[parent] as? DivBlurTemplate else {
       throw DeserializationError.unknownType(type: parent)
@@ -95,7 +94,7 @@ public final class DivBlurTemplate: TemplateValue, TemplateDeserializable {
     )
   }
 
-  public func resolveParent(templates: Templates) throws -> DivBlurTemplate {
+  public func resolveParent(templates: [TemplateName: Any]) throws -> DivBlurTemplate {
     return try mergedWithParent(templates: templates)
   }
 }

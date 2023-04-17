@@ -3,9 +3,8 @@
 import CommonCorePublic
 import Foundation
 import Serialization
-import TemplatesSupport
 
-public final class DivPageSizeTemplate: TemplateValue, TemplateDeserializable {
+public final class DivPageSizeTemplate: TemplateValue {
   public static let type: String = "percentage"
   public let parent: String? // at least 1 char
   public let pageWidth: Field<DivPercentageSizeTemplate>?
@@ -13,7 +12,7 @@ public final class DivPageSizeTemplate: TemplateValue, TemplateDeserializable {
   static let parentValidator: AnyValueValidator<String> =
     makeStringValidator(minLength: 1)
 
-  public convenience init(dictionary: [String: Any], templateToType: TemplateToType) throws {
+  public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
     do {
       self.init(
         parent: try dictionary.getOptionalField("type", validator: Self.parentValidator),
@@ -32,7 +31,7 @@ public final class DivPageSizeTemplate: TemplateValue, TemplateDeserializable {
     self.pageWidth = pageWidth
   }
 
-  private static func resolveOnlyLinks(context: Context, parent: DivPageSizeTemplate?) -> DeserializationResult<DivPageSize> {
+  private static func resolveOnlyLinks(context: TemplatesContext, parent: DivPageSizeTemplate?) -> DeserializationResult<DivPageSize> {
     let pageWidthValue = parent?.pageWidth?.resolveValue(context: context, useOnlyLinks: true) ?? .noValue
     var errors = mergeErrors(
       pageWidthValue.errorsOrWarnings?.map { .nestedObjectError(field: "page_width", error: $0) }
@@ -51,7 +50,7 @@ public final class DivPageSizeTemplate: TemplateValue, TemplateDeserializable {
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  public static func resolveValue(context: Context, parent: DivPageSizeTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivPageSize> {
+  public static func resolveValue(context: TemplatesContext, parent: DivPageSizeTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivPageSize> {
     if useOnlyLinks {
       return resolveOnlyLinks(context: context, parent: parent)
     }
@@ -85,7 +84,7 @@ public final class DivPageSizeTemplate: TemplateValue, TemplateDeserializable {
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  private func mergedWithParent(templates: Templates) throws -> DivPageSizeTemplate {
+  private func mergedWithParent(templates: [TemplateName: Any]) throws -> DivPageSizeTemplate {
     guard let parent = parent, parent != Self.type else { return self }
     guard let parentTemplate = templates[parent] as? DivPageSizeTemplate else {
       throw DeserializationError.unknownType(type: parent)
@@ -98,7 +97,7 @@ public final class DivPageSizeTemplate: TemplateValue, TemplateDeserializable {
     )
   }
 
-  public func resolveParent(templates: Templates) throws -> DivPageSizeTemplate {
+  public func resolveParent(templates: [TemplateName: Any]) throws -> DivPageSizeTemplate {
     let merged = try mergedWithParent(templates: templates)
 
     return DivPageSizeTemplate(

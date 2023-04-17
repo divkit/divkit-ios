@@ -3,9 +3,8 @@
 import CommonCorePublic
 import Foundation
 import Serialization
-import TemplatesSupport
 
-public final class DivCustomTemplate: TemplateValue, TemplateDeserializable {
+public final class DivCustomTemplate: TemplateValue {
   public static let type: String = "custom"
   public let parent: String? // at least 1 char
   public let accessibility: Field<DivAccessibilityTemplate>?
@@ -40,7 +39,7 @@ public final class DivCustomTemplate: TemplateValue, TemplateDeserializable {
   static let parentValidator: AnyValueValidator<String> =
     makeStringValidator(minLength: 1)
 
-  public convenience init(dictionary: [String: Any], templateToType: TemplateToType) throws {
+  public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
     do {
       self.init(
         parent: try dictionary.getOptionalField("type", validator: Self.parentValidator),
@@ -140,7 +139,7 @@ public final class DivCustomTemplate: TemplateValue, TemplateDeserializable {
     self.width = width
   }
 
-  private static func resolveOnlyLinks(context: Context, parent: DivCustomTemplate?) -> DeserializationResult<DivCustom> {
+  private static func resolveOnlyLinks(context: TemplatesContext, parent: DivCustomTemplate?) -> DeserializationResult<DivCustom> {
     let accessibilityValue = parent?.accessibility?.resolveOptionalValue(context: context, validator: ResolvedValue.accessibilityValidator, useOnlyLinks: true) ?? .noValue
     let alignmentHorizontalValue = parent?.alignmentHorizontal?.resolveOptionalValue(context: context, validator: ResolvedValue.alignmentHorizontalValidator) ?? .noValue
     let alignmentVerticalValue = parent?.alignmentVertical?.resolveOptionalValue(context: context, validator: ResolvedValue.alignmentVerticalValidator) ?? .noValue
@@ -240,7 +239,7 @@ public final class DivCustomTemplate: TemplateValue, TemplateDeserializable {
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  public static func resolveValue(context: Context, parent: DivCustomTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivCustom> {
+  public static func resolveValue(context: TemplatesContext, parent: DivCustomTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivCustom> {
     if useOnlyLinks {
       return resolveOnlyLinks(context: context, parent: parent)
     }
@@ -480,7 +479,7 @@ public final class DivCustomTemplate: TemplateValue, TemplateDeserializable {
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  private func mergedWithParent(templates: Templates) throws -> DivCustomTemplate {
+  private func mergedWithParent(templates: [TemplateName: Any]) throws -> DivCustomTemplate {
     guard let parent = parent, parent != Self.type else { return self }
     guard let parentTemplate = templates[parent] as? DivCustomTemplate else {
       throw DeserializationError.unknownType(type: parent)
@@ -520,7 +519,7 @@ public final class DivCustomTemplate: TemplateValue, TemplateDeserializable {
     )
   }
 
-  public func resolveParent(templates: Templates) throws -> DivCustomTemplate {
+  public func resolveParent(templates: [TemplateName: Any]) throws -> DivCustomTemplate {
     let merged = try mergedWithParent(templates: templates)
 
     return DivCustomTemplate(

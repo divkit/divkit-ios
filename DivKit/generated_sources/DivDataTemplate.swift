@@ -3,14 +3,13 @@
 import CommonCorePublic
 import Foundation
 import Serialization
-import TemplatesSupport
 
-public final class DivDataTemplate: TemplateValue, TemplateDeserializable {
-  public final class StateTemplate: TemplateValue, TemplateDeserializable {
+public final class DivDataTemplate: TemplateValue {
+  public final class StateTemplate: TemplateValue {
     public let div: Field<DivTemplate>?
     public let stateId: Field<Int>?
 
-    public convenience init(dictionary: [String: Any], templateToType: TemplateToType) throws {
+    public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
       do {
         self.init(
           div: try dictionary.getOptionalField("div", templateToType: templateToType),
@@ -29,7 +28,7 @@ public final class DivDataTemplate: TemplateValue, TemplateDeserializable {
       self.stateId = stateId
     }
 
-    private static func resolveOnlyLinks(context: Context, parent: StateTemplate?) -> DeserializationResult<DivData.State> {
+    private static func resolveOnlyLinks(context: TemplatesContext, parent: StateTemplate?) -> DeserializationResult<DivData.State> {
       let divValue = parent?.div?.resolveValue(context: context, useOnlyLinks: true) ?? .noValue
       let stateIdValue = parent?.stateId?.resolveValue(context: context) ?? .noValue
       var errors = mergeErrors(
@@ -55,7 +54,7 @@ public final class DivDataTemplate: TemplateValue, TemplateDeserializable {
       return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
     }
 
-    public static func resolveValue(context: Context, parent: StateTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivData.State> {
+    public static func resolveValue(context: TemplatesContext, parent: StateTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivData.State> {
       if useOnlyLinks {
         return resolveOnlyLinks(context: context, parent: parent)
       }
@@ -100,11 +99,11 @@ public final class DivDataTemplate: TemplateValue, TemplateDeserializable {
       return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
     }
 
-    private func mergedWithParent(templates: Templates) throws -> StateTemplate {
+    private func mergedWithParent(templates: [TemplateName: Any]) throws -> StateTemplate {
       return self
     }
 
-    public func resolveParent(templates: Templates) throws -> StateTemplate {
+    public func resolveParent(templates: [TemplateName: Any]) throws -> StateTemplate {
       let merged = try mergedWithParent(templates: templates)
 
       return StateTemplate(
@@ -124,7 +123,7 @@ public final class DivDataTemplate: TemplateValue, TemplateDeserializable {
   static let statesValidator: AnyArrayValueValidator<DivDataTemplate.StateTemplate> =
     makeStrictArrayValidator(minItems: 1)
 
-  public convenience init(dictionary: [String: Any], templateToType: TemplateToType) throws {
+  public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
     do {
       self.init(
         logId: try dictionary.getOptionalField("log_id"),
@@ -155,7 +154,7 @@ public final class DivDataTemplate: TemplateValue, TemplateDeserializable {
     self.variables = variables
   }
 
-  private static func resolveOnlyLinks(context: Context, parent: DivDataTemplate?) -> DeserializationResult<DivData> {
+  private static func resolveOnlyLinks(context: TemplatesContext, parent: DivDataTemplate?) -> DeserializationResult<DivData> {
     let logIdValue = parent?.logId?.resolveValue(context: context, validator: ResolvedValue.logIdValidator) ?? .noValue
     let statesValue = parent?.states?.resolveValue(context: context, validator: ResolvedValue.statesValidator, useOnlyLinks: true) ?? .noValue
     let timersValue = parent?.timers?.resolveOptionalValue(context: context, validator: ResolvedValue.timersValidator, useOnlyLinks: true) ?? .noValue
@@ -193,7 +192,7 @@ public final class DivDataTemplate: TemplateValue, TemplateDeserializable {
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  public static func resolveValue(context: Context, parent: DivDataTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivData> {
+  public static func resolveValue(context: TemplatesContext, parent: DivDataTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivData> {
     if useOnlyLinks {
       return resolveOnlyLinks(context: context, parent: parent)
     }
@@ -269,11 +268,11 @@ public final class DivDataTemplate: TemplateValue, TemplateDeserializable {
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  private func mergedWithParent(templates: Templates) throws -> DivDataTemplate {
+  private func mergedWithParent(templates: [TemplateName: Any]) throws -> DivDataTemplate {
     return self
   }
 
-  public func resolveParent(templates: Templates) throws -> DivDataTemplate {
+  public func resolveParent(templates: [TemplateName: Any]) throws -> DivDataTemplate {
     let merged = try mergedWithParent(templates: templates)
 
     return DivDataTemplate(

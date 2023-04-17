@@ -3,9 +3,8 @@
 import CommonCorePublic
 import Foundation
 import Serialization
-import TemplatesSupport
 
-public final class DivFixedSizeTemplate: TemplateValue, TemplateDeserializable {
+public final class DivFixedSizeTemplate: TemplateValue {
   public static let type: String = "fixed"
   public let parent: String? // at least 1 char
   public let unit: Field<Expression<DivSizeUnit>>? // default value: dp
@@ -14,7 +13,7 @@ public final class DivFixedSizeTemplate: TemplateValue, TemplateDeserializable {
   static let parentValidator: AnyValueValidator<String> =
     makeStringValidator(minLength: 1)
 
-  public convenience init(dictionary: [String: Any], templateToType: TemplateToType) throws {
+  public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
     do {
       self.init(
         parent: try dictionary.getOptionalField("type", validator: Self.parentValidator),
@@ -36,7 +35,7 @@ public final class DivFixedSizeTemplate: TemplateValue, TemplateDeserializable {
     self.value = value
   }
 
-  private static func resolveOnlyLinks(context: Context, parent: DivFixedSizeTemplate?) -> DeserializationResult<DivFixedSize> {
+  private static func resolveOnlyLinks(context: TemplatesContext, parent: DivFixedSizeTemplate?) -> DeserializationResult<DivFixedSize> {
     let unitValue = parent?.unit?.resolveOptionalValue(context: context, validator: ResolvedValue.unitValidator) ?? .noValue
     let valueValue = parent?.value?.resolveValue(context: context, validator: ResolvedValue.valueValidator) ?? .noValue
     var errors = mergeErrors(
@@ -58,7 +57,7 @@ public final class DivFixedSizeTemplate: TemplateValue, TemplateDeserializable {
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  public static func resolveValue(context: Context, parent: DivFixedSizeTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivFixedSize> {
+  public static func resolveValue(context: TemplatesContext, parent: DivFixedSizeTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivFixedSize> {
     if useOnlyLinks {
       return resolveOnlyLinks(context: context, parent: parent)
     }
@@ -96,7 +95,7 @@ public final class DivFixedSizeTemplate: TemplateValue, TemplateDeserializable {
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  private func mergedWithParent(templates: Templates) throws -> DivFixedSizeTemplate {
+  private func mergedWithParent(templates: [TemplateName: Any]) throws -> DivFixedSizeTemplate {
     guard let parent = parent, parent != Self.type else { return self }
     guard let parentTemplate = templates[parent] as? DivFixedSizeTemplate else {
       throw DeserializationError.unknownType(type: parent)
@@ -110,7 +109,7 @@ public final class DivFixedSizeTemplate: TemplateValue, TemplateDeserializable {
     )
   }
 
-  public func resolveParent(templates: Templates) throws -> DivFixedSizeTemplate {
+  public func resolveParent(templates: [TemplateName: Any]) throws -> DivFixedSizeTemplate {
     return try mergedWithParent(templates: templates)
   }
 }

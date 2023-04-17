@@ -3,9 +3,8 @@
 import CommonCorePublic
 import Foundation
 import Serialization
-import TemplatesSupport
 
-public final class DivChangeSetTransitionTemplate: TemplateValue, TemplateDeserializable {
+public final class DivChangeSetTransitionTemplate: TemplateValue {
   public static let type: String = "set"
   public let parent: String? // at least 1 char
   public let items: Field<[DivChangeTransitionTemplate]>? // at least 1 elements
@@ -13,7 +12,7 @@ public final class DivChangeSetTransitionTemplate: TemplateValue, TemplateDeseri
   static let parentValidator: AnyValueValidator<String> =
     makeStringValidator(minLength: 1)
 
-  public convenience init(dictionary: [String: Any], templateToType: TemplateToType) throws {
+  public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
     do {
       self.init(
         parent: try dictionary.getOptionalField("type", validator: Self.parentValidator),
@@ -32,7 +31,7 @@ public final class DivChangeSetTransitionTemplate: TemplateValue, TemplateDeseri
     self.items = items
   }
 
-  private static func resolveOnlyLinks(context: Context, parent: DivChangeSetTransitionTemplate?) -> DeserializationResult<DivChangeSetTransition> {
+  private static func resolveOnlyLinks(context: TemplatesContext, parent: DivChangeSetTransitionTemplate?) -> DeserializationResult<DivChangeSetTransition> {
     let itemsValue = parent?.items?.resolveValue(context: context, validator: ResolvedValue.itemsValidator, useOnlyLinks: true) ?? .noValue
     var errors = mergeErrors(
       itemsValue.errorsOrWarnings?.map { .nestedObjectError(field: "items", error: $0) }
@@ -51,7 +50,7 @@ public final class DivChangeSetTransitionTemplate: TemplateValue, TemplateDeseri
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  public static func resolveValue(context: Context, parent: DivChangeSetTransitionTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivChangeSetTransition> {
+  public static func resolveValue(context: TemplatesContext, parent: DivChangeSetTransitionTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivChangeSetTransition> {
     if useOnlyLinks {
       return resolveOnlyLinks(context: context, parent: parent)
     }
@@ -85,7 +84,7 @@ public final class DivChangeSetTransitionTemplate: TemplateValue, TemplateDeseri
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  private func mergedWithParent(templates: Templates) throws -> DivChangeSetTransitionTemplate {
+  private func mergedWithParent(templates: [TemplateName: Any]) throws -> DivChangeSetTransitionTemplate {
     guard let parent = parent, parent != Self.type else { return self }
     guard let parentTemplate = templates[parent] as? DivChangeSetTransitionTemplate else {
       throw DeserializationError.unknownType(type: parent)
@@ -98,7 +97,7 @@ public final class DivChangeSetTransitionTemplate: TemplateValue, TemplateDeseri
     )
   }
 
-  public func resolveParent(templates: Templates) throws -> DivChangeSetTransitionTemplate {
+  public func resolveParent(templates: [TemplateName: Any]) throws -> DivChangeSetTransitionTemplate {
     let merged = try mergedWithParent(templates: templates)
 
     return DivChangeSetTransitionTemplate(

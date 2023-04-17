@@ -3,16 +3,15 @@
 import CommonCorePublic
 import Foundation
 import Serialization
-import TemplatesSupport
 
-public final class DivTriggerTemplate: TemplateValue, TemplateDeserializable {
+public final class DivTriggerTemplate: TemplateValue {
   public typealias Mode = DivTrigger.Mode
 
   public let actions: Field<[DivActionTemplate]>? // at least 1 elements
   public let condition: Field<Expression<Bool>>?
   public let mode: Field<Expression<Mode>>? // default value: on_condition
 
-  public convenience init(dictionary: [String: Any], templateToType: TemplateToType) throws {
+  public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
     do {
       self.init(
         actions: try dictionary.getOptionalArray("actions", templateToType: templateToType),
@@ -34,7 +33,7 @@ public final class DivTriggerTemplate: TemplateValue, TemplateDeserializable {
     self.mode = mode
   }
 
-  private static func resolveOnlyLinks(context: Context, parent: DivTriggerTemplate?) -> DeserializationResult<DivTrigger> {
+  private static func resolveOnlyLinks(context: TemplatesContext, parent: DivTriggerTemplate?) -> DeserializationResult<DivTrigger> {
     let actionsValue = parent?.actions?.resolveValue(context: context, validator: ResolvedValue.actionsValidator, useOnlyLinks: true) ?? .noValue
     let conditionValue = parent?.condition?.resolveValue(context: context) ?? .noValue
     let modeValue = parent?.mode?.resolveOptionalValue(context: context, validator: ResolvedValue.modeValidator) ?? .noValue
@@ -63,7 +62,7 @@ public final class DivTriggerTemplate: TemplateValue, TemplateDeserializable {
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  public static func resolveValue(context: Context, parent: DivTriggerTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivTrigger> {
+  public static func resolveValue(context: TemplatesContext, parent: DivTriggerTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivTrigger> {
     if useOnlyLinks {
       return resolveOnlyLinks(context: context, parent: parent)
     }
@@ -115,11 +114,11 @@ public final class DivTriggerTemplate: TemplateValue, TemplateDeserializable {
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  private func mergedWithParent(templates: Templates) throws -> DivTriggerTemplate {
+  private func mergedWithParent(templates: [TemplateName: Any]) throws -> DivTriggerTemplate {
     return self
   }
 
-  public func resolveParent(templates: Templates) throws -> DivTriggerTemplate {
+  public func resolveParent(templates: [TemplateName: Any]) throws -> DivTriggerTemplate {
     let merged = try mergedWithParent(templates: templates)
 
     return DivTriggerTemplate(

@@ -3,9 +3,8 @@
 import CommonCorePublic
 import Foundation
 import Serialization
-import TemplatesSupport
 
-public final class DivTimerTemplate: TemplateValue, TemplateDeserializable {
+public final class DivTimerTemplate: TemplateValue {
   public let duration: Field<Expression<Int>>? // constraint: number >= 0; default value: 0
   public let endActions: Field<[DivActionTemplate]>? // at least 1 elements
   public let id: Field<String>? // at least 1 char
@@ -13,7 +12,7 @@ public final class DivTimerTemplate: TemplateValue, TemplateDeserializable {
   public let tickInterval: Field<Expression<Int>>? // constraint: number > 0
   public let valueVariable: Field<String>? // at least 1 char
 
-  public convenience init(dictionary: [String: Any], templateToType: TemplateToType) throws {
+  public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
     do {
       self.init(
         duration: try dictionary.getOptionalExpressionField("duration"),
@@ -44,7 +43,7 @@ public final class DivTimerTemplate: TemplateValue, TemplateDeserializable {
     self.valueVariable = valueVariable
   }
 
-  private static func resolveOnlyLinks(context: Context, parent: DivTimerTemplate?) -> DeserializationResult<DivTimer> {
+  private static func resolveOnlyLinks(context: TemplatesContext, parent: DivTimerTemplate?) -> DeserializationResult<DivTimer> {
     let durationValue = parent?.duration?.resolveOptionalValue(context: context, validator: ResolvedValue.durationValidator) ?? .noValue
     let endActionsValue = parent?.endActions?.resolveOptionalValue(context: context, validator: ResolvedValue.endActionsValidator, useOnlyLinks: true) ?? .noValue
     let idValue = parent?.id?.resolveValue(context: context, validator: ResolvedValue.idValidator) ?? .noValue
@@ -78,7 +77,7 @@ public final class DivTimerTemplate: TemplateValue, TemplateDeserializable {
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  public static func resolveValue(context: Context, parent: DivTimerTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivTimer> {
+  public static func resolveValue(context: TemplatesContext, parent: DivTimerTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivTimer> {
     if useOnlyLinks {
       return resolveOnlyLinks(context: context, parent: parent)
     }
@@ -148,11 +147,11 @@ public final class DivTimerTemplate: TemplateValue, TemplateDeserializable {
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  private func mergedWithParent(templates: Templates) throws -> DivTimerTemplate {
+  private func mergedWithParent(templates: [TemplateName: Any]) throws -> DivTimerTemplate {
     return self
   }
 
-  public func resolveParent(templates: Templates) throws -> DivTimerTemplate {
+  public func resolveParent(templates: [TemplateName: Any]) throws -> DivTimerTemplate {
     let merged = try mergedWithParent(templates: templates)
 
     return DivTimerTemplate(

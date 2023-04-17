@@ -3,13 +3,12 @@
 import CommonCorePublic
 import Foundation
 import Serialization
-import TemplatesSupport
 
-public final class DivDimensionTemplate: TemplateValue, TemplateDeserializable {
+public final class DivDimensionTemplate: TemplateValue {
   public let unit: Field<Expression<DivSizeUnit>>? // default value: dp
   public let value: Field<Expression<Double>>?
 
-  public convenience init(dictionary: [String: Any], templateToType: TemplateToType) throws {
+  public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
     do {
       self.init(
         unit: try dictionary.getOptionalExpressionField("unit"),
@@ -28,7 +27,7 @@ public final class DivDimensionTemplate: TemplateValue, TemplateDeserializable {
     self.value = value
   }
 
-  private static func resolveOnlyLinks(context: Context, parent: DivDimensionTemplate?) -> DeserializationResult<DivDimension> {
+  private static func resolveOnlyLinks(context: TemplatesContext, parent: DivDimensionTemplate?) -> DeserializationResult<DivDimension> {
     let unitValue = parent?.unit?.resolveOptionalValue(context: context, validator: ResolvedValue.unitValidator) ?? .noValue
     let valueValue = parent?.value?.resolveValue(context: context) ?? .noValue
     var errors = mergeErrors(
@@ -50,7 +49,7 @@ public final class DivDimensionTemplate: TemplateValue, TemplateDeserializable {
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  public static func resolveValue(context: Context, parent: DivDimensionTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivDimension> {
+  public static func resolveValue(context: TemplatesContext, parent: DivDimensionTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivDimension> {
     if useOnlyLinks {
       return resolveOnlyLinks(context: context, parent: parent)
     }
@@ -88,11 +87,11 @@ public final class DivDimensionTemplate: TemplateValue, TemplateDeserializable {
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  private func mergedWithParent(templates: Templates) throws -> DivDimensionTemplate {
+  private func mergedWithParent(templates: [TemplateName: Any]) throws -> DivDimensionTemplate {
     return self
   }
 
-  public func resolveParent(templates: Templates) throws -> DivDimensionTemplate {
+  public func resolveParent(templates: [TemplateName: Any]) throws -> DivDimensionTemplate {
     return try mergedWithParent(templates: templates)
   }
 }

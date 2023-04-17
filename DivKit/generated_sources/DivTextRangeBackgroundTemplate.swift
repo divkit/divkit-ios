@@ -3,7 +3,6 @@
 import CommonCorePublic
 import Foundation
 import Serialization
-import TemplatesSupport
 
 @frozen
 public enum DivTextRangeBackgroundTemplate: TemplateValue {
@@ -16,14 +15,14 @@ public enum DivTextRangeBackgroundTemplate: TemplateValue {
     }
   }
 
-  public func resolveParent(templates: Templates) throws -> DivTextRangeBackgroundTemplate {
+  public func resolveParent(templates: [TemplateName: Any]) throws -> DivTextRangeBackgroundTemplate {
     switch self {
     case let .divSolidBackgroundTemplate(value):
       return .divSolidBackgroundTemplate(try value.resolveParent(templates: templates))
     }
   }
 
-  public static func resolveValue(context: Context, parent: DivTextRangeBackgroundTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivTextRangeBackground> {
+  public static func resolveValue(context: TemplatesContext, parent: DivTextRangeBackgroundTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivTextRangeBackground> {
     guard let parent = parent else {
       if useOnlyLinks {
         return .failure(NonEmptyArray(.missingType(representation: context.templateData)))
@@ -44,7 +43,7 @@ public enum DivTextRangeBackgroundTemplate: TemplateValue {
     }
   }
 
-  private static func resolveUnknownValue(context: Context, useOnlyLinks: Bool) -> DeserializationResult<DivTextRangeBackground> {
+  private static func resolveUnknownValue(context: TemplatesContext, useOnlyLinks: Bool) -> DeserializationResult<DivTextRangeBackground> {
     guard let type = (context.templateData["type"] as? String).flatMap({ context.templateToType[$0] ?? $0 }) else {
       return .failure(NonEmptyArray(.requiredFieldIsMissing(field: "type")))
     }
@@ -64,8 +63,8 @@ public enum DivTextRangeBackgroundTemplate: TemplateValue {
   }
 }
 
-extension DivTextRangeBackgroundTemplate: TemplateDeserializable {
-  public init(dictionary: [String: Any], templateToType: TemplateToType) throws {
+extension DivTextRangeBackgroundTemplate {
+  public init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
     let receivedType = try dictionary.getField("type") as String
     let blockType = templateToType[receivedType] ?? receivedType
     switch blockType {

@@ -3,9 +3,8 @@
 import CommonCorePublic
 import Foundation
 import Serialization
-import TemplatesSupport
 
-public final class DivPercentageSizeTemplate: TemplateValue, TemplateDeserializable {
+public final class DivPercentageSizeTemplate: TemplateValue {
   public static let type: String = "percentage"
   public let parent: String? // at least 1 char
   public let value: Field<Expression<Double>>? // constraint: number > 0
@@ -13,7 +12,7 @@ public final class DivPercentageSizeTemplate: TemplateValue, TemplateDeserializa
   static let parentValidator: AnyValueValidator<String> =
     makeStringValidator(minLength: 1)
 
-  public convenience init(dictionary: [String: Any], templateToType: TemplateToType) throws {
+  public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
     do {
       self.init(
         parent: try dictionary.getOptionalField("type", validator: Self.parentValidator),
@@ -32,7 +31,7 @@ public final class DivPercentageSizeTemplate: TemplateValue, TemplateDeserializa
     self.value = value
   }
 
-  private static func resolveOnlyLinks(context: Context, parent: DivPercentageSizeTemplate?) -> DeserializationResult<DivPercentageSize> {
+  private static func resolveOnlyLinks(context: TemplatesContext, parent: DivPercentageSizeTemplate?) -> DeserializationResult<DivPercentageSize> {
     let valueValue = parent?.value?.resolveValue(context: context, validator: ResolvedValue.valueValidator) ?? .noValue
     var errors = mergeErrors(
       valueValue.errorsOrWarnings?.map { .nestedObjectError(field: "value", error: $0) }
@@ -51,7 +50,7 @@ public final class DivPercentageSizeTemplate: TemplateValue, TemplateDeserializa
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  public static func resolveValue(context: Context, parent: DivPercentageSizeTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivPercentageSize> {
+  public static func resolveValue(context: TemplatesContext, parent: DivPercentageSizeTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivPercentageSize> {
     if useOnlyLinks {
       return resolveOnlyLinks(context: context, parent: parent)
     }
@@ -82,7 +81,7 @@ public final class DivPercentageSizeTemplate: TemplateValue, TemplateDeserializa
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  private func mergedWithParent(templates: Templates) throws -> DivPercentageSizeTemplate {
+  private func mergedWithParent(templates: [TemplateName: Any]) throws -> DivPercentageSizeTemplate {
     guard let parent = parent, parent != Self.type else { return self }
     guard let parentTemplate = templates[parent] as? DivPercentageSizeTemplate else {
       throw DeserializationError.unknownType(type: parent)
@@ -95,7 +94,7 @@ public final class DivPercentageSizeTemplate: TemplateValue, TemplateDeserializa
     )
   }
 
-  public func resolveParent(templates: Templates) throws -> DivPercentageSizeTemplate {
+  public func resolveParent(templates: [TemplateName: Any]) throws -> DivPercentageSizeTemplate {
     return try mergedWithParent(templates: templates)
   }
 }

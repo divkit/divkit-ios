@@ -3,9 +3,8 @@
 import CommonCorePublic
 import Foundation
 import Serialization
-import TemplatesSupport
 
-public final class DivAccessibilityTemplate: TemplateValue, TemplateDeserializable {
+public final class DivAccessibilityTemplate: TemplateValue {
   public typealias Kind = DivAccessibility.Kind
 
   public typealias Mode = DivAccessibility.Mode
@@ -17,7 +16,7 @@ public final class DivAccessibilityTemplate: TemplateValue, TemplateDeserializab
   public let stateDescription: Field<Expression<String>>? // at least 1 char
   public let type: Field<Kind>?
 
-  public convenience init(dictionary: [String: Any], templateToType: TemplateToType) throws {
+  public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
     self.init(
       description: try dictionary.getOptionalExpressionField("description"),
       hint: try dictionary.getOptionalExpressionField("hint"),
@@ -44,7 +43,7 @@ public final class DivAccessibilityTemplate: TemplateValue, TemplateDeserializab
     self.type = type
   }
 
-  private static func resolveOnlyLinks(context: Context, parent: DivAccessibilityTemplate?) -> DeserializationResult<DivAccessibility> {
+  private static func resolveOnlyLinks(context: TemplatesContext, parent: DivAccessibilityTemplate?) -> DeserializationResult<DivAccessibility> {
     let descriptionValue = parent?.description?.resolveOptionalValue(context: context, validator: ResolvedValue.descriptionValidator) ?? .noValue
     let hintValue = parent?.hint?.resolveOptionalValue(context: context, validator: ResolvedValue.hintValidator) ?? .noValue
     let modeValue = parent?.mode?.resolveOptionalValue(context: context, validator: ResolvedValue.modeValidator) ?? .noValue
@@ -70,7 +69,7 @@ public final class DivAccessibilityTemplate: TemplateValue, TemplateDeserializab
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  public static func resolveValue(context: Context, parent: DivAccessibilityTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivAccessibility> {
+  public static func resolveValue(context: TemplatesContext, parent: DivAccessibilityTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivAccessibility> {
     if useOnlyLinks {
       return resolveOnlyLinks(context: context, parent: parent)
     }
@@ -128,11 +127,11 @@ public final class DivAccessibilityTemplate: TemplateValue, TemplateDeserializab
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  private func mergedWithParent(templates: Templates) throws -> DivAccessibilityTemplate {
+  private func mergedWithParent(templates: [TemplateName: Any]) throws -> DivAccessibilityTemplate {
     return self
   }
 
-  public func resolveParent(templates: Templates) throws -> DivAccessibilityTemplate {
+  public func resolveParent(templates: [TemplateName: Any]) throws -> DivAccessibilityTemplate {
     return try mergedWithParent(templates: templates)
   }
 }

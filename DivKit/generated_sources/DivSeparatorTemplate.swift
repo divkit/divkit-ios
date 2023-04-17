@@ -3,16 +3,15 @@
 import CommonCorePublic
 import Foundation
 import Serialization
-import TemplatesSupport
 
-public final class DivSeparatorTemplate: TemplateValue, TemplateDeserializable {
-  public final class DelimiterStyleTemplate: TemplateValue, TemplateDeserializable {
+public final class DivSeparatorTemplate: TemplateValue {
+  public final class DelimiterStyleTemplate: TemplateValue {
     public typealias Orientation = DivSeparator.DelimiterStyle.Orientation
 
     public let color: Field<Expression<Color>>? // default value: #14000000
     public let orientation: Field<Expression<Orientation>>? // default value: horizontal
 
-    public convenience init(dictionary: [String: Any], templateToType: TemplateToType) throws {
+    public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
       self.init(
         color: try dictionary.getOptionalExpressionField("color", transform: Color.color(withHexString:)),
         orientation: try dictionary.getOptionalExpressionField("orientation")
@@ -27,7 +26,7 @@ public final class DivSeparatorTemplate: TemplateValue, TemplateDeserializable {
       self.orientation = orientation
     }
 
-    private static func resolveOnlyLinks(context: Context, parent: DelimiterStyleTemplate?) -> DeserializationResult<DivSeparator.DelimiterStyle> {
+    private static func resolveOnlyLinks(context: TemplatesContext, parent: DelimiterStyleTemplate?) -> DeserializationResult<DivSeparator.DelimiterStyle> {
       let colorValue = parent?.color?.resolveOptionalValue(context: context, transform: Color.color(withHexString:), validator: ResolvedValue.colorValidator) ?? .noValue
       let orientationValue = parent?.orientation?.resolveOptionalValue(context: context, validator: ResolvedValue.orientationValidator) ?? .noValue
       let errors = mergeErrors(
@@ -41,7 +40,7 @@ public final class DivSeparatorTemplate: TemplateValue, TemplateDeserializable {
       return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
     }
 
-    public static func resolveValue(context: Context, parent: DelimiterStyleTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivSeparator.DelimiterStyle> {
+    public static func resolveValue(context: TemplatesContext, parent: DelimiterStyleTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivSeparator.DelimiterStyle> {
       if useOnlyLinks {
         return resolveOnlyLinks(context: context, parent: parent)
       }
@@ -71,11 +70,11 @@ public final class DivSeparatorTemplate: TemplateValue, TemplateDeserializable {
       return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
     }
 
-    private func mergedWithParent(templates: Templates) throws -> DelimiterStyleTemplate {
+    private func mergedWithParent(templates: [TemplateName: Any]) throws -> DelimiterStyleTemplate {
       return self
     }
 
-    public func resolveParent(templates: Templates) throws -> DelimiterStyleTemplate {
+    public func resolveParent(templates: [TemplateName: Any]) throws -> DelimiterStyleTemplate {
       return try mergedWithParent(templates: templates)
     }
   }
@@ -117,7 +116,7 @@ public final class DivSeparatorTemplate: TemplateValue, TemplateDeserializable {
   static let parentValidator: AnyValueValidator<String> =
     makeStringValidator(minLength: 1)
 
-  public convenience init(dictionary: [String: Any], templateToType: TemplateToType) throws {
+  public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
     self.init(
       parent: try dictionary.getOptionalField("type", validator: Self.parentValidator),
       accessibility: try dictionary.getOptionalField("accessibility", templateToType: templateToType),
@@ -222,7 +221,7 @@ public final class DivSeparatorTemplate: TemplateValue, TemplateDeserializable {
     self.width = width
   }
 
-  private static func resolveOnlyLinks(context: Context, parent: DivSeparatorTemplate?) -> DeserializationResult<DivSeparator> {
+  private static func resolveOnlyLinks(context: TemplatesContext, parent: DivSeparatorTemplate?) -> DeserializationResult<DivSeparator> {
     let accessibilityValue = parent?.accessibility?.resolveOptionalValue(context: context, validator: ResolvedValue.accessibilityValidator, useOnlyLinks: true) ?? .noValue
     let actionValue = parent?.action?.resolveOptionalValue(context: context, validator: ResolvedValue.actionValidator, useOnlyLinks: true) ?? .noValue
     let actionAnimationValue = parent?.actionAnimation?.resolveOptionalValue(context: context, validator: ResolvedValue.actionAnimationValidator, useOnlyLinks: true) ?? .noValue
@@ -323,7 +322,7 @@ public final class DivSeparatorTemplate: TemplateValue, TemplateDeserializable {
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  public static func resolveValue(context: Context, parent: DivSeparatorTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivSeparator> {
+  public static func resolveValue(context: TemplatesContext, parent: DivSeparatorTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivSeparator> {
     if useOnlyLinks {
       return resolveOnlyLinks(context: context, parent: parent)
     }
@@ -581,7 +580,7 @@ public final class DivSeparatorTemplate: TemplateValue, TemplateDeserializable {
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  private func mergedWithParent(templates: Templates) throws -> DivSeparatorTemplate {
+  private func mergedWithParent(templates: [TemplateName: Any]) throws -> DivSeparatorTemplate {
     guard let parent = parent, parent != Self.type else { return self }
     guard let parentTemplate = templates[parent] as? DivSeparatorTemplate else {
       throw DeserializationError.unknownType(type: parent)
@@ -624,7 +623,7 @@ public final class DivSeparatorTemplate: TemplateValue, TemplateDeserializable {
     )
   }
 
-  public func resolveParent(templates: Templates) throws -> DivSeparatorTemplate {
+  public func resolveParent(templates: [TemplateName: Any]) throws -> DivSeparatorTemplate {
     let merged = try mergedWithParent(templates: templates)
 
     return DivSeparatorTemplate(

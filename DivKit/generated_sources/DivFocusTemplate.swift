@@ -3,17 +3,16 @@
 import CommonCorePublic
 import Foundation
 import Serialization
-import TemplatesSupport
 
-public final class DivFocusTemplate: TemplateValue, TemplateDeserializable {
-  public final class NextFocusIdsTemplate: TemplateValue, TemplateDeserializable {
+public final class DivFocusTemplate: TemplateValue {
+  public final class NextFocusIdsTemplate: TemplateValue {
     public let down: Field<Expression<String>>? // at least 1 char
     public let forward: Field<Expression<String>>? // at least 1 char
     public let left: Field<Expression<String>>? // at least 1 char
     public let right: Field<Expression<String>>? // at least 1 char
     public let up: Field<Expression<String>>? // at least 1 char
 
-    public convenience init(dictionary: [String: Any], templateToType: TemplateToType) throws {
+    public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
       self.init(
         down: try dictionary.getOptionalExpressionField("down"),
         forward: try dictionary.getOptionalExpressionField("forward"),
@@ -37,7 +36,7 @@ public final class DivFocusTemplate: TemplateValue, TemplateDeserializable {
       self.up = up
     }
 
-    private static func resolveOnlyLinks(context: Context, parent: NextFocusIdsTemplate?) -> DeserializationResult<DivFocus.NextFocusIds> {
+    private static func resolveOnlyLinks(context: TemplatesContext, parent: NextFocusIdsTemplate?) -> DeserializationResult<DivFocus.NextFocusIds> {
       let downValue = parent?.down?.resolveOptionalValue(context: context, validator: ResolvedValue.downValidator) ?? .noValue
       let forwardValue = parent?.forward?.resolveOptionalValue(context: context, validator: ResolvedValue.forwardValidator) ?? .noValue
       let leftValue = parent?.left?.resolveOptionalValue(context: context, validator: ResolvedValue.leftValidator) ?? .noValue
@@ -60,7 +59,7 @@ public final class DivFocusTemplate: TemplateValue, TemplateDeserializable {
       return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
     }
 
-    public static func resolveValue(context: Context, parent: NextFocusIdsTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivFocus.NextFocusIds> {
+    public static func resolveValue(context: TemplatesContext, parent: NextFocusIdsTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivFocus.NextFocusIds> {
       if useOnlyLinks {
         return resolveOnlyLinks(context: context, parent: parent)
       }
@@ -111,11 +110,11 @@ public final class DivFocusTemplate: TemplateValue, TemplateDeserializable {
       return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
     }
 
-    private func mergedWithParent(templates: Templates) throws -> NextFocusIdsTemplate {
+    private func mergedWithParent(templates: [TemplateName: Any]) throws -> NextFocusIdsTemplate {
       return self
     }
 
-    public func resolveParent(templates: Templates) throws -> NextFocusIdsTemplate {
+    public func resolveParent(templates: [TemplateName: Any]) throws -> NextFocusIdsTemplate {
       return try mergedWithParent(templates: templates)
     }
   }
@@ -126,7 +125,7 @@ public final class DivFocusTemplate: TemplateValue, TemplateDeserializable {
   public let onBlur: Field<[DivActionTemplate]>? // at least 1 elements
   public let onFocus: Field<[DivActionTemplate]>? // at least 1 elements
 
-  public convenience init(dictionary: [String: Any], templateToType: TemplateToType) throws {
+  public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
     self.init(
       background: try dictionary.getOptionalArray("background", templateToType: templateToType),
       border: try dictionary.getOptionalField("border", templateToType: templateToType),
@@ -150,7 +149,7 @@ public final class DivFocusTemplate: TemplateValue, TemplateDeserializable {
     self.onFocus = onFocus
   }
 
-  private static func resolveOnlyLinks(context: Context, parent: DivFocusTemplate?) -> DeserializationResult<DivFocus> {
+  private static func resolveOnlyLinks(context: TemplatesContext, parent: DivFocusTemplate?) -> DeserializationResult<DivFocus> {
     let backgroundValue = parent?.background?.resolveOptionalValue(context: context, validator: ResolvedValue.backgroundValidator, useOnlyLinks: true) ?? .noValue
     let borderValue = parent?.border?.resolveOptionalValue(context: context, validator: ResolvedValue.borderValidator, useOnlyLinks: true) ?? .noValue
     let nextFocusIdsValue = parent?.nextFocusIds?.resolveOptionalValue(context: context, validator: ResolvedValue.nextFocusIdsValidator, useOnlyLinks: true) ?? .noValue
@@ -173,7 +172,7 @@ public final class DivFocusTemplate: TemplateValue, TemplateDeserializable {
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  public static func resolveValue(context: Context, parent: DivFocusTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivFocus> {
+  public static func resolveValue(context: TemplatesContext, parent: DivFocusTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivFocus> {
     if useOnlyLinks {
       return resolveOnlyLinks(context: context, parent: parent)
     }
@@ -231,11 +230,11 @@ public final class DivFocusTemplate: TemplateValue, TemplateDeserializable {
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  private func mergedWithParent(templates: Templates) throws -> DivFocusTemplate {
+  private func mergedWithParent(templates: [TemplateName: Any]) throws -> DivFocusTemplate {
     return self
   }
 
-  public func resolveParent(templates: Templates) throws -> DivFocusTemplate {
+  public func resolveParent(templates: [TemplateName: Any]) throws -> DivFocusTemplate {
     let merged = try mergedWithParent(templates: templates)
 
     return DivFocusTemplate(

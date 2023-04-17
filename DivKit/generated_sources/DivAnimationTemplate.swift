@@ -3,9 +3,8 @@
 import CommonCorePublic
 import Foundation
 import Serialization
-import TemplatesSupport
 
-public final class DivAnimationTemplate: TemplateValue, TemplateDeserializable {
+public final class DivAnimationTemplate: TemplateValue {
   public typealias Name = DivAnimation.Name
 
   public let duration: Field<Expression<Int>>? // constraint: number >= 0; default value: 300
@@ -17,7 +16,7 @@ public final class DivAnimationTemplate: TemplateValue, TemplateDeserializable {
   public let startDelay: Field<Expression<Int>>? // constraint: number >= 0; default value: 0
   public let startValue: Field<Expression<Double>>?
 
-  public convenience init(dictionary: [String: Any], templateToType: TemplateToType) throws {
+  public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
     do {
       self.init(
         duration: try dictionary.getOptionalExpressionField("duration"),
@@ -54,7 +53,7 @@ public final class DivAnimationTemplate: TemplateValue, TemplateDeserializable {
     self.startValue = startValue
   }
 
-  private static func resolveOnlyLinks(context: Context, parent: DivAnimationTemplate?) -> DeserializationResult<DivAnimation> {
+  private static func resolveOnlyLinks(context: TemplatesContext, parent: DivAnimationTemplate?) -> DeserializationResult<DivAnimation> {
     let durationValue = parent?.duration?.resolveOptionalValue(context: context, validator: ResolvedValue.durationValidator) ?? .noValue
     let endValueValue = parent?.endValue?.resolveOptionalValue(context: context) ?? .noValue
     let interpolatorValue = parent?.interpolator?.resolveOptionalValue(context: context, validator: ResolvedValue.interpolatorValidator) ?? .noValue
@@ -94,7 +93,7 @@ public final class DivAnimationTemplate: TemplateValue, TemplateDeserializable {
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  public static func resolveValue(context: Context, parent: DivAnimationTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivAnimation> {
+  public static func resolveValue(context: TemplatesContext, parent: DivAnimationTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivAnimation> {
     if useOnlyLinks {
       return resolveOnlyLinks(context: context, parent: parent)
     }
@@ -178,11 +177,11 @@ public final class DivAnimationTemplate: TemplateValue, TemplateDeserializable {
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  private func mergedWithParent(templates: Templates) throws -> DivAnimationTemplate {
+  private func mergedWithParent(templates: [TemplateName: Any]) throws -> DivAnimationTemplate {
     return self
   }
 
-  public func resolveParent(templates: Templates) throws -> DivAnimationTemplate {
+  public func resolveParent(templates: [TemplateName: Any]) throws -> DivAnimationTemplate {
     let merged = try mergedWithParent(templates: templates)
 
     return DivAnimationTemplate(

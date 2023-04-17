@@ -3,7 +3,6 @@
 import CommonCorePublic
 import Foundation
 import Serialization
-import TemplatesSupport
 
 @frozen
 public enum DivPagerLayoutModeTemplate: TemplateValue {
@@ -19,7 +18,7 @@ public enum DivPagerLayoutModeTemplate: TemplateValue {
     }
   }
 
-  public func resolveParent(templates: Templates) throws -> DivPagerLayoutModeTemplate {
+  public func resolveParent(templates: [TemplateName: Any]) throws -> DivPagerLayoutModeTemplate {
     switch self {
     case let .divPageSizeTemplate(value):
       return .divPageSizeTemplate(try value.resolveParent(templates: templates))
@@ -28,7 +27,7 @@ public enum DivPagerLayoutModeTemplate: TemplateValue {
     }
   }
 
-  public static func resolveValue(context: Context, parent: DivPagerLayoutModeTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivPagerLayoutMode> {
+  public static func resolveValue(context: TemplatesContext, parent: DivPagerLayoutModeTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivPagerLayoutMode> {
     guard let parent = parent else {
       if useOnlyLinks {
         return .failure(NonEmptyArray(.missingType(representation: context.templateData)))
@@ -57,7 +56,7 @@ public enum DivPagerLayoutModeTemplate: TemplateValue {
     }
   }
 
-  private static func resolveUnknownValue(context: Context, useOnlyLinks: Bool) -> DeserializationResult<DivPagerLayoutMode> {
+  private static func resolveUnknownValue(context: TemplatesContext, useOnlyLinks: Bool) -> DeserializationResult<DivPagerLayoutMode> {
     guard let type = (context.templateData["type"] as? String).flatMap({ context.templateToType[$0] ?? $0 }) else {
       return .failure(NonEmptyArray(.requiredFieldIsMissing(field: "type")))
     }
@@ -85,8 +84,8 @@ public enum DivPagerLayoutModeTemplate: TemplateValue {
   }
 }
 
-extension DivPagerLayoutModeTemplate: TemplateDeserializable {
-  public init(dictionary: [String: Any], templateToType: TemplateToType) throws {
+extension DivPagerLayoutModeTemplate {
+  public init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
     let receivedType = try dictionary.getField("type") as String
     let blockType = templateToType[receivedType] ?? receivedType
     switch blockType {

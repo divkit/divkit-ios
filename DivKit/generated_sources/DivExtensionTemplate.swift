@@ -3,13 +3,12 @@
 import CommonCorePublic
 import Foundation
 import Serialization
-import TemplatesSupport
 
-public final class DivExtensionTemplate: TemplateValue, TemplateDeserializable {
+public final class DivExtensionTemplate: TemplateValue {
   public let id: Field<String>? // at least 1 char
   public let params: Field<[String: Any]>?
 
-  public convenience init(dictionary: [String: Any], templateToType: TemplateToType) throws {
+  public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
     do {
       self.init(
         id: try dictionary.getOptionalField("id"),
@@ -28,7 +27,7 @@ public final class DivExtensionTemplate: TemplateValue, TemplateDeserializable {
     self.params = params
   }
 
-  private static func resolveOnlyLinks(context: Context, parent: DivExtensionTemplate?) -> DeserializationResult<DivExtension> {
+  private static func resolveOnlyLinks(context: TemplatesContext, parent: DivExtensionTemplate?) -> DeserializationResult<DivExtension> {
     let idValue = parent?.id?.resolveValue(context: context, validator: ResolvedValue.idValidator) ?? .noValue
     let paramsValue = parent?.params?.resolveOptionalValue(context: context, validator: ResolvedValue.paramsValidator) ?? .noValue
     var errors = mergeErrors(
@@ -50,7 +49,7 @@ public final class DivExtensionTemplate: TemplateValue, TemplateDeserializable {
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  public static func resolveValue(context: Context, parent: DivExtensionTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivExtension> {
+  public static func resolveValue(context: TemplatesContext, parent: DivExtensionTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivExtension> {
     if useOnlyLinks {
       return resolveOnlyLinks(context: context, parent: parent)
     }
@@ -88,11 +87,11 @@ public final class DivExtensionTemplate: TemplateValue, TemplateDeserializable {
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  private func mergedWithParent(templates: Templates) throws -> DivExtensionTemplate {
+  private func mergedWithParent(templates: [TemplateName: Any]) throws -> DivExtensionTemplate {
     return self
   }
 
-  public func resolveParent(templates: Templates) throws -> DivExtensionTemplate {
+  public func resolveParent(templates: [TemplateName: Any]) throws -> DivExtensionTemplate {
     return try mergedWithParent(templates: templates)
   }
 }

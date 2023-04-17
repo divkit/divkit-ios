@@ -3,17 +3,16 @@
 import CommonCorePublic
 import Foundation
 import Serialization
-import TemplatesSupport
 
-public final class DivStateTemplate: TemplateValue, TemplateDeserializable {
-  public final class StateTemplate: TemplateValue, TemplateDeserializable {
+public final class DivStateTemplate: TemplateValue {
+  public final class StateTemplate: TemplateValue {
     public let animationIn: Field<DivAnimationTemplate>?
     public let animationOut: Field<DivAnimationTemplate>?
     public let div: Field<DivTemplate>?
     public let stateId: Field<String>?
     public let swipeOutActions: Field<[DivActionTemplate]>? // at least 1 elements
 
-    public convenience init(dictionary: [String: Any], templateToType: TemplateToType) throws {
+    public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
       do {
         self.init(
           animationIn: try dictionary.getOptionalField("animation_in", templateToType: templateToType),
@@ -41,7 +40,7 @@ public final class DivStateTemplate: TemplateValue, TemplateDeserializable {
       self.swipeOutActions = swipeOutActions
     }
 
-    private static func resolveOnlyLinks(context: Context, parent: StateTemplate?) -> DeserializationResult<DivState.State> {
+    private static func resolveOnlyLinks(context: TemplatesContext, parent: StateTemplate?) -> DeserializationResult<DivState.State> {
       let animationInValue = parent?.animationIn?.resolveOptionalValue(context: context, validator: ResolvedValue.animationInValidator, useOnlyLinks: true) ?? .noValue
       let animationOutValue = parent?.animationOut?.resolveOptionalValue(context: context, validator: ResolvedValue.animationOutValidator, useOnlyLinks: true) ?? .noValue
       let divValue = parent?.div?.resolveOptionalValue(context: context, validator: ResolvedValue.divValidator, useOnlyLinks: true) ?? .noValue
@@ -72,7 +71,7 @@ public final class DivStateTemplate: TemplateValue, TemplateDeserializable {
       return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
     }
 
-    public static func resolveValue(context: Context, parent: StateTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivState.State> {
+    public static func resolveValue(context: TemplatesContext, parent: StateTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivState.State> {
       if useOnlyLinks {
         return resolveOnlyLinks(context: context, parent: parent)
       }
@@ -137,11 +136,11 @@ public final class DivStateTemplate: TemplateValue, TemplateDeserializable {
       return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
     }
 
-    private func mergedWithParent(templates: Templates) throws -> StateTemplate {
+    private func mergedWithParent(templates: [TemplateName: Any]) throws -> StateTemplate {
       return self
     }
 
-    public func resolveParent(templates: Templates) throws -> StateTemplate {
+    public func resolveParent(templates: [TemplateName: Any]) throws -> StateTemplate {
       let merged = try mergedWithParent(templates: templates)
 
       return StateTemplate(
@@ -189,7 +188,7 @@ public final class DivStateTemplate: TemplateValue, TemplateDeserializable {
   static let parentValidator: AnyValueValidator<String> =
     makeStringValidator(minLength: 1)
 
-  public convenience init(dictionary: [String: Any], templateToType: TemplateToType) throws {
+  public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
     do {
       self.init(
         parent: try dictionary.getOptionalField("type", validator: Self.parentValidator),
@@ -292,7 +291,7 @@ public final class DivStateTemplate: TemplateValue, TemplateDeserializable {
     self.width = width
   }
 
-  private static func resolveOnlyLinks(context: Context, parent: DivStateTemplate?) -> DeserializationResult<DivState> {
+  private static func resolveOnlyLinks(context: TemplatesContext, parent: DivStateTemplate?) -> DeserializationResult<DivState> {
     let accessibilityValue = parent?.accessibility?.resolveOptionalValue(context: context, validator: ResolvedValue.accessibilityValidator, useOnlyLinks: true) ?? .noValue
     let alignmentHorizontalValue = parent?.alignmentHorizontal?.resolveOptionalValue(context: context, validator: ResolvedValue.alignmentHorizontalValidator) ?? .noValue
     let alignmentVerticalValue = parent?.alignmentVertical?.resolveOptionalValue(context: context, validator: ResolvedValue.alignmentVerticalValidator) ?? .noValue
@@ -395,7 +394,7 @@ public final class DivStateTemplate: TemplateValue, TemplateDeserializable {
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  public static func resolveValue(context: Context, parent: DivStateTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivState> {
+  public static func resolveValue(context: TemplatesContext, parent: DivStateTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivState> {
     if useOnlyLinks {
       return resolveOnlyLinks(context: context, parent: parent)
     }
@@ -642,7 +641,7 @@ public final class DivStateTemplate: TemplateValue, TemplateDeserializable {
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  private func mergedWithParent(templates: Templates) throws -> DivStateTemplate {
+  private func mergedWithParent(templates: [TemplateName: Any]) throws -> DivStateTemplate {
     guard let parent = parent, parent != Self.type else { return self }
     guard let parentTemplate = templates[parent] as? DivStateTemplate else {
       throw DeserializationError.unknownType(type: parent)
@@ -683,7 +682,7 @@ public final class DivStateTemplate: TemplateValue, TemplateDeserializable {
     )
   }
 
-  public func resolveParent(templates: Templates) throws -> DivStateTemplate {
+  public func resolveParent(templates: [TemplateName: Any]) throws -> DivStateTemplate {
     let merged = try mergedWithParent(templates: templates)
 
     return DivStateTemplate(

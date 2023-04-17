@@ -3,9 +3,8 @@
 import CommonCorePublic
 import Foundation
 import Serialization
-import TemplatesSupport
 
-public final class DivImageBackgroundTemplate: TemplateValue, TemplateDeserializable {
+public final class DivImageBackgroundTemplate: TemplateValue {
   public static let type: String = "image"
   public let parent: String? // at least 1 char
   public let alpha: Field<Expression<Double>>? // constraint: number >= 0.0 && number <= 1.0; default value: 1.0
@@ -19,7 +18,7 @@ public final class DivImageBackgroundTemplate: TemplateValue, TemplateDeserializ
   static let parentValidator: AnyValueValidator<String> =
     makeStringValidator(minLength: 1)
 
-  public convenience init(dictionary: [String: Any], templateToType: TemplateToType) throws {
+  public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
     do {
       self.init(
         parent: try dictionary.getOptionalField("type", validator: Self.parentValidator),
@@ -56,7 +55,7 @@ public final class DivImageBackgroundTemplate: TemplateValue, TemplateDeserializ
     self.scale = scale
   }
 
-  private static func resolveOnlyLinks(context: Context, parent: DivImageBackgroundTemplate?) -> DeserializationResult<DivImageBackground> {
+  private static func resolveOnlyLinks(context: TemplatesContext, parent: DivImageBackgroundTemplate?) -> DeserializationResult<DivImageBackground> {
     let alphaValue = parent?.alpha?.resolveOptionalValue(context: context, validator: ResolvedValue.alphaValidator) ?? .noValue
     let contentAlignmentHorizontalValue = parent?.contentAlignmentHorizontal?.resolveOptionalValue(context: context, validator: ResolvedValue.contentAlignmentHorizontalValidator) ?? .noValue
     let contentAlignmentVerticalValue = parent?.contentAlignmentVertical?.resolveOptionalValue(context: context, validator: ResolvedValue.contentAlignmentVerticalValidator) ?? .noValue
@@ -93,7 +92,7 @@ public final class DivImageBackgroundTemplate: TemplateValue, TemplateDeserializ
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  public static func resolveValue(context: Context, parent: DivImageBackgroundTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivImageBackground> {
+  public static func resolveValue(context: TemplatesContext, parent: DivImageBackgroundTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivImageBackground> {
     if useOnlyLinks {
       return resolveOnlyLinks(context: context, parent: parent)
     }
@@ -169,7 +168,7 @@ public final class DivImageBackgroundTemplate: TemplateValue, TemplateDeserializ
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  private func mergedWithParent(templates: Templates) throws -> DivImageBackgroundTemplate {
+  private func mergedWithParent(templates: [TemplateName: Any]) throws -> DivImageBackgroundTemplate {
     guard let parent = parent, parent != Self.type else { return self }
     guard let parentTemplate = templates[parent] as? DivImageBackgroundTemplate else {
       throw DeserializationError.unknownType(type: parent)
@@ -188,7 +187,7 @@ public final class DivImageBackgroundTemplate: TemplateValue, TemplateDeserializ
     )
   }
 
-  public func resolveParent(templates: Templates) throws -> DivImageBackgroundTemplate {
+  public func resolveParent(templates: [TemplateName: Any]) throws -> DivImageBackgroundTemplate {
     let merged = try mergedWithParent(templates: templates)
 
     return DivImageBackgroundTemplate(

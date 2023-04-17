@@ -5,9 +5,9 @@ import Serialization
 
 extension Field {
   @inlinable
-  public static func makeOptional(
+  static func makeOptional(
     valueGetter: @autoclosure () -> T?,
-    linkGetter: @autoclosure () -> Link?
+    linkGetter: @autoclosure () -> TemplatedPropertyLink?
   ) -> Field<T>? {
     if let value = valueGetter() {
       return .value(value)
@@ -21,12 +21,13 @@ extension Field {
 
 /// Deserialization for Field<T>?
 extension Dictionary where Key == String, Value == Any {
-  public func link(for key: String) -> Link? {
-    self["$" + key] as? Link
+  @inlinable
+  func link(for key: String) -> TemplatedPropertyLink? {
+    self["$" + key] as? TemplatedPropertyLink
   }
 
   @inlinable
-  public func getOptionalField<T, U>(
+  func getOptionalField<T, U>(
     _ key: String,
     transform: (U) -> T?,
     validator: AnyValueValidator<T>? = nil
@@ -39,7 +40,7 @@ extension Dictionary where Key == String, Value == Any {
   }
 
   @inlinable
-  public func getOptionalField<T: RawRepresentable>(_ key: String) throws -> Field<T>? {
+  func getOptionalField<T: RawRepresentable>(_ key: String) throws -> Field<T>? {
     try getOptionalField(
       key,
       transform: T.init(rawValue:)
@@ -47,7 +48,7 @@ extension Dictionary where Key == String, Value == Any {
   }
 
   @inlinable
-  public func getOptionalField<T: ValidSerializationValue>(_ key: String) throws -> Field<T>? {
+  func getOptionalField<T: ValidSerializationValue>(_ key: String) throws -> Field<T>? {
     try getOptionalField(
       key,
       transform: { $0 as T }
@@ -55,9 +56,9 @@ extension Dictionary where Key == String, Value == Any {
   }
 
   @inlinable
-  public func getOptionalField<T: TemplateDeserializable>(
+  func getOptionalField<T: TemplateValue>(
     _ key: String,
-    templateToType: TemplateToType,
+    templateToType: [TemplateName: String],
     validator: AnyValueValidator<T>? = nil
   ) throws -> Field<T>? {
     try getOptionalField(
@@ -71,7 +72,7 @@ extension Dictionary where Key == String, Value == Any {
 /// Deserializaton for Field<[T]> and [T]
 extension Dictionary where Key == String, Value == Any {
   @inlinable
-  public func getOptionalArray<T, U>(
+  func getOptionalArray<T, U>(
     _ key: String,
     transform: (U) throws -> T,
     validator: AnyArrayValueValidator<T>? = nil
@@ -88,7 +89,7 @@ extension Dictionary where Key == String, Value == Any {
   }
 
   @inlinable
-  public func getOptionalArray<T, U>(
+  func getOptionalArray<T, U>(
     _ key: String,
     transform: (U) -> T?,
     validator: AnyArrayValueValidator<T>? = nil
@@ -102,7 +103,7 @@ extension Dictionary where Key == String, Value == Any {
   }
 
   @inlinable
-  public func getOptionalArray<T: RawRepresentable>(_ key: String) throws -> Field<[T]>? {
+  func getOptionalArray<T: RawRepresentable>(_ key: String) throws -> Field<[T]>? {
     try getOptionalArray(
       key,
       transform: T.init(rawValue:)
@@ -110,9 +111,9 @@ extension Dictionary where Key == String, Value == Any {
   }
 
   @inlinable
-  public func getOptionalArray<T: TemplateDeserializable>(
+  func getOptionalArray<T: TemplateValue>(
     _ key: String,
-    templateToType: TemplateToType,
+    templateToType: [TemplateName: String],
     validator: AnyArrayValueValidator<T>? = nil
   ) throws -> Field<[T]>? {
     try getOptionalArray(
@@ -123,12 +124,11 @@ extension Dictionary where Key == String, Value == Any {
   }
 }
 
-/// Deserialization for TemplateDeserializable
 extension Dictionary where Key == String, Value == Any {
   @inlinable
-  public func getField<T: TemplateDeserializable>(
+  func getField<T: TemplateValue>(
     _ key: String,
-    templateToType: TemplateToType,
+    templateToType: [TemplateName: String],
     validator: AnyValueValidator<T>? = nil
   ) throws -> T {
     try getField(
@@ -139,10 +139,10 @@ extension Dictionary where Key == String, Value == Any {
   }
 }
 
-extension Context {
+extension TemplatesContext {
   @usableFromInline
-  func deserializeTemplate<T: TemplateValue & TemplateDeserializable>(
-    _ dict: TemplateData,
+  func deserializeTemplate<T: TemplateValue>(
+    _ dict: [String: Any],
     type: T.Type
   ) -> DeserializationResult<T.ResolvedValue> {
     let deserializer = makeTemplateDeserializer(
@@ -154,7 +154,7 @@ extension Context {
   }
 
   @inlinable
-  public func getArray<T: TemplateValue & TemplateDeserializable>(
+  func getArray<T: TemplateValue>(
     _ key: String,
     validator: AnyArrayValueValidator<T.ResolvedValue>? = nil,
     type: T.Type
@@ -167,7 +167,7 @@ extension Context {
   }
 
   @inlinable
-  public func getArray<T: TemplateValue & TemplateDeserializable>(
+  func getArray<T: TemplateValue>(
     _ key: String,
     validator: AnyArrayValueValidator<T.ResolvedValue>? = nil,
     type: T.Type
@@ -181,10 +181,10 @@ extension Context {
 }
 
 @inlinable
-public func deserialize<T: TemplateValue & TemplateDeserializable>(
+func deserialize<T: TemplateValue>(
   _ value: Any,
-  templates: Templates,
-  templateToType: TemplateToType,
+  templates: [TemplateName: Any],
+  templateToType: [TemplateName: String],
   validator: AnyValueValidator<T.ResolvedValue>? = nil,
   type: T.Type
 ) -> DeserializationResult<T.ResolvedValue> {
@@ -200,10 +200,10 @@ public func deserialize<T: TemplateValue & TemplateDeserializable>(
 }
 
 @inlinable
-public func deserialize<T: TemplateValue & TemplateDeserializable>(
+func deserialize<T: TemplateValue>(
   _ value: Any,
-  templates: Templates,
-  templateToType: TemplateToType,
+  templates: [TemplateName: Any],
+  templateToType: [TemplateName: String],
   validator: AnyArrayValueValidator<T.ResolvedValue>? = nil,
   type: T.Type
 ) -> DeserializationResult<[T.ResolvedValue]> {
@@ -219,13 +219,17 @@ public func deserialize<T: TemplateValue & TemplateDeserializable>(
 }
 
 @usableFromInline
-func makeTemplateDeserializer<T: TemplateValue & TemplateDeserializable>(
-  templates: Templates,
-  templateToType: TemplateToType,
+func makeTemplateDeserializer<T: TemplateValue>(
+  templates: [TemplateName: Any],
+  templateToType: [TemplateName: String],
   type _: T.Type
-) -> ((TemplateData) -> DeserializationResult<T.ResolvedValue>) {
+) -> (([String: Any]) -> DeserializationResult<T.ResolvedValue>) {
   return { dict in
-    let context = Context(templates: templates, templateToType: templateToType, templateData: dict)
+    let context = TemplatesContext(
+      templates: templates,
+      templateToType: templateToType,
+      templateData: dict
+    )
     return T.resolveValue(context: context, useOnlyLinks: false)
   }
 }

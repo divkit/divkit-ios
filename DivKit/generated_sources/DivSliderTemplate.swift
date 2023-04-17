@@ -3,17 +3,16 @@
 import CommonCorePublic
 import Foundation
 import Serialization
-import TemplatesSupport
 
-public final class DivSliderTemplate: TemplateValue, TemplateDeserializable {
-  public final class TextStyleTemplate: TemplateValue, TemplateDeserializable {
+public final class DivSliderTemplate: TemplateValue {
+  public final class TextStyleTemplate: TemplateValue {
     public let fontSize: Field<Expression<Int>>? // constraint: number >= 0
     public let fontSizeUnit: Field<Expression<DivSizeUnit>>? // default value: sp
     public let fontWeight: Field<Expression<DivFontWeight>>? // default value: regular
     public let offset: Field<DivPointTemplate>?
     public let textColor: Field<Expression<Color>>? // default value: #FF000000
 
-    public convenience init(dictionary: [String: Any], templateToType: TemplateToType) throws {
+    public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
       do {
         self.init(
           fontSize: try dictionary.getOptionalExpressionField("font_size"),
@@ -41,7 +40,7 @@ public final class DivSliderTemplate: TemplateValue, TemplateDeserializable {
       self.textColor = textColor
     }
 
-    private static func resolveOnlyLinks(context: Context, parent: TextStyleTemplate?) -> DeserializationResult<DivSlider.TextStyle> {
+    private static func resolveOnlyLinks(context: TemplatesContext, parent: TextStyleTemplate?) -> DeserializationResult<DivSlider.TextStyle> {
       let fontSizeValue = parent?.fontSize?.resolveValue(context: context, validator: ResolvedValue.fontSizeValidator) ?? .noValue
       let fontSizeUnitValue = parent?.fontSizeUnit?.resolveOptionalValue(context: context, validator: ResolvedValue.fontSizeUnitValidator) ?? .noValue
       let fontWeightValue = parent?.fontWeight?.resolveOptionalValue(context: context, validator: ResolvedValue.fontWeightValidator) ?? .noValue
@@ -72,7 +71,7 @@ public final class DivSliderTemplate: TemplateValue, TemplateDeserializable {
       return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
     }
 
-    public static func resolveValue(context: Context, parent: TextStyleTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivSlider.TextStyle> {
+    public static func resolveValue(context: TemplatesContext, parent: TextStyleTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivSlider.TextStyle> {
       if useOnlyLinks {
         return resolveOnlyLinks(context: context, parent: parent)
       }
@@ -134,11 +133,11 @@ public final class DivSliderTemplate: TemplateValue, TemplateDeserializable {
       return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
     }
 
-    private func mergedWithParent(templates: Templates) throws -> TextStyleTemplate {
+    private func mergedWithParent(templates: [TemplateName: Any]) throws -> TextStyleTemplate {
       return self
     }
 
-    public func resolveParent(templates: Templates) throws -> TextStyleTemplate {
+    public func resolveParent(templates: [TemplateName: Any]) throws -> TextStyleTemplate {
       let merged = try mergedWithParent(templates: templates)
 
       return TextStyleTemplate(
@@ -195,7 +194,7 @@ public final class DivSliderTemplate: TemplateValue, TemplateDeserializable {
   static let parentValidator: AnyValueValidator<String> =
     makeStringValidator(minLength: 1)
 
-  public convenience init(dictionary: [String: Any], templateToType: TemplateToType) throws {
+  public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
     do {
       self.init(
         parent: try dictionary.getOptionalField("type", validator: Self.parentValidator),
@@ -325,7 +324,7 @@ public final class DivSliderTemplate: TemplateValue, TemplateDeserializable {
     self.width = width
   }
 
-  private static func resolveOnlyLinks(context: Context, parent: DivSliderTemplate?) -> DeserializationResult<DivSlider> {
+  private static func resolveOnlyLinks(context: TemplatesContext, parent: DivSliderTemplate?) -> DeserializationResult<DivSlider> {
     let accessibilityValue = parent?.accessibility?.resolveOptionalValue(context: context, validator: ResolvedValue.accessibilityValidator, useOnlyLinks: true) ?? .noValue
     let alignmentHorizontalValue = parent?.alignmentHorizontal?.resolveOptionalValue(context: context, validator: ResolvedValue.alignmentHorizontalValidator) ?? .noValue
     let alignmentVerticalValue = parent?.alignmentVertical?.resolveOptionalValue(context: context, validator: ResolvedValue.alignmentVerticalValidator) ?? .noValue
@@ -463,7 +462,7 @@ public final class DivSliderTemplate: TemplateValue, TemplateDeserializable {
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  public static func resolveValue(context: Context, parent: DivSliderTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivSlider> {
+  public static func resolveValue(context: TemplatesContext, parent: DivSliderTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivSlider> {
     if useOnlyLinks {
       return resolveOnlyLinks(context: context, parent: parent)
     }
@@ -789,7 +788,7 @@ public final class DivSliderTemplate: TemplateValue, TemplateDeserializable {
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  private func mergedWithParent(templates: Templates) throws -> DivSliderTemplate {
+  private func mergedWithParent(templates: [TemplateName: Any]) throws -> DivSliderTemplate {
     guard let parent = parent, parent != Self.type else { return self }
     guard let parentTemplate = templates[parent] as? DivSliderTemplate else {
       throw DeserializationError.unknownType(type: parent)
@@ -839,7 +838,7 @@ public final class DivSliderTemplate: TemplateValue, TemplateDeserializable {
     )
   }
 
-  public func resolveParent(templates: Templates) throws -> DivSliderTemplate {
+  public func resolveParent(templates: [TemplateName: Any]) throws -> DivSliderTemplate {
     let merged = try mergedWithParent(templates: templates)
 
     return DivSliderTemplate(

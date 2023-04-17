@@ -3,9 +3,8 @@
 import CommonCorePublic
 import Foundation
 import Serialization
-import TemplatesSupport
 
-public final class DivShapeDrawableTemplate: TemplateValue, TemplateDeserializable {
+public final class DivShapeDrawableTemplate: TemplateValue {
   public static let type: String = "shape_drawable"
   public let parent: String? // at least 1 char
   public let color: Field<Expression<Color>>?
@@ -15,7 +14,7 @@ public final class DivShapeDrawableTemplate: TemplateValue, TemplateDeserializab
   static let parentValidator: AnyValueValidator<String> =
     makeStringValidator(minLength: 1)
 
-  public convenience init(dictionary: [String: Any], templateToType: TemplateToType) throws {
+  public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
     do {
       self.init(
         parent: try dictionary.getOptionalField("type", validator: Self.parentValidator),
@@ -40,7 +39,7 @@ public final class DivShapeDrawableTemplate: TemplateValue, TemplateDeserializab
     self.stroke = stroke
   }
 
-  private static func resolveOnlyLinks(context: Context, parent: DivShapeDrawableTemplate?) -> DeserializationResult<DivShapeDrawable> {
+  private static func resolveOnlyLinks(context: TemplatesContext, parent: DivShapeDrawableTemplate?) -> DeserializationResult<DivShapeDrawable> {
     let colorValue = parent?.color?.resolveValue(context: context, transform: Color.color(withHexString:)) ?? .noValue
     let shapeValue = parent?.shape?.resolveValue(context: context, useOnlyLinks: true) ?? .noValue
     let strokeValue = parent?.stroke?.resolveOptionalValue(context: context, validator: ResolvedValue.strokeValidator, useOnlyLinks: true) ?? .noValue
@@ -69,7 +68,7 @@ public final class DivShapeDrawableTemplate: TemplateValue, TemplateDeserializab
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  public static func resolveValue(context: Context, parent: DivShapeDrawableTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivShapeDrawable> {
+  public static func resolveValue(context: TemplatesContext, parent: DivShapeDrawableTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivShapeDrawable> {
     if useOnlyLinks {
       return resolveOnlyLinks(context: context, parent: parent)
     }
@@ -122,7 +121,7 @@ public final class DivShapeDrawableTemplate: TemplateValue, TemplateDeserializab
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  private func mergedWithParent(templates: Templates) throws -> DivShapeDrawableTemplate {
+  private func mergedWithParent(templates: [TemplateName: Any]) throws -> DivShapeDrawableTemplate {
     guard let parent = parent, parent != Self.type else { return self }
     guard let parentTemplate = templates[parent] as? DivShapeDrawableTemplate else {
       throw DeserializationError.unknownType(type: parent)
@@ -137,7 +136,7 @@ public final class DivShapeDrawableTemplate: TemplateValue, TemplateDeserializab
     )
   }
 
-  public func resolveParent(templates: Templates) throws -> DivShapeDrawableTemplate {
+  public func resolveParent(templates: [TemplateName: Any]) throws -> DivShapeDrawableTemplate {
     let merged = try mergedWithParent(templates: templates)
 
     return DivShapeDrawableTemplate(

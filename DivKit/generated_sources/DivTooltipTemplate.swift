@@ -3,9 +3,8 @@
 import CommonCorePublic
 import Foundation
 import Serialization
-import TemplatesSupport
 
-public final class DivTooltipTemplate: TemplateValue, TemplateDeserializable {
+public final class DivTooltipTemplate: TemplateValue {
   public typealias Position = DivTooltip.Position
 
   public let animationIn: Field<DivAnimationTemplate>?
@@ -16,7 +15,7 @@ public final class DivTooltipTemplate: TemplateValue, TemplateDeserializable {
   public let offset: Field<DivPointTemplate>?
   public let position: Field<Expression<Position>>?
 
-  public convenience init(dictionary: [String: Any], templateToType: TemplateToType) throws {
+  public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
     do {
       self.init(
         animationIn: try dictionary.getOptionalField("animation_in", templateToType: templateToType),
@@ -50,7 +49,7 @@ public final class DivTooltipTemplate: TemplateValue, TemplateDeserializable {
     self.position = position
   }
 
-  private static func resolveOnlyLinks(context: Context, parent: DivTooltipTemplate?) -> DeserializationResult<DivTooltip> {
+  private static func resolveOnlyLinks(context: TemplatesContext, parent: DivTooltipTemplate?) -> DeserializationResult<DivTooltip> {
     let animationInValue = parent?.animationIn?.resolveOptionalValue(context: context, validator: ResolvedValue.animationInValidator, useOnlyLinks: true) ?? .noValue
     let animationOutValue = parent?.animationOut?.resolveOptionalValue(context: context, validator: ResolvedValue.animationOutValidator, useOnlyLinks: true) ?? .noValue
     let divValue = parent?.div?.resolveValue(context: context, useOnlyLinks: true) ?? .noValue
@@ -95,7 +94,7 @@ public final class DivTooltipTemplate: TemplateValue, TemplateDeserializable {
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  public static func resolveValue(context: Context, parent: DivTooltipTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivTooltip> {
+  public static func resolveValue(context: TemplatesContext, parent: DivTooltipTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivTooltip> {
     if useOnlyLinks {
       return resolveOnlyLinks(context: context, parent: parent)
     }
@@ -182,11 +181,11 @@ public final class DivTooltipTemplate: TemplateValue, TemplateDeserializable {
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  private func mergedWithParent(templates: Templates) throws -> DivTooltipTemplate {
+  private func mergedWithParent(templates: [TemplateName: Any]) throws -> DivTooltipTemplate {
     return self
   }
 
-  public func resolveParent(templates: Templates) throws -> DivTooltipTemplate {
+  public func resolveParent(templates: [TemplateName: Any]) throws -> DivTooltipTemplate {
     let merged = try mergedWithParent(templates: templates)
 
     return DivTooltipTemplate(

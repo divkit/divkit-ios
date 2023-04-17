@@ -3,15 +3,14 @@
 import CommonCorePublic
 import Foundation
 import Serialization
-import TemplatesSupport
 
-public final class DivAbsoluteEdgeInsetsTemplate: TemplateValue, TemplateDeserializable {
+public final class DivAbsoluteEdgeInsetsTemplate: TemplateValue {
   public let bottom: Field<Expression<Int>>? // constraint: number >= 0; default value: 0
   public let left: Field<Expression<Int>>? // constraint: number >= 0; default value: 0
   public let right: Field<Expression<Int>>? // constraint: number >= 0; default value: 0
   public let top: Field<Expression<Int>>? // constraint: number >= 0; default value: 0
 
-  public convenience init(dictionary: [String: Any], templateToType: TemplateToType) throws {
+  public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
     self.init(
       bottom: try dictionary.getOptionalExpressionField("bottom"),
       left: try dictionary.getOptionalExpressionField("left"),
@@ -32,7 +31,7 @@ public final class DivAbsoluteEdgeInsetsTemplate: TemplateValue, TemplateDeseria
     self.top = top
   }
 
-  private static func resolveOnlyLinks(context: Context, parent: DivAbsoluteEdgeInsetsTemplate?) -> DeserializationResult<DivAbsoluteEdgeInsets> {
+  private static func resolveOnlyLinks(context: TemplatesContext, parent: DivAbsoluteEdgeInsetsTemplate?) -> DeserializationResult<DivAbsoluteEdgeInsets> {
     let bottomValue = parent?.bottom?.resolveOptionalValue(context: context, validator: ResolvedValue.bottomValidator) ?? .noValue
     let leftValue = parent?.left?.resolveOptionalValue(context: context, validator: ResolvedValue.leftValidator) ?? .noValue
     let rightValue = parent?.right?.resolveOptionalValue(context: context, validator: ResolvedValue.rightValidator) ?? .noValue
@@ -52,7 +51,7 @@ public final class DivAbsoluteEdgeInsetsTemplate: TemplateValue, TemplateDeseria
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  public static func resolveValue(context: Context, parent: DivAbsoluteEdgeInsetsTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivAbsoluteEdgeInsets> {
+  public static func resolveValue(context: TemplatesContext, parent: DivAbsoluteEdgeInsetsTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivAbsoluteEdgeInsets> {
     if useOnlyLinks {
       return resolveOnlyLinks(context: context, parent: parent)
     }
@@ -96,11 +95,11 @@ public final class DivAbsoluteEdgeInsetsTemplate: TemplateValue, TemplateDeseria
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  private func mergedWithParent(templates: Templates) throws -> DivAbsoluteEdgeInsetsTemplate {
+  private func mergedWithParent(templates: [TemplateName: Any]) throws -> DivAbsoluteEdgeInsetsTemplate {
     return self
   }
 
-  public func resolveParent(templates: Templates) throws -> DivAbsoluteEdgeInsetsTemplate {
+  public func resolveParent(templates: [TemplateName: Any]) throws -> DivAbsoluteEdgeInsetsTemplate {
     return try mergedWithParent(templates: templates)
   }
 }

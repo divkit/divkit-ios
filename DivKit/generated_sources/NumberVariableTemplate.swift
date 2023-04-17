@@ -3,9 +3,8 @@
 import CommonCorePublic
 import Foundation
 import Serialization
-import TemplatesSupport
 
-public final class NumberVariableTemplate: TemplateValue, TemplateDeserializable {
+public final class NumberVariableTemplate: TemplateValue {
   public static let type: String = "number"
   public let parent: String? // at least 1 char
   public let name: Field<String>? // at least 1 char
@@ -14,7 +13,7 @@ public final class NumberVariableTemplate: TemplateValue, TemplateDeserializable
   static let parentValidator: AnyValueValidator<String> =
     makeStringValidator(minLength: 1)
 
-  public convenience init(dictionary: [String: Any], templateToType: TemplateToType) throws {
+  public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
     do {
       self.init(
         parent: try dictionary.getOptionalField("type", validator: Self.parentValidator),
@@ -36,7 +35,7 @@ public final class NumberVariableTemplate: TemplateValue, TemplateDeserializable
     self.value = value
   }
 
-  private static func resolveOnlyLinks(context: Context, parent: NumberVariableTemplate?) -> DeserializationResult<NumberVariable> {
+  private static func resolveOnlyLinks(context: TemplatesContext, parent: NumberVariableTemplate?) -> DeserializationResult<NumberVariable> {
     let nameValue = parent?.name?.resolveValue(context: context, validator: ResolvedValue.nameValidator) ?? .noValue
     let valueValue = parent?.value?.resolveValue(context: context) ?? .noValue
     var errors = mergeErrors(
@@ -62,7 +61,7 @@ public final class NumberVariableTemplate: TemplateValue, TemplateDeserializable
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  public static func resolveValue(context: Context, parent: NumberVariableTemplate?, useOnlyLinks: Bool) -> DeserializationResult<NumberVariable> {
+  public static func resolveValue(context: TemplatesContext, parent: NumberVariableTemplate?, useOnlyLinks: Bool) -> DeserializationResult<NumberVariable> {
     if useOnlyLinks {
       return resolveOnlyLinks(context: context, parent: parent)
     }
@@ -104,7 +103,7 @@ public final class NumberVariableTemplate: TemplateValue, TemplateDeserializable
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  private func mergedWithParent(templates: Templates) throws -> NumberVariableTemplate {
+  private func mergedWithParent(templates: [TemplateName: Any]) throws -> NumberVariableTemplate {
     guard let parent = parent, parent != Self.type else { return self }
     guard let parentTemplate = templates[parent] as? NumberVariableTemplate else {
       throw DeserializationError.unknownType(type: parent)
@@ -118,7 +117,7 @@ public final class NumberVariableTemplate: TemplateValue, TemplateDeserializable
     )
   }
 
-  public func resolveParent(templates: Templates) throws -> NumberVariableTemplate {
+  public func resolveParent(templates: [TemplateName: Any]) throws -> NumberVariableTemplate {
     return try mergedWithParent(templates: templates)
   }
 }

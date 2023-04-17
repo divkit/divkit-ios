@@ -3,15 +3,14 @@
 import CommonCorePublic
 import Foundation
 import Serialization
-import TemplatesSupport
 
-public final class DivFixedLengthInputMaskTemplate: TemplateValue, TemplateDeserializable {
-  public final class PatternElementTemplate: TemplateValue, TemplateDeserializable {
+public final class DivFixedLengthInputMaskTemplate: TemplateValue {
+  public final class PatternElementTemplate: TemplateValue {
     public let key: Field<Expression<String>>? // at least 1 char
     public let placeholder: Field<Expression<String>>? // default value: _
     public let regex: Field<Expression<String>>? // at least 1 char
 
-    public convenience init(dictionary: [String: Any], templateToType: TemplateToType) throws {
+    public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
       do {
         self.init(
           key: try dictionary.getOptionalExpressionField("key"),
@@ -33,7 +32,7 @@ public final class DivFixedLengthInputMaskTemplate: TemplateValue, TemplateDeser
       self.regex = regex
     }
 
-    private static func resolveOnlyLinks(context: Context, parent: PatternElementTemplate?) -> DeserializationResult<DivFixedLengthInputMask.PatternElement> {
+    private static func resolveOnlyLinks(context: TemplatesContext, parent: PatternElementTemplate?) -> DeserializationResult<DivFixedLengthInputMask.PatternElement> {
       let keyValue = parent?.key?.resolveValue(context: context, validator: ResolvedValue.keyValidator) ?? .noValue
       let placeholderValue = parent?.placeholder?.resolveOptionalValue(context: context, validator: ResolvedValue.placeholderValidator) ?? .noValue
       let regexValue = parent?.regex?.resolveOptionalValue(context: context, validator: ResolvedValue.regexValidator) ?? .noValue
@@ -58,7 +57,7 @@ public final class DivFixedLengthInputMaskTemplate: TemplateValue, TemplateDeser
       return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
     }
 
-    public static func resolveValue(context: Context, parent: PatternElementTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivFixedLengthInputMask.PatternElement> {
+    public static func resolveValue(context: TemplatesContext, parent: PatternElementTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivFixedLengthInputMask.PatternElement> {
       if useOnlyLinks {
         return resolveOnlyLinks(context: context, parent: parent)
       }
@@ -103,11 +102,11 @@ public final class DivFixedLengthInputMaskTemplate: TemplateValue, TemplateDeser
       return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
     }
 
-    private func mergedWithParent(templates: Templates) throws -> PatternElementTemplate {
+    private func mergedWithParent(templates: [TemplateName: Any]) throws -> PatternElementTemplate {
       return self
     }
 
-    public func resolveParent(templates: Templates) throws -> PatternElementTemplate {
+    public func resolveParent(templates: [TemplateName: Any]) throws -> PatternElementTemplate {
       return try mergedWithParent(templates: templates)
     }
   }
@@ -121,7 +120,7 @@ public final class DivFixedLengthInputMaskTemplate: TemplateValue, TemplateDeser
   static let parentValidator: AnyValueValidator<String> =
     makeStringValidator(minLength: 1)
 
-  public convenience init(dictionary: [String: Any], templateToType: TemplateToType) throws {
+  public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
     do {
       self.init(
         parent: try dictionary.getOptionalField("type", validator: Self.parentValidator),
@@ -146,7 +145,7 @@ public final class DivFixedLengthInputMaskTemplate: TemplateValue, TemplateDeser
     self.patternElements = patternElements
   }
 
-  private static func resolveOnlyLinks(context: Context, parent: DivFixedLengthInputMaskTemplate?) -> DeserializationResult<DivFixedLengthInputMask> {
+  private static func resolveOnlyLinks(context: TemplatesContext, parent: DivFixedLengthInputMaskTemplate?) -> DeserializationResult<DivFixedLengthInputMask> {
     let alwaysVisibleValue = parent?.alwaysVisible?.resolveOptionalValue(context: context, validator: ResolvedValue.alwaysVisibleValidator) ?? .noValue
     let patternValue = parent?.pattern?.resolveValue(context: context, validator: ResolvedValue.patternValidator) ?? .noValue
     let patternElementsValue = parent?.patternElements?.resolveValue(context: context, validator: ResolvedValue.patternElementsValidator, useOnlyLinks: true) ?? .noValue
@@ -175,7 +174,7 @@ public final class DivFixedLengthInputMaskTemplate: TemplateValue, TemplateDeser
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  public static func resolveValue(context: Context, parent: DivFixedLengthInputMaskTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivFixedLengthInputMask> {
+  public static func resolveValue(context: TemplatesContext, parent: DivFixedLengthInputMaskTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivFixedLengthInputMask> {
     if useOnlyLinks {
       return resolveOnlyLinks(context: context, parent: parent)
     }
@@ -227,7 +226,7 @@ public final class DivFixedLengthInputMaskTemplate: TemplateValue, TemplateDeser
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  private func mergedWithParent(templates: Templates) throws -> DivFixedLengthInputMaskTemplate {
+  private func mergedWithParent(templates: [TemplateName: Any]) throws -> DivFixedLengthInputMaskTemplate {
     guard let parent = parent, parent != Self.type else { return self }
     guard let parentTemplate = templates[parent] as? DivFixedLengthInputMaskTemplate else {
       throw DeserializationError.unknownType(type: parent)
@@ -242,7 +241,7 @@ public final class DivFixedLengthInputMaskTemplate: TemplateValue, TemplateDeser
     )
   }
 
-  public func resolveParent(templates: Templates) throws -> DivFixedLengthInputMaskTemplate {
+  public func resolveParent(templates: [TemplateName: Any]) throws -> DivFixedLengthInputMaskTemplate {
     let merged = try mergedWithParent(templates: templates)
 
     return DivFixedLengthInputMaskTemplate(

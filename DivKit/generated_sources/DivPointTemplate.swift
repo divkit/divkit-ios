@@ -3,13 +3,12 @@
 import CommonCorePublic
 import Foundation
 import Serialization
-import TemplatesSupport
 
-public final class DivPointTemplate: TemplateValue, TemplateDeserializable {
+public final class DivPointTemplate: TemplateValue {
   public let x: Field<DivDimensionTemplate>?
   public let y: Field<DivDimensionTemplate>?
 
-  public convenience init(dictionary: [String: Any], templateToType: TemplateToType) throws {
+  public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
     do {
       self.init(
         x: try dictionary.getOptionalField("x", templateToType: templateToType),
@@ -28,7 +27,7 @@ public final class DivPointTemplate: TemplateValue, TemplateDeserializable {
     self.y = y
   }
 
-  private static func resolveOnlyLinks(context: Context, parent: DivPointTemplate?) -> DeserializationResult<DivPoint> {
+  private static func resolveOnlyLinks(context: TemplatesContext, parent: DivPointTemplate?) -> DeserializationResult<DivPoint> {
     let xValue = parent?.x?.resolveValue(context: context, useOnlyLinks: true) ?? .noValue
     let yValue = parent?.y?.resolveValue(context: context, useOnlyLinks: true) ?? .noValue
     var errors = mergeErrors(
@@ -54,7 +53,7 @@ public final class DivPointTemplate: TemplateValue, TemplateDeserializable {
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  public static func resolveValue(context: Context, parent: DivPointTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivPoint> {
+  public static func resolveValue(context: TemplatesContext, parent: DivPointTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivPoint> {
     if useOnlyLinks {
       return resolveOnlyLinks(context: context, parent: parent)
     }
@@ -100,11 +99,11 @@ public final class DivPointTemplate: TemplateValue, TemplateDeserializable {
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  private func mergedWithParent(templates: Templates) throws -> DivPointTemplate {
+  private func mergedWithParent(templates: [TemplateName: Any]) throws -> DivPointTemplate {
     return self
   }
 
-  public func resolveParent(templates: Templates) throws -> DivPointTemplate {
+  public func resolveParent(templates: [TemplateName: Any]) throws -> DivPointTemplate {
     let merged = try mergedWithParent(templates: templates)
 
     return DivPointTemplate(

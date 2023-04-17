@@ -52,7 +52,6 @@ let package = Package(
         "LayoutKit",
         "NetworkingPublic",
         "Serialization",
-        "TemplatesSupport",
       ],
       path: "DivKit",
       exclude: [
@@ -87,14 +86,6 @@ let package = Package(
         "CommonCorePublic",
       ],
       path: "Serialization"
-    ),
-    .target(
-      name: "TemplatesSupport",
-      dependencies: [
-        "CommonCorePublic",
-        "Serialization",
-      ],
-      path: "TemplatesSupport"
     ),
   ]
 )

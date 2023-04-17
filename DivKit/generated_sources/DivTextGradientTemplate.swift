@@ -3,7 +3,6 @@
 import CommonCorePublic
 import Foundation
 import Serialization
-import TemplatesSupport
 
 @frozen
 public enum DivTextGradientTemplate: TemplateValue {
@@ -19,7 +18,7 @@ public enum DivTextGradientTemplate: TemplateValue {
     }
   }
 
-  public func resolveParent(templates: Templates) throws -> DivTextGradientTemplate {
+  public func resolveParent(templates: [TemplateName: Any]) throws -> DivTextGradientTemplate {
     switch self {
     case let .divLinearGradientTemplate(value):
       return .divLinearGradientTemplate(try value.resolveParent(templates: templates))
@@ -28,7 +27,7 @@ public enum DivTextGradientTemplate: TemplateValue {
     }
   }
 
-  public static func resolveValue(context: Context, parent: DivTextGradientTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivTextGradient> {
+  public static func resolveValue(context: TemplatesContext, parent: DivTextGradientTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivTextGradient> {
     guard let parent = parent else {
       if useOnlyLinks {
         return .failure(NonEmptyArray(.missingType(representation: context.templateData)))
@@ -57,7 +56,7 @@ public enum DivTextGradientTemplate: TemplateValue {
     }
   }
 
-  private static func resolveUnknownValue(context: Context, useOnlyLinks: Bool) -> DeserializationResult<DivTextGradient> {
+  private static func resolveUnknownValue(context: TemplatesContext, useOnlyLinks: Bool) -> DeserializationResult<DivTextGradient> {
     guard let type = (context.templateData["type"] as? String).flatMap({ context.templateToType[$0] ?? $0 }) else {
       return .failure(NonEmptyArray(.requiredFieldIsMissing(field: "type")))
     }
@@ -85,8 +84,8 @@ public enum DivTextGradientTemplate: TemplateValue {
   }
 }
 
-extension DivTextGradientTemplate: TemplateDeserializable {
-  public init(dictionary: [String: Any], templateToType: TemplateToType) throws {
+extension DivTextGradientTemplate {
+  public init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
     let receivedType = try dictionary.getField("type") as String
     let blockType = templateToType[receivedType] ?? receivedType
     switch blockType {

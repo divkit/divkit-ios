@@ -3,15 +3,14 @@
 import CommonCorePublic
 import Foundation
 import Serialization
-import TemplatesSupport
 
-public final class DivShadowTemplate: TemplateValue, TemplateDeserializable {
+public final class DivShadowTemplate: TemplateValue {
   public let alpha: Field<Expression<Double>>? // constraint: number >= 0.0 && number <= 1.0; default value: 0.19
   public let blur: Field<Expression<Int>>? // constraint: number >= 0; default value: 2
   public let color: Field<Expression<Color>>? // default value: #000000
   public let offset: Field<DivPointTemplate>?
 
-  public convenience init(dictionary: [String: Any], templateToType: TemplateToType) throws {
+  public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
     do {
       self.init(
         alpha: try dictionary.getOptionalExpressionField("alpha"),
@@ -36,7 +35,7 @@ public final class DivShadowTemplate: TemplateValue, TemplateDeserializable {
     self.offset = offset
   }
 
-  private static func resolveOnlyLinks(context: Context, parent: DivShadowTemplate?) -> DeserializationResult<DivShadow> {
+  private static func resolveOnlyLinks(context: TemplatesContext, parent: DivShadowTemplate?) -> DeserializationResult<DivShadow> {
     let alphaValue = parent?.alpha?.resolveOptionalValue(context: context, validator: ResolvedValue.alphaValidator) ?? .noValue
     let blurValue = parent?.blur?.resolveOptionalValue(context: context, validator: ResolvedValue.blurValidator) ?? .noValue
     let colorValue = parent?.color?.resolveOptionalValue(context: context, transform: Color.color(withHexString:), validator: ResolvedValue.colorValidator) ?? .noValue
@@ -64,7 +63,7 @@ public final class DivShadowTemplate: TemplateValue, TemplateDeserializable {
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  public static func resolveValue(context: Context, parent: DivShadowTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivShadow> {
+  public static func resolveValue(context: TemplatesContext, parent: DivShadowTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivShadow> {
     if useOnlyLinks {
       return resolveOnlyLinks(context: context, parent: parent)
     }
@@ -119,11 +118,11 @@ public final class DivShadowTemplate: TemplateValue, TemplateDeserializable {
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  private func mergedWithParent(templates: Templates) throws -> DivShadowTemplate {
+  private func mergedWithParent(templates: [TemplateName: Any]) throws -> DivShadowTemplate {
     return self
   }
 
-  public func resolveParent(templates: Templates) throws -> DivShadowTemplate {
+  public func resolveParent(templates: [TemplateName: Any]) throws -> DivShadowTemplate {
     let merged = try mergedWithParent(templates: templates)
 
     return DivShadowTemplate(

@@ -3,7 +3,6 @@
 import CommonCorePublic
 import Foundation
 import Serialization
-import TemplatesSupport
 
 @frozen
 public enum DivCountTemplate: TemplateValue {
@@ -19,7 +18,7 @@ public enum DivCountTemplate: TemplateValue {
     }
   }
 
-  public func resolveParent(templates: Templates) throws -> DivCountTemplate {
+  public func resolveParent(templates: [TemplateName: Any]) throws -> DivCountTemplate {
     switch self {
     case let .divInfinityCountTemplate(value):
       return .divInfinityCountTemplate(try value.resolveParent(templates: templates))
@@ -28,7 +27,7 @@ public enum DivCountTemplate: TemplateValue {
     }
   }
 
-  public static func resolveValue(context: Context, parent: DivCountTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivCount> {
+  public static func resolveValue(context: TemplatesContext, parent: DivCountTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivCount> {
     guard let parent = parent else {
       if useOnlyLinks {
         return .failure(NonEmptyArray(.missingType(representation: context.templateData)))
@@ -57,7 +56,7 @@ public enum DivCountTemplate: TemplateValue {
     }
   }
 
-  private static func resolveUnknownValue(context: Context, useOnlyLinks: Bool) -> DeserializationResult<DivCount> {
+  private static func resolveUnknownValue(context: TemplatesContext, useOnlyLinks: Bool) -> DeserializationResult<DivCount> {
     guard let type = (context.templateData["type"] as? String).flatMap({ context.templateToType[$0] ?? $0 }) else {
       return .failure(NonEmptyArray(.requiredFieldIsMissing(field: "type")))
     }
@@ -85,8 +84,8 @@ public enum DivCountTemplate: TemplateValue {
   }
 }
 
-extension DivCountTemplate: TemplateDeserializable {
-  public init(dictionary: [String: Any], templateToType: TemplateToType) throws {
+extension DivCountTemplate {
+  public init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
     let receivedType = try dictionary.getField("type") as String
     let blockType = templateToType[receivedType] ?? receivedType
     switch blockType {

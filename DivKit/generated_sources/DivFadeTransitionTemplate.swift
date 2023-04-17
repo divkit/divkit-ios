@@ -3,9 +3,8 @@
 import CommonCorePublic
 import Foundation
 import Serialization
-import TemplatesSupport
 
-public final class DivFadeTransitionTemplate: TemplateValue, TemplateDeserializable {
+public final class DivFadeTransitionTemplate: TemplateValue {
   public static let type: String = "fade"
   public let parent: String? // at least 1 char
   public let alpha: Field<Expression<Double>>? // constraint: number >= 0.0 && number <= 1.0; default value: 0.0
@@ -16,7 +15,7 @@ public final class DivFadeTransitionTemplate: TemplateValue, TemplateDeserializa
   static let parentValidator: AnyValueValidator<String> =
     makeStringValidator(minLength: 1)
 
-  public convenience init(dictionary: [String: Any], templateToType: TemplateToType) throws {
+  public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
     self.init(
       parent: try dictionary.getOptionalField("type", validator: Self.parentValidator),
       alpha: try dictionary.getOptionalExpressionField("alpha"),
@@ -40,7 +39,7 @@ public final class DivFadeTransitionTemplate: TemplateValue, TemplateDeserializa
     self.startDelay = startDelay
   }
 
-  private static func resolveOnlyLinks(context: Context, parent: DivFadeTransitionTemplate?) -> DeserializationResult<DivFadeTransition> {
+  private static func resolveOnlyLinks(context: TemplatesContext, parent: DivFadeTransitionTemplate?) -> DeserializationResult<DivFadeTransition> {
     let alphaValue = parent?.alpha?.resolveOptionalValue(context: context, validator: ResolvedValue.alphaValidator) ?? .noValue
     let durationValue = parent?.duration?.resolveOptionalValue(context: context, validator: ResolvedValue.durationValidator) ?? .noValue
     let interpolatorValue = parent?.interpolator?.resolveOptionalValue(context: context, validator: ResolvedValue.interpolatorValidator) ?? .noValue
@@ -60,7 +59,7 @@ public final class DivFadeTransitionTemplate: TemplateValue, TemplateDeserializa
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  public static func resolveValue(context: Context, parent: DivFadeTransitionTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivFadeTransition> {
+  public static func resolveValue(context: TemplatesContext, parent: DivFadeTransitionTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivFadeTransition> {
     if useOnlyLinks {
       return resolveOnlyLinks(context: context, parent: parent)
     }
@@ -104,7 +103,7 @@ public final class DivFadeTransitionTemplate: TemplateValue, TemplateDeserializa
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  private func mergedWithParent(templates: Templates) throws -> DivFadeTransitionTemplate {
+  private func mergedWithParent(templates: [TemplateName: Any]) throws -> DivFadeTransitionTemplate {
     guard let parent = parent, parent != Self.type else { return self }
     guard let parentTemplate = templates[parent] as? DivFadeTransitionTemplate else {
       throw DeserializationError.unknownType(type: parent)
@@ -120,7 +119,7 @@ public final class DivFadeTransitionTemplate: TemplateValue, TemplateDeserializa
     )
   }
 
-  public func resolveParent(templates: Templates) throws -> DivFadeTransitionTemplate {
+  public func resolveParent(templates: [TemplateName: Any]) throws -> DivFadeTransitionTemplate {
     return try mergedWithParent(templates: templates)
   }
 }

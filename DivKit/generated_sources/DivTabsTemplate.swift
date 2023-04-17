@@ -3,15 +3,14 @@
 import CommonCorePublic
 import Foundation
 import Serialization
-import TemplatesSupport
 
-public final class DivTabsTemplate: TemplateValue, TemplateDeserializable {
-  public final class ItemTemplate: TemplateValue, TemplateDeserializable {
+public final class DivTabsTemplate: TemplateValue {
+  public final class ItemTemplate: TemplateValue {
     public let div: Field<DivTemplate>?
     public let title: Field<Expression<String>>? // at least 1 char
     public let titleClickAction: Field<DivActionTemplate>?
 
-    public convenience init(dictionary: [String: Any], templateToType: TemplateToType) throws {
+    public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
       do {
         self.init(
           div: try dictionary.getOptionalField("div", templateToType: templateToType),
@@ -33,7 +32,7 @@ public final class DivTabsTemplate: TemplateValue, TemplateDeserializable {
       self.titleClickAction = titleClickAction
     }
 
-    private static func resolveOnlyLinks(context: Context, parent: ItemTemplate?) -> DeserializationResult<DivTabs.Item> {
+    private static func resolveOnlyLinks(context: TemplatesContext, parent: ItemTemplate?) -> DeserializationResult<DivTabs.Item> {
       let divValue = parent?.div?.resolveValue(context: context, useOnlyLinks: true) ?? .noValue
       let titleValue = parent?.title?.resolveValue(context: context, validator: ResolvedValue.titleValidator) ?? .noValue
       let titleClickActionValue = parent?.titleClickAction?.resolveOptionalValue(context: context, validator: ResolvedValue.titleClickActionValidator, useOnlyLinks: true) ?? .noValue
@@ -62,7 +61,7 @@ public final class DivTabsTemplate: TemplateValue, TemplateDeserializable {
       return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
     }
 
-    public static func resolveValue(context: Context, parent: ItemTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivTabs.Item> {
+    public static func resolveValue(context: TemplatesContext, parent: ItemTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivTabs.Item> {
       if useOnlyLinks {
         return resolveOnlyLinks(context: context, parent: parent)
       }
@@ -115,11 +114,11 @@ public final class DivTabsTemplate: TemplateValue, TemplateDeserializable {
       return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
     }
 
-    private func mergedWithParent(templates: Templates) throws -> ItemTemplate {
+    private func mergedWithParent(templates: [TemplateName: Any]) throws -> ItemTemplate {
       return self
     }
 
-    public func resolveParent(templates: Templates) throws -> ItemTemplate {
+    public func resolveParent(templates: [TemplateName: Any]) throws -> ItemTemplate {
       let merged = try mergedWithParent(templates: templates)
 
       return ItemTemplate(
@@ -130,7 +129,7 @@ public final class DivTabsTemplate: TemplateValue, TemplateDeserializable {
     }
   }
 
-  public final class TabTitleStyleTemplate: TemplateValue, TemplateDeserializable {
+  public final class TabTitleStyleTemplate: TemplateValue {
     public typealias AnimationType = DivTabs.TabTitleStyle.AnimationType
 
     public let activeBackgroundColor: Field<Expression<Color>>? // default value: #FFFFDC60
@@ -152,7 +151,7 @@ public final class DivTabsTemplate: TemplateValue, TemplateDeserializable {
     public let lineHeight: Field<Expression<Int>>? // constraint: number >= 0
     public let paddings: Field<DivEdgeInsetsTemplate>? // default value: DivEdgeInsets(bottom: .value(6), left: .value(8), right: .value(8), top: .value(6))
 
-    public convenience init(dictionary: [String: Any], templateToType: TemplateToType) throws {
+    public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
       self.init(
         activeBackgroundColor: try dictionary.getOptionalExpressionField("active_background_color", transform: Color.color(withHexString:)),
         activeFontWeight: try dictionary.getOptionalExpressionField("active_font_weight"),
@@ -215,7 +214,7 @@ public final class DivTabsTemplate: TemplateValue, TemplateDeserializable {
       self.paddings = paddings
     }
 
-    private static func resolveOnlyLinks(context: Context, parent: TabTitleStyleTemplate?) -> DeserializationResult<DivTabs.TabTitleStyle> {
+    private static func resolveOnlyLinks(context: TemplatesContext, parent: TabTitleStyleTemplate?) -> DeserializationResult<DivTabs.TabTitleStyle> {
       let activeBackgroundColorValue = parent?.activeBackgroundColor?.resolveOptionalValue(context: context, transform: Color.color(withHexString:), validator: ResolvedValue.activeBackgroundColorValidator) ?? .noValue
       let activeFontWeightValue = parent?.activeFontWeight?.resolveOptionalValue(context: context, validator: ResolvedValue.activeFontWeightValidator) ?? .noValue
       let activeTextColorValue = parent?.activeTextColor?.resolveOptionalValue(context: context, transform: Color.color(withHexString:), validator: ResolvedValue.activeTextColorValidator) ?? .noValue
@@ -277,7 +276,7 @@ public final class DivTabsTemplate: TemplateValue, TemplateDeserializable {
       return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
     }
 
-    public static func resolveValue(context: Context, parent: TabTitleStyleTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivTabs.TabTitleStyle> {
+    public static func resolveValue(context: TemplatesContext, parent: TabTitleStyleTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivTabs.TabTitleStyle> {
       if useOnlyLinks {
         return resolveOnlyLinks(context: context, parent: parent)
       }
@@ -423,11 +422,11 @@ public final class DivTabsTemplate: TemplateValue, TemplateDeserializable {
       return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
     }
 
-    private func mergedWithParent(templates: Templates) throws -> TabTitleStyleTemplate {
+    private func mergedWithParent(templates: [TemplateName: Any]) throws -> TabTitleStyleTemplate {
       return self
     }
 
-    public func resolveParent(templates: Templates) throws -> TabTitleStyleTemplate {
+    public func resolveParent(templates: [TemplateName: Any]) throws -> TabTitleStyleTemplate {
       let merged = try mergedWithParent(templates: templates)
 
       return TabTitleStyleTemplate(
@@ -494,7 +493,7 @@ public final class DivTabsTemplate: TemplateValue, TemplateDeserializable {
   static let parentValidator: AnyValueValidator<String> =
     makeStringValidator(minLength: 1)
 
-  public convenience init(dictionary: [String: Any], templateToType: TemplateToType) throws {
+  public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
     do {
       self.init(
         parent: try dictionary.getOptionalField("type", validator: Self.parentValidator),
@@ -615,7 +614,7 @@ public final class DivTabsTemplate: TemplateValue, TemplateDeserializable {
     self.width = width
   }
 
-  private static func resolveOnlyLinks(context: Context, parent: DivTabsTemplate?) -> DeserializationResult<DivTabs> {
+  private static func resolveOnlyLinks(context: TemplatesContext, parent: DivTabsTemplate?) -> DeserializationResult<DivTabs> {
     let accessibilityValue = parent?.accessibility?.resolveOptionalValue(context: context, validator: ResolvedValue.accessibilityValidator, useOnlyLinks: true) ?? .noValue
     let alignmentHorizontalValue = parent?.alignmentHorizontal?.resolveOptionalValue(context: context, validator: ResolvedValue.alignmentHorizontalValidator) ?? .noValue
     let alignmentVerticalValue = parent?.alignmentVertical?.resolveOptionalValue(context: context, validator: ResolvedValue.alignmentVerticalValidator) ?? .noValue
@@ -736,7 +735,7 @@ public final class DivTabsTemplate: TemplateValue, TemplateDeserializable {
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  public static func resolveValue(context: Context, parent: DivTabsTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivTabs> {
+  public static func resolveValue(context: TemplatesContext, parent: DivTabsTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivTabs> {
     if useOnlyLinks {
       return resolveOnlyLinks(context: context, parent: parent)
     }
@@ -1028,7 +1027,7 @@ public final class DivTabsTemplate: TemplateValue, TemplateDeserializable {
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  private func mergedWithParent(templates: Templates) throws -> DivTabsTemplate {
+  private func mergedWithParent(templates: [TemplateName: Any]) throws -> DivTabsTemplate {
     guard let parent = parent, parent != Self.type else { return self }
     guard let parentTemplate = templates[parent] as? DivTabsTemplate else {
       throw DeserializationError.unknownType(type: parent)
@@ -1075,7 +1074,7 @@ public final class DivTabsTemplate: TemplateValue, TemplateDeserializable {
     )
   }
 
-  public func resolveParent(templates: Templates) throws -> DivTabsTemplate {
+  public func resolveParent(templates: [TemplateName: Any]) throws -> DivTabsTemplate {
     let merged = try mergedWithParent(templates: templates)
 
     return DivTabsTemplate(

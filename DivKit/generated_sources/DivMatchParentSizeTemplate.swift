@@ -3,9 +3,8 @@
 import CommonCorePublic
 import Foundation
 import Serialization
-import TemplatesSupport
 
-public final class DivMatchParentSizeTemplate: TemplateValue, TemplateDeserializable {
+public final class DivMatchParentSizeTemplate: TemplateValue {
   public static let type: String = "match_parent"
   public let parent: String? // at least 1 char
   public let weight: Field<Expression<Double>>? // constraint: number > 0
@@ -13,7 +12,7 @@ public final class DivMatchParentSizeTemplate: TemplateValue, TemplateDeserializ
   static let parentValidator: AnyValueValidator<String> =
     makeStringValidator(minLength: 1)
 
-  public convenience init(dictionary: [String: Any], templateToType: TemplateToType) throws {
+  public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
     self.init(
       parent: try dictionary.getOptionalField("type", validator: Self.parentValidator),
       weight: try dictionary.getOptionalExpressionField("weight")
@@ -28,7 +27,7 @@ public final class DivMatchParentSizeTemplate: TemplateValue, TemplateDeserializ
     self.weight = weight
   }
 
-  private static func resolveOnlyLinks(context: Context, parent: DivMatchParentSizeTemplate?) -> DeserializationResult<DivMatchParentSize> {
+  private static func resolveOnlyLinks(context: TemplatesContext, parent: DivMatchParentSizeTemplate?) -> DeserializationResult<DivMatchParentSize> {
     let weightValue = parent?.weight?.resolveOptionalValue(context: context, validator: ResolvedValue.weightValidator) ?? .noValue
     let errors = mergeErrors(
       weightValue.errorsOrWarnings?.map { .nestedObjectError(field: "weight", error: $0) }
@@ -39,7 +38,7 @@ public final class DivMatchParentSizeTemplate: TemplateValue, TemplateDeserializ
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  public static func resolveValue(context: Context, parent: DivMatchParentSizeTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivMatchParentSize> {
+  public static func resolveValue(context: TemplatesContext, parent: DivMatchParentSizeTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivMatchParentSize> {
     if useOnlyLinks {
       return resolveOnlyLinks(context: context, parent: parent)
     }
@@ -62,7 +61,7 @@ public final class DivMatchParentSizeTemplate: TemplateValue, TemplateDeserializ
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  private func mergedWithParent(templates: Templates) throws -> DivMatchParentSizeTemplate {
+  private func mergedWithParent(templates: [TemplateName: Any]) throws -> DivMatchParentSizeTemplate {
     guard let parent = parent, parent != Self.type else { return self }
     guard let parentTemplate = templates[parent] as? DivMatchParentSizeTemplate else {
       throw DeserializationError.unknownType(type: parent)
@@ -75,7 +74,7 @@ public final class DivMatchParentSizeTemplate: TemplateValue, TemplateDeserializ
     )
   }
 
-  public func resolveParent(templates: Templates) throws -> DivMatchParentSizeTemplate {
+  public func resolveParent(templates: [TemplateName: Any]) throws -> DivMatchParentSizeTemplate {
     return try mergedWithParent(templates: templates)
   }
 }

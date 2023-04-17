@@ -3,9 +3,8 @@
 import CommonCorePublic
 import Foundation
 import Serialization
-import TemplatesSupport
 
-public final class DivSolidBackgroundTemplate: TemplateValue, TemplateDeserializable {
+public final class DivSolidBackgroundTemplate: TemplateValue {
   public static let type: String = "solid"
   public let parent: String? // at least 1 char
   public let color: Field<Expression<Color>>?
@@ -13,7 +12,7 @@ public final class DivSolidBackgroundTemplate: TemplateValue, TemplateDeserializ
   static let parentValidator: AnyValueValidator<String> =
     makeStringValidator(minLength: 1)
 
-  public convenience init(dictionary: [String: Any], templateToType: TemplateToType) throws {
+  public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
     do {
       self.init(
         parent: try dictionary.getOptionalField("type", validator: Self.parentValidator),
@@ -32,7 +31,7 @@ public final class DivSolidBackgroundTemplate: TemplateValue, TemplateDeserializ
     self.color = color
   }
 
-  private static func resolveOnlyLinks(context: Context, parent: DivSolidBackgroundTemplate?) -> DeserializationResult<DivSolidBackground> {
+  private static func resolveOnlyLinks(context: TemplatesContext, parent: DivSolidBackgroundTemplate?) -> DeserializationResult<DivSolidBackground> {
     let colorValue = parent?.color?.resolveValue(context: context, transform: Color.color(withHexString:)) ?? .noValue
     var errors = mergeErrors(
       colorValue.errorsOrWarnings?.map { .nestedObjectError(field: "color", error: $0) }
@@ -51,7 +50,7 @@ public final class DivSolidBackgroundTemplate: TemplateValue, TemplateDeserializ
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  public static func resolveValue(context: Context, parent: DivSolidBackgroundTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivSolidBackground> {
+  public static func resolveValue(context: TemplatesContext, parent: DivSolidBackgroundTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivSolidBackground> {
     if useOnlyLinks {
       return resolveOnlyLinks(context: context, parent: parent)
     }
@@ -82,7 +81,7 @@ public final class DivSolidBackgroundTemplate: TemplateValue, TemplateDeserializ
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  private func mergedWithParent(templates: Templates) throws -> DivSolidBackgroundTemplate {
+  private func mergedWithParent(templates: [TemplateName: Any]) throws -> DivSolidBackgroundTemplate {
     guard let parent = parent, parent != Self.type else { return self }
     guard let parentTemplate = templates[parent] as? DivSolidBackgroundTemplate else {
       throw DeserializationError.unknownType(type: parent)
@@ -95,7 +94,7 @@ public final class DivSolidBackgroundTemplate: TemplateValue, TemplateDeserializ
     )
   }
 
-  public func resolveParent(templates: Templates) throws -> DivSolidBackgroundTemplate {
+  public func resolveParent(templates: [TemplateName: Any]) throws -> DivSolidBackgroundTemplate {
     return try mergedWithParent(templates: templates)
   }
 }

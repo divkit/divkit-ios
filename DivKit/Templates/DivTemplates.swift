@@ -2,15 +2,17 @@ import Foundation
 
 import CommonCorePublic
 import Serialization
-import TemplatesSupport
 
 public struct DivTemplates: Deserializable {
-  public let templates: Templates
-  public let templateToType: TemplateToType
+  public let templates: [TemplateName: Any]
+  public let templateToType: [TemplateName: String]
 
   public static let empty = DivTemplates(dictionary: [:])
 
-  public init(templates: Templates, templatesToType: TemplateToType) {
+  public init(
+    templates: [TemplateName: Any],
+    templatesToType: [TemplateName: String]
+  ) {
     self.templates = templates
     self.templateToType = templatesToType
   }
@@ -52,12 +54,11 @@ extension DivTemplates {
     )
   }
 
-  @inlinable
-  public func parseValue<T: TemplateDeserializable & TemplateValue>(
+  public func parseValue<T: TemplateValue>(
     type _: T.Type,
     from dict: [String: Any]
   ) -> DeserializationResult<T.ResolvedValue> {
-    let context = Context(
+    let context = TemplatesContext(
       templates: templates,
       templateToType: templateToType,
       templateData: dict
@@ -92,8 +93,8 @@ extension DivTemplates {
 
 private func mapTemplatesByType(
   templatesDictionary: [String: Any],
-  templateToType: TemplateToType
-) -> [Link: DivTemplate] {
+  templateToType: [TemplateName: String]
+) -> [TemplateName: DivTemplate] {
   Dictionary(
     templatesDictionary.keys.compactMap { [templateToType] key in
       guard let divTemplate: DivTemplate = try? templatesDictionary.getField(
@@ -107,9 +108,9 @@ private func mapTemplatesByType(
 }
 
 private func resolveTemplates(
-  templatesByType: [Link: DivTemplate],
-  untypedTemplatesByType: [Link: Any]
-) -> [Link: Any] {
+  templatesByType: [TemplateName: DivTemplate],
+  untypedTemplatesByType: [TemplateName: Any]
+) -> [TemplateName: Any] {
   templatesByType.compactMapValues {
     try? $0.resolveParent(templates: untypedTemplatesByType).value
   }

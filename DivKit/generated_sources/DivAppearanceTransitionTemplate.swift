@@ -3,7 +3,6 @@
 import CommonCorePublic
 import Foundation
 import Serialization
-import TemplatesSupport
 
 @frozen
 public enum DivAppearanceTransitionTemplate: TemplateValue {
@@ -25,7 +24,7 @@ public enum DivAppearanceTransitionTemplate: TemplateValue {
     }
   }
 
-  public func resolveParent(templates: Templates) throws -> DivAppearanceTransitionTemplate {
+  public func resolveParent(templates: [TemplateName: Any]) throws -> DivAppearanceTransitionTemplate {
     switch self {
     case let .divAppearanceSetTransitionTemplate(value):
       return .divAppearanceSetTransitionTemplate(try value.resolveParent(templates: templates))
@@ -38,7 +37,7 @@ public enum DivAppearanceTransitionTemplate: TemplateValue {
     }
   }
 
-  public static func resolveValue(context: Context, parent: DivAppearanceTransitionTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivAppearanceTransition> {
+  public static func resolveValue(context: TemplatesContext, parent: DivAppearanceTransitionTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivAppearanceTransition> {
     guard let parent = parent else {
       if useOnlyLinks {
         return .failure(NonEmptyArray(.missingType(representation: context.templateData)))
@@ -83,7 +82,7 @@ public enum DivAppearanceTransitionTemplate: TemplateValue {
     }
   }
 
-  private static func resolveUnknownValue(context: Context, useOnlyLinks: Bool) -> DeserializationResult<DivAppearanceTransition> {
+  private static func resolveUnknownValue(context: TemplatesContext, useOnlyLinks: Bool) -> DeserializationResult<DivAppearanceTransition> {
     guard let type = (context.templateData["type"] as? String).flatMap({ context.templateToType[$0] ?? $0 }) else {
       return .failure(NonEmptyArray(.requiredFieldIsMissing(field: "type")))
     }
@@ -127,8 +126,8 @@ public enum DivAppearanceTransitionTemplate: TemplateValue {
   }
 }
 
-extension DivAppearanceTransitionTemplate: TemplateDeserializable {
-  public init(dictionary: [String: Any], templateToType: TemplateToType) throws {
+extension DivAppearanceTransitionTemplate {
+  public init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
     let receivedType = try dictionary.getField("type") as String
     let blockType = templateToType[receivedType] ?? receivedType
     switch blockType {

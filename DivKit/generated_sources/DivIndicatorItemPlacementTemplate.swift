@@ -3,7 +3,6 @@
 import CommonCorePublic
 import Foundation
 import Serialization
-import TemplatesSupport
 
 @frozen
 public enum DivIndicatorItemPlacementTemplate: TemplateValue {
@@ -19,7 +18,7 @@ public enum DivIndicatorItemPlacementTemplate: TemplateValue {
     }
   }
 
-  public func resolveParent(templates: Templates) throws -> DivIndicatorItemPlacementTemplate {
+  public func resolveParent(templates: [TemplateName: Any]) throws -> DivIndicatorItemPlacementTemplate {
     switch self {
     case let .divDefaultIndicatorItemPlacementTemplate(value):
       return .divDefaultIndicatorItemPlacementTemplate(try value.resolveParent(templates: templates))
@@ -28,7 +27,7 @@ public enum DivIndicatorItemPlacementTemplate: TemplateValue {
     }
   }
 
-  public static func resolveValue(context: Context, parent: DivIndicatorItemPlacementTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivIndicatorItemPlacement> {
+  public static func resolveValue(context: TemplatesContext, parent: DivIndicatorItemPlacementTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivIndicatorItemPlacement> {
     guard let parent = parent else {
       if useOnlyLinks {
         return .failure(NonEmptyArray(.missingType(representation: context.templateData)))
@@ -57,7 +56,7 @@ public enum DivIndicatorItemPlacementTemplate: TemplateValue {
     }
   }
 
-  private static func resolveUnknownValue(context: Context, useOnlyLinks: Bool) -> DeserializationResult<DivIndicatorItemPlacement> {
+  private static func resolveUnknownValue(context: TemplatesContext, useOnlyLinks: Bool) -> DeserializationResult<DivIndicatorItemPlacement> {
     guard let type = (context.templateData["type"] as? String).flatMap({ context.templateToType[$0] ?? $0 }) else {
       return .failure(NonEmptyArray(.requiredFieldIsMissing(field: "type")))
     }
@@ -85,8 +84,8 @@ public enum DivIndicatorItemPlacementTemplate: TemplateValue {
   }
 }
 
-extension DivIndicatorItemPlacementTemplate: TemplateDeserializable {
-  public init(dictionary: [String: Any], templateToType: TemplateToType) throws {
+extension DivIndicatorItemPlacementTemplate {
+  public init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
     let receivedType = try dictionary.getField("type") as String
     let blockType = templateToType[receivedType] ?? receivedType
     switch blockType {

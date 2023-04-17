@@ -3,14 +3,13 @@
 import CommonCorePublic
 import Foundation
 import Serialization
-import TemplatesSupport
 
-public final class DivStrokeTemplate: TemplateValue, TemplateDeserializable {
+public final class DivStrokeTemplate: TemplateValue {
   public let color: Field<Expression<Color>>?
   public let unit: Field<Expression<DivSizeUnit>>? // default value: dp
   public let width: Field<Expression<Int>>? // constraint: number >= 0; default value: 1
 
-  public convenience init(dictionary: [String: Any], templateToType: TemplateToType) throws {
+  public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
     do {
       self.init(
         color: try dictionary.getOptionalExpressionField("color", transform: Color.color(withHexString:)),
@@ -32,7 +31,7 @@ public final class DivStrokeTemplate: TemplateValue, TemplateDeserializable {
     self.width = width
   }
 
-  private static func resolveOnlyLinks(context: Context, parent: DivStrokeTemplate?) -> DeserializationResult<DivStroke> {
+  private static func resolveOnlyLinks(context: TemplatesContext, parent: DivStrokeTemplate?) -> DeserializationResult<DivStroke> {
     let colorValue = parent?.color?.resolveValue(context: context, transform: Color.color(withHexString:)) ?? .noValue
     let unitValue = parent?.unit?.resolveOptionalValue(context: context, validator: ResolvedValue.unitValidator) ?? .noValue
     let widthValue = parent?.width?.resolveOptionalValue(context: context, validator: ResolvedValue.widthValidator) ?? .noValue
@@ -57,7 +56,7 @@ public final class DivStrokeTemplate: TemplateValue, TemplateDeserializable {
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  public static func resolveValue(context: Context, parent: DivStrokeTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivStroke> {
+  public static func resolveValue(context: TemplatesContext, parent: DivStrokeTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivStroke> {
     if useOnlyLinks {
       return resolveOnlyLinks(context: context, parent: parent)
     }
@@ -102,11 +101,11 @@ public final class DivStrokeTemplate: TemplateValue, TemplateDeserializable {
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  private func mergedWithParent(templates: Templates) throws -> DivStrokeTemplate {
+  private func mergedWithParent(templates: [TemplateName: Any]) throws -> DivStrokeTemplate {
     return self
   }
 
-  public func resolveParent(templates: Templates) throws -> DivStrokeTemplate {
+  public func resolveParent(templates: [TemplateName: Any]) throws -> DivStrokeTemplate {
     return try mergedWithParent(templates: templates)
   }
 }

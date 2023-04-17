@@ -3,9 +3,8 @@
 import CommonCorePublic
 import Foundation
 import Serialization
-import TemplatesSupport
 
-public final class DivNinePatchBackgroundTemplate: TemplateValue, TemplateDeserializable {
+public final class DivNinePatchBackgroundTemplate: TemplateValue {
   public static let type: String = "nine_patch_image"
   public let parent: String? // at least 1 char
   public let imageUrl: Field<Expression<URL>>?
@@ -14,7 +13,7 @@ public final class DivNinePatchBackgroundTemplate: TemplateValue, TemplateDeseri
   static let parentValidator: AnyValueValidator<String> =
     makeStringValidator(minLength: 1)
 
-  public convenience init(dictionary: [String: Any], templateToType: TemplateToType) throws {
+  public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
     do {
       self.init(
         parent: try dictionary.getOptionalField("type", validator: Self.parentValidator),
@@ -36,7 +35,7 @@ public final class DivNinePatchBackgroundTemplate: TemplateValue, TemplateDeseri
     self.insets = insets
   }
 
-  private static func resolveOnlyLinks(context: Context, parent: DivNinePatchBackgroundTemplate?) -> DeserializationResult<DivNinePatchBackground> {
+  private static func resolveOnlyLinks(context: TemplatesContext, parent: DivNinePatchBackgroundTemplate?) -> DeserializationResult<DivNinePatchBackground> {
     let imageUrlValue = parent?.imageUrl?.resolveValue(context: context, transform: URL.init(string:)) ?? .noValue
     let insetsValue = parent?.insets?.resolveOptionalValue(context: context, useOnlyLinks: true) ?? .noValue
     var errors = mergeErrors(
@@ -58,7 +57,7 @@ public final class DivNinePatchBackgroundTemplate: TemplateValue, TemplateDeseri
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  public static func resolveValue(context: Context, parent: DivNinePatchBackgroundTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivNinePatchBackground> {
+  public static func resolveValue(context: TemplatesContext, parent: DivNinePatchBackgroundTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivNinePatchBackground> {
     if useOnlyLinks {
       return resolveOnlyLinks(context: context, parent: parent)
     }
@@ -99,7 +98,7 @@ public final class DivNinePatchBackgroundTemplate: TemplateValue, TemplateDeseri
     return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
   }
 
-  private func mergedWithParent(templates: Templates) throws -> DivNinePatchBackgroundTemplate {
+  private func mergedWithParent(templates: [TemplateName: Any]) throws -> DivNinePatchBackgroundTemplate {
     guard let parent = parent, parent != Self.type else { return self }
     guard let parentTemplate = templates[parent] as? DivNinePatchBackgroundTemplate else {
       throw DeserializationError.unknownType(type: parent)
@@ -113,7 +112,7 @@ public final class DivNinePatchBackgroundTemplate: TemplateValue, TemplateDeseri
     )
   }
 
-  public func resolveParent(templates: Templates) throws -> DivNinePatchBackgroundTemplate {
+  public func resolveParent(templates: [TemplateName: Any]) throws -> DivNinePatchBackgroundTemplate {
     let merged = try mergedWithParent(templates: templates)
 
     return DivNinePatchBackgroundTemplate(

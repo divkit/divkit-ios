@@ -3,7 +3,6 @@
 import CommonCorePublic
 import Foundation
 import Serialization
-import TemplatesSupport
 
 @frozen
 public enum DivRadialGradientCenterTemplate: TemplateValue {
@@ -19,7 +18,7 @@ public enum DivRadialGradientCenterTemplate: TemplateValue {
     }
   }
 
-  public func resolveParent(templates: Templates) throws -> DivRadialGradientCenterTemplate {
+  public func resolveParent(templates: [TemplateName: Any]) throws -> DivRadialGradientCenterTemplate {
     switch self {
     case let .divRadialGradientFixedCenterTemplate(value):
       return .divRadialGradientFixedCenterTemplate(try value.resolveParent(templates: templates))
@@ -28,7 +27,7 @@ public enum DivRadialGradientCenterTemplate: TemplateValue {
     }
   }
 
-  public static func resolveValue(context: Context, parent: DivRadialGradientCenterTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivRadialGradientCenter> {
+  public static func resolveValue(context: TemplatesContext, parent: DivRadialGradientCenterTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivRadialGradientCenter> {
     guard let parent = parent else {
       if useOnlyLinks {
         return .failure(NonEmptyArray(.missingType(representation: context.templateData)))
@@ -57,7 +56,7 @@ public enum DivRadialGradientCenterTemplate: TemplateValue {
     }
   }
 
-  private static func resolveUnknownValue(context: Context, useOnlyLinks: Bool) -> DeserializationResult<DivRadialGradientCenter> {
+  private static func resolveUnknownValue(context: TemplatesContext, useOnlyLinks: Bool) -> DeserializationResult<DivRadialGradientCenter> {
     guard let type = (context.templateData["type"] as? String).flatMap({ context.templateToType[$0] ?? $0 }) else {
       return .failure(NonEmptyArray(.requiredFieldIsMissing(field: "type")))
     }
@@ -85,8 +84,8 @@ public enum DivRadialGradientCenterTemplate: TemplateValue {
   }
 }
 
-extension DivRadialGradientCenterTemplate: TemplateDeserializable {
-  public init(dictionary: [String: Any], templateToType: TemplateToType) throws {
+extension DivRadialGradientCenterTemplate {
+  public init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
     let receivedType = try dictionary.getField("type") as String
     let blockType = templateToType[receivedType] ?? receivedType
     switch blockType {
