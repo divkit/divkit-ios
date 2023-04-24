@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = 'Serialization'
-  s.version          = '##VERSION##'
+  s.version          = '24.3.0'
   s.summary          = 'Serialization'
   s.summary          = 'Part of DivKit framework'
   s.description      = 'Part of DivKit framework'

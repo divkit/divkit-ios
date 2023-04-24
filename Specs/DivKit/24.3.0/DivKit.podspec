@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = 'DivKit'
-  s.version          = '##VERSION##'
+  s.version          = '24.3.0'
   s.summary          = 'DivKit framework'
   s.description      = 'DivKit is a backend-driven UI framework'
   s.homepage         = 'https://divkit.tech'
