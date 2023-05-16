@@ -58,13 +58,13 @@ extension DivBase {
       .getState(context.parentPath) ?? .default
     let background = getBackground(focusState)
     let border = getBorder(focusState)
+    let anchorPoint = transform.makeAnchorPoint(expressionResolver: expressionResolver)
 
     block = applyBackground(
       background,
       to: block,
       imageHolderFactory: context.imageHolderFactory,
-      expressionResolver: expressionResolver,
-      metalImageRenderingEnabled: context.flagsInfo.metalImageRenderingEnabled
+      expressionResolver: expressionResolver
     )
     .addingDecorations(
       boundary: border.makeBoundaryTrait(with: expressionResolver),
@@ -72,6 +72,11 @@ extension DivBase {
       shadow: border.makeBlockShadow(with: expressionResolver),
       visibilityActions: visibilityActions.isEmpty ? nil : visibilityActions,
       tooltips: try makeTooltips(context: context)
+    )
+    .addingTransform(
+      transform: transform.resolveRotation(expressionResolver)
+        .flatMap { CGAffineTransform(rotationAngle: CGFloat($0) * .pi / 180) } ?? .identity,
+      anchorPoint: anchorPoint
     )
 
     block = applyTransitioningAnimations(to: block, context: context, statePath: statePath)
@@ -89,17 +94,10 @@ extension DivBase {
         )
       )
 
-    let anchorPoint = transform.makeAnchorPoint(expressionResolver: expressionResolver)
-
     return applyExtensionHandlersAfterBaseProperties(
       to: block,
       extensionHandlers: extensionHandlers,
       context: context
-    )
-    .addingTransform(
-      transform: transform.resolveRotation(expressionResolver)
-        .flatMap { CGAffineTransform(rotationAngle: CGFloat($0) * .pi / 180) } ?? .identity,
-      anchorPoint: anchorPoint
     )
   }
 
@@ -224,8 +222,7 @@ extension DivBase {
     _ backgrounds: [DivBackground]?,
     to block: Block,
     imageHolderFactory: ImageHolderFactory,
-    expressionResolver: ExpressionResolver,
-    metalImageRenderingEnabled: Bool
+    expressionResolver: ExpressionResolver
   ) -> Block {
     guard let backgrounds = backgrounds else {
       return block
@@ -235,8 +232,7 @@ extension DivBase {
     if backgrounds.count == 1 {
       guard let background = backgrounds[0].makeBlockBackground(
         with: imageHolderFactory,
-        expressionResolver: expressionResolver,
-        metalImageRenderingEnabled: metalImageRenderingEnabled
+        expressionResolver: expressionResolver
       ) else {
         return block
       }
@@ -249,8 +245,7 @@ extension DivBase {
     let blockBackgrounds = backgrounds.compactMap {
       $0.makeBlockBackground(
         with: imageHolderFactory,
-        expressionResolver: expressionResolver,
-        metalImageRenderingEnabled: metalImageRenderingEnabled
+        expressionResolver: expressionResolver
       )
     }
     guard let background = blockBackgrounds.composite() else {
