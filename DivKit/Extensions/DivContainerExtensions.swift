@@ -150,16 +150,21 @@ extension DivContainer: DivBlockModeling {
   ) throws -> Block {
     let expressionResolver = context.expressionResolver
     let layoutDirection = orientation.layoutDirection
-    let axialAlignment: Alignment
-    let crossAlignment: ContainerBlock.CrossAlignment
-    switch layoutDirection {
-    case .horizontal:
-      axialAlignment = resolveContentAlignmentHorizontal(expressionResolver).alignment
-      crossAlignment = resolveContentAlignmentVertical(expressionResolver).crossAlignment
-    case .vertical:
-      axialAlignment = resolveContentAlignmentVertical(expressionResolver).alignment
-      crossAlignment = resolveContentAlignmentHorizontal(expressionResolver).crossAlignment
-    }
+
+    let divContentAlignmentVertical = resolveContentAlignmentVertical(expressionResolver)
+    let divContentAlignmentHorizontal = resolveContentAlignmentHorizontal(expressionResolver)
+
+    let axialAlignment = makeAxialAlignment(
+      layoutDirection,
+      verticalAlignment: divContentAlignmentVertical,
+      horizontalAlignment: divContentAlignmentHorizontal
+    )
+
+    let crossAlignment = makeCrossAlignment(
+      layoutDirection,
+      verticalAlignment: divContentAlignmentVertical,
+      horizontalAlignment: divContentAlignmentHorizontal
+    )
 
     let fallbackWidth = getFallbackWidth(
       orientation: orientation,
@@ -392,6 +397,38 @@ extension DivAlignmentVertical {
   }
 }
 
+extension DivContentAlignmentHorizontal {
+  fileprivate var alignment: Alignment {
+    switch self {
+    case .left:
+      return .leading
+    case .center:
+      return .center
+    case .right:
+      return .trailing
+    case .spaceEvenly, .spaceAround, .spaceBetween:
+      DivKitLogger.warning("Alignment \(rawValue) is not supported")
+      return .leading
+    }
+  }
+}
+
+extension DivContentAlignmentVertical {
+  fileprivate var alignment: Alignment {
+    switch self {
+    case .top:
+      return .leading
+    case .center:
+      return .center
+    case .bottom:
+      return .trailing
+    case .spaceEvenly, .spaceAround, .spaceBetween, .baseline:
+      DivKitLogger.warning("Alignment \(rawValue) is not supported")
+      return .leading
+    }
+  }
+}
+
 extension DivContainer.LayoutMode {
   fileprivate var system: ContainerBlock.LayoutMode {
     switch self {
@@ -440,3 +477,81 @@ private let defaultFallbackSize = DivOverridenSize(
   original: .divMatchParentSize(DivMatchParentSize()),
   overriden: .divWrapContentSize(DivWrapContentSize(constrained: .value(true)))
 )
+
+
+fileprivate func makeCrossAlignment(
+  _ direction: ContainerBlock.LayoutDirection,
+  verticalAlignment: DivContentAlignmentVertical,
+  horizontalAlignment: DivContentAlignmentHorizontal
+) -> ContainerBlock.CrossAlignment {
+  switch direction {
+  case .horizontal:
+    switch verticalAlignment {
+    case .top:
+      return .leading
+    case .center:
+      return .center
+    case .bottom:
+      return .trailing
+    case .baseline:
+      return .baseline
+    case .spaceBetween, .spaceEvenly, .spaceAround:
+      return .leading
+    }
+  case .vertical:
+    switch horizontalAlignment {
+    case .left:
+      return .leading
+    case .center:
+      return .center
+    case .right:
+      return .trailing
+    case .spaceBetween, .spaceEvenly, .spaceAround:
+      return .center
+    }
+  }
+}
+
+fileprivate func makeAxialAlignment(
+  _ direction: ContainerBlock.LayoutDirection,
+  verticalAlignment: DivContentAlignmentVertical,
+  horizontalAlignment: DivContentAlignmentHorizontal
+) -> ContainerBlock.AxialAlignment {
+  switch direction {
+  case .horizontal:
+    switch horizontalAlignment {
+    case .left:
+      return .leading
+    case .center:
+      return .center
+    case .right:
+      return .trailing
+    case .spaceBetween:
+      return .spaceBetween
+    case .spaceAround:
+      return .spaceAround
+    case .spaceEvenly:
+      return .spaceEvenly
+    }
+  case .vertical:
+    switch verticalAlignment {
+    case .top:
+      return .leading
+    case .center:
+      return .center
+    case .bottom:
+      return .trailing
+    case .baseline:
+      DivKitLogger.warning("Baseline alignment not supported.")
+      return .leading
+    case .spaceBetween:
+      return .spaceBetween
+    case .spaceAround:
+      return .spaceAround
+    case .spaceEvenly:
+      return .spaceEvenly
+    }
+  }
+}
+
+

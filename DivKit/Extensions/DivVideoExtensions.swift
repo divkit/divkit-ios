@@ -5,19 +5,27 @@ import LayoutKit
 
 extension DivVideo: DivBlockModeling {
   public func makeBlock(context: DivBlockModelingContext) throws -> Block {
+    try applyBaseProperties(
+      to: { try makeBaseBlock(context: context) },
+      context: context,
+      actions: nil,
+      actionAnimation: nil,
+      doubleTapActions: nil,
+      longTapActions: nil
+    )
+  }
+
+  private func makeBaseBlock(context: DivBlockModelingContext) throws -> Block {
     guard let playerFactory = context.playerFactory else {
       DivKitLogger.warning("There is no player factory in the context")
       return EmptyBlock()
     }
 
-    let resumeActions = resumeActions?
-      .compactMap { $0.makeUiAction(context: context.actionContext) } ?? []
-    let bufferingActions = bufferingActions?.compactMap {
-      $0.makeUiAction(context: context.actionContext)
-    } ?? []
-    let endActions = endActions?.compactMap {
-      $0.makeUiAction(context: context.actionContext)
-    } ?? []
+    let resumeActions = resumeActions?.makeActions(context: context.actionContext) ?? []
+    let pauseActions = pauseActions?.makeActions(context: context.actionContext) ?? []
+    let bufferingActions = bufferingActions?.makeActions(context: context.actionContext) ?? []
+    let endActions = endActions?.makeActions(context: context.actionContext) ?? []
+    let fatalActions = fatalActions?.makeActions(context: context.actionContext) ?? []
     let resolver = context.expressionResolver
     let repeatable = resolveRepeatable(resolver)
     let muted = resolveMuted(resolver)
@@ -42,8 +50,10 @@ extension DivVideo: DivBlockModeling {
       preview: preview,
       elapsedTime: elapsedTime,
       resumeActions: resumeActions,
+      pauseActions: pauseActions,
       bufferingActions: bufferingActions,
       endActions: endActions,
+      fatalActions: fatalActions,
       path: context.parentPath
     )
 
