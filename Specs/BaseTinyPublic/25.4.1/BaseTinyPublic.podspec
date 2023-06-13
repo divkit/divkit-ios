@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
-  s.name             = 'CommonCorePublic'
-  s.version          = '25.4.0'
+  s.name             = 'BaseTinyPublic'
+  s.version          = '25.4.1'
   s.summary          = 'Part of DivKit framework'
   s.description      = 'Part of DivKit framework'
   s.homepage         = 'https://divkit.tech'
@@ -14,9 +14,7 @@ Pod::Spec.new do |s|
   s.prefix_header_file = false
   s.platforms = { :ios => '11.0' }
 
-  s.dependency 'BasePublic', s.version.to_s
-
   s.source_files = [
-    'Core/CommonCorePublic/**/*'
+    'Core/BaseTinyPublic/**/*'
   ]
 end

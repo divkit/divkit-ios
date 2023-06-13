@@ -1,8 +1,8 @@
 Pod::Spec.new do |s|
-  s.name             = 'NetworkingPublic'
-  s.version          = '25.4.0'
-  s.summary          = 'Part of DivKit framework'
-  s.description      = 'Part of DivKit framework'
+  s.name             = 'DivKit'
+  s.version          = '25.4.1'
+  s.summary          = 'DivKit framework'
+  s.description      = 'DivKit is a backend-driven UI framework'
   s.homepage         = 'https://divkit.tech'
 
   s.license          = { :type => 'MIT', :file => 'LICENSE' }
@@ -14,9 +14,12 @@ Pod::Spec.new do |s|
   s.prefix_header_file = false
   s.platforms = { :ios => '11.0' }
 
-  s.dependency 'BasePublic', s.version.to_s
+  s.dependency 'CommonCorePublic', s.version.to_s
+  s.dependency 'LayoutKit', s.version.to_s
+  s.dependency 'NetworkingPublic', s.version.to_s
+  s.dependency 'Serialization', s.version.to_s
 
   s.source_files = [
-    'Core/NetworkingPublic/**/*'
+    'DivKit/**/*'
   ]
 end

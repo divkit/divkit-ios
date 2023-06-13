@@ -1,7 +1,6 @@
 Pod::Spec.new do |s|
-  s.name             = 'Serialization'
-  s.version          = '25.4.0'
-  s.summary          = 'Serialization'
+  s.name             = 'LayoutKitInterface'
+  s.version          = '25.4.1'
   s.summary          = 'Part of DivKit framework'
   s.description      = 'Part of DivKit framework'
   s.homepage         = 'https://divkit.tech'
@@ -15,9 +14,11 @@ Pod::Spec.new do |s|
   s.prefix_header_file = false
   s.platforms = { :ios => '11.0' }
 
-  s.dependency 'CommonCorePublic', s.version.to_s
+  s.dependency 'BasePublic', s.version.to_s
+  s.dependency 'BaseTinyPublic', s.version.to_s
+  s.dependency 'BaseUIPublic', s.version.to_s
 
   s.source_files = [
-    'Serialization/**/*'
+    'LayoutKit/Interface/**/*'
   ]
 end
