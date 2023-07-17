@@ -14,7 +14,6 @@ public struct DivBlockModelingContext {
   public var stateManager: DivStateManager
   public let blockStateStorage: DivBlockStateStorage
   public let visibilityCounter: DivVisibilityCounting
-  public var galleryResizableInsets: InsetMode.Resizable?
   public let imageHolderFactory: ImageHolderFactory
   public let highPriorityImageHolderFactory: ImageHolderFactory?
   public let divCustomBlockFactory: DivCustomBlockFactory
@@ -23,6 +22,7 @@ public struct DivBlockModelingContext {
   public let extensionHandlers: [String: DivExtensionHandler]
   public let stateInterceptors: [String: DivStateInterceptor]
   private let variables: DivVariables
+  public let layoutDirection: LayoutDirection
   public var expressionResolver: ExpressionResolver {
     ExpressionResolver(
       variables: variables,
@@ -47,7 +47,6 @@ public struct DivBlockModelingContext {
     stateManager: DivStateManager,
     blockStateStorage: DivBlockStateStorage = DivBlockStateStorage(),
     visibilityCounter: DivVisibilityCounting = DivVisibilityCounter(),
-    galleryResizableInsets: InsetMode.Resizable? = nil,
     imageHolderFactory: ImageHolderFactory,
     highPriorityImageHolderFactory: ImageHolderFactory? = nil,
     divCustomBlockFactory: DivCustomBlockFactory = EmptyDivCustomBlockFactory(),
@@ -60,7 +59,8 @@ public struct DivBlockModelingContext {
     debugParams: DebugParams = DebugParams(),
     childrenA11yDescription: String? = nil,
     parentScrollView: ScrollView? = nil,
-    errorsStorage: DivErrorsStorage = DivErrorsStorage(errors: [])
+    errorsStorage: DivErrorsStorage = DivErrorsStorage(errors: []),
+    layoutDirection: LayoutDirection = .system
   ) {
     self.cardId = cardId
     self.cardLogId = cardLogId
@@ -69,7 +69,6 @@ public struct DivBlockModelingContext {
     self.stateManager = stateManager
     self.blockStateStorage = blockStateStorage
     self.visibilityCounter = visibilityCounter
-    self.galleryResizableInsets = galleryResizableInsets
     self.imageHolderFactory = imageHolderFactory
     self.highPriorityImageHolderFactory = highPriorityImageHolderFactory
     self.divCustomBlockFactory = divCustomBlockFactory
@@ -80,6 +79,7 @@ public struct DivBlockModelingContext {
     self.childrenA11yDescription = childrenA11yDescription
     self.parentScrollView = parentScrollView
     self.errorsStorage = errorsStorage
+    self.layoutDirection = layoutDirection
 
     self.variables = variables
 
