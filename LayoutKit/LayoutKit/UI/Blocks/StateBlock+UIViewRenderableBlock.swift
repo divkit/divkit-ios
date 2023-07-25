@@ -19,6 +19,7 @@ extension StateBlock {
   ) {
     (view as! StateBlockView).configure(
       child: child,
+      stateId: stateId,
       ids: Set(ids.map { BlockViewID(rawValue: $0) }),
       observer: observer,
       overscrollDelegate: overscrollDelegate,
@@ -60,6 +61,14 @@ private final class SubviewStorage: RenderingDelegate {
     wrappedRenderingDelegate?.mapView(view, to: id)
   }
 
+  func tooltipAnchorViewAdded(anchorView: TooltipAnchorView) {
+    wrappedRenderingDelegate?.tooltipAnchorViewAdded(anchorView: anchorView)
+  }
+
+  func tooltipAnchorViewRemoved(anchorView: TooltipAnchorView) {
+    wrappedRenderingDelegate?.tooltipAnchorViewRemoved(anchorView: anchorView)
+  }
+
   func getView(_ id: BlockViewID) -> DetachableAnimationBlockView? {
     views.first { $0.id == id }?.view
   }
@@ -99,6 +108,8 @@ private final class SubviewStorage: RenderingDelegate {
 private final class StateBlockView: BlockView {
   private var subviewStorage = SubviewStorage(wrappedRenderingDelegate: nil, ids: [])
   private var childView: BlockView?
+  private var stateId: String?
+  private var isStateChanged = false
 
   var effectiveBackgroundColor: UIColor? { childView?.effectiveBackgroundColor }
 
@@ -113,11 +124,17 @@ private final class StateBlockView: BlockView {
 
   func configure(
     child: Block,
+    stateId: String,
     ids: Set<BlockViewID>,
     observer: ElementStateObserver?,
     overscrollDelegate: ScrollDelegate?,
     renderingDelegate: RenderingDelegate?
   ) {
+    if (self.stateId != stateId) {
+      isStateChanged = true
+      self.stateId = stateId
+    }
+
     // remove views with unfinished animations
     subviews.forEach {
       if $0 !== childView {
@@ -171,6 +188,15 @@ private final class StateBlockView: BlockView {
 }
 
 extension StateBlockView: VisibleBoundsTrackingContainer {
+  func onVisibleBoundsChanged(from: CGRect, to: CGRect) {
+    if isStateChanged {
+      isStateChanged = false
+      passVisibleBoundsChanged(from: .zero, to: to)
+    } else {
+      passVisibleBoundsChanged(from: from, to: to)
+    }
+  }
+
   var visibleBoundsTrackingSubviews: [VisibleBoundsTrackingView] {
     childView.asArray()
   }

@@ -16,12 +16,13 @@ public final class DivKitComponents {
   public let flagsInfo: DivFlagsInfo
   public let fontProvider: DivFontProvider
   public let imageHolderFactory: ImageHolderFactory
-  public let layoutDirection: LayoutDirection
+  public let layoutDirection: UserInterfaceLayoutDirection
   public let patchProvider: DivPatchProvider
   public let playerFactory: PlayerFactory?
   public let safeAreaManager: DivSafeAreaManager
-  public let showToolip: DivActionURLHandler.ShowTooltipAction
   public let stateManagement: DivStateManagement
+  public let showToolip: DivActionURLHandler.ShowTooltipAction?
+  public let tooltipManager: TooltipManager
   public let triggersStorage: DivTriggersStorage
   public let urlOpener: UrlOpener
   public let variablesStorage: DivVariablesStorage
@@ -29,6 +30,8 @@ public final class DivKitComponents {
 
   private let timerStorage: DivTimerStorage
   private let updateAggregator: RunLoopCardUpdateAggregator
+  private let updateCard: DivActionURLHandler.UpdateCardAction
+  private let variableTracker = DivVariableTracker()
   private let disposePool = AutodisposePool()
 
   public init(
@@ -37,11 +40,12 @@ public final class DivKitComponents {
     flagsInfo: DivFlagsInfo = .default,
     fontProvider: DivFontProvider? = nil,
     imageHolderFactory: ImageHolderFactory? = nil,
-    layoutDirection: LayoutDirection = .system,
+    layoutDirection: UserInterfaceLayoutDirection = UserInterfaceLayoutDirection.system,
     patchProvider: DivPatchProvider? = nil,
     requestPerformer: URLRequestPerforming? = nil,
-    showTooltip: @escaping DivActionURLHandler.ShowTooltipAction = { _ in },
+    showTooltip: DivActionURLHandler.ShowTooltipAction? = nil,
     stateManagement: DivStateManagement = DefaultDivStateManagement(),
+    tooltipManager: TooltipManager? = nil,
     trackVisibility: @escaping DivActionHandler.TrackVisibility = { _, _ in },
     trackDisappear: @escaping DivActionHandler.TrackVisibility = { _, _ in },
     updateCardAction: UpdateCardAction?,
@@ -62,6 +66,9 @@ public final class DivKitComponents {
 
     safeAreaManager = DivSafeAreaManager(storage: variablesStorage)
 
+    updateAggregator = RunLoopCardUpdateAggregator(updateCardAction: updateCardAction ?? { _ in })
+    updateCard = updateAggregator.aggregate(_:)
+
     let requestPerformer = requestPerformer ?? URLRequestPerformer(urlTransform: nil)
 
     self.imageHolderFactory = imageHolderFactory
@@ -70,12 +77,19 @@ public final class DivKitComponents {
     self.patchProvider = patchProvider
       ?? DivPatchDownloader(requestPerformer: requestPerformer)
 
-    let updateAggregator = RunLoopCardUpdateAggregator(updateCardAction: updateCardAction ?? { _ in
-    })
-    self.updateAggregator = updateAggregator
-    let updateCard: DivActionURLHandler.UpdateCardAction = updateAggregator.aggregate(_:)
-
     weak var weakTimerStorage: DivTimerStorage?
+    weak var weakActionHandler: DivActionHandler?
+
+    self.tooltipManager = tooltipManager ?? DefaultTooltipManager(
+      shownDivTooltips: .init(),
+      handleAction: {
+        switch $0.payload {
+        case let .divAction(params: params):
+          weakActionHandler?.handle(params: params, urlOpener: urlOpener)
+        default: break
+        }
+      }
+    )
 
     actionHandler = DivActionHandler(
       stateUpdater: stateManagement,
@@ -84,6 +98,7 @@ public final class DivKitComponents {
       variablesStorage: variablesStorage,
       updateCard: updateCard,
       showTooltip: showTooltip,
+      tooltipActionPerformer: self.tooltipManager,
       logger: DefaultDivActionLogger(
         requestPerformer: requestPerformer
       ),
@@ -104,14 +119,12 @@ public final class DivKitComponents {
       urlOpener: urlOpener,
       updateCard: updateCard
     )
+
+    weakActionHandler = actionHandler
     weakTimerStorage = timerStorage
-    variablesStorage.changeEvents.addObserver { change in
-      switch change.kind {
-      case .global:
-        updateCard(.variable(.all))
-      case let .local(cardId, _):
-        updateCard(.variable(.specific([cardId])))
-      }
+
+    variablesStorage.changeEvents.addObserver { [weak self] event in
+      self?.onVariablesChanged(event: event)
     }.dispose(in: disposePool)
   }
 
@@ -175,7 +188,8 @@ public final class DivKitComponents {
     debugParams: DebugParams = DebugParams(),
     parentScrollView: ScrollView? = nil
   ) -> DivBlockModelingContext {
-    DivBlockModelingContext(
+    variableTracker.onModelingStarted(cardId: cardId)
+    return DivBlockModelingContext(
       cardId: cardId,
       stateManager: stateManagement.getStateManagerForCard(cardId: cardId),
       blockStateStorage: blockStateStorage,
@@ -190,7 +204,8 @@ public final class DivKitComponents {
       playerFactory: playerFactory,
       debugParams: debugParams,
       parentScrollView: parentScrollView,
-      layoutDirection: layoutDirection
+      layoutDirection: layoutDirection,
+      variableTracker: variableTracker
     )
   }
 
@@ -216,6 +231,18 @@ public final class DivKitComponents {
 
   public func setTimers(divData: DivData, cardId: DivCardID) {
     timerStorage.set(cardId: cardId, timers: divData.timers ?? [])
+  }
+
+  private func onVariablesChanged(event: DivVariablesStorage.ChangeEvent) {
+    switch event.kind {
+    case let .global(variables):
+      let cardIds = variableTracker.getAffectedCards(variables: variables)
+      if (!cardIds.isEmpty) {
+        updateCard(.variable(.specific(cardIds)))
+      }
+    case let .local(cardId, _):
+      updateCard(.variable(.specific([cardId])))
+    }
   }
 }
 
