@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
-  s.name             = 'BaseTinyPublic'
-  s.version          = '26.2.0'
+  s.name             = 'BaseUIPublic'
+  s.version          = '26.2.1'
   s.summary          = 'Part of DivKit framework'
   s.description      = 'Part of DivKit framework'
   s.homepage         = 'https://divkit.tech'
@@ -13,8 +13,10 @@ Pod::Spec.new do |s|
   s.requires_arc = true
   s.prefix_header_file = false
   s.platforms = { :ios => '11.0' }
+  
+  s.dependency 'BaseTinyPublic', s.version.to_s
 
   s.source_files = [
-    'Core/BaseTinyPublic/**/*'
+    'Core/BaseUIPublic/**/*'
   ]
 end

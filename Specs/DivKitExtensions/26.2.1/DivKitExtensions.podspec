@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = 'DivKitExtensions'
-  s.version          = '26.2.0'
+  s.version          = '26.2.1'
   s.summary          = 'DivKit framework extensions'
   s.description      = 'Part of DivKit framework'
   s.homepage         = 'https://divkit.tech'

@@ -1,9 +1,8 @@
 Pod::Spec.new do |s|
-  s.name             = 'Serialization'
-  s.version          = '26.2.0'
-  s.summary          = 'Serialization'
-  s.summary          = 'Part of DivKit framework'
-  s.description      = 'Part of DivKit framework'
+  s.name             = 'DivKit'
+  s.version          = '26.2.1'
+  s.summary          = 'DivKit framework'
+  s.description      = 'DivKit is a backend-driven UI framework'
   s.homepage         = 'https://divkit.tech'
 
   s.license          = { :type => 'MIT', :file => 'LICENSE' }
@@ -16,8 +15,11 @@ Pod::Spec.new do |s|
   s.platforms = { :ios => '11.0' }
 
   s.dependency 'CommonCorePublic', s.version.to_s
+  s.dependency 'LayoutKit', s.version.to_s
+  s.dependency 'NetworkingPublic', s.version.to_s
+  s.dependency 'Serialization', s.version.to_s
 
   s.source_files = [
-    'Serialization/**/*'
+    'DivKit/**/*'
   ]
 end
