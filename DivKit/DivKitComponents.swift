@@ -6,6 +6,12 @@ import LayoutKit
 import NetworkingPublic
 import Serialization
 
+#if os(iOS)
+import UIKit
+#else
+import AppKit
+#endif
+
 public final class DivKitComponents {
   public typealias UpdateCardAction = (NonEmptyArray<DivActionURLHandler.UpdateReason>) -> Void
 
@@ -24,15 +30,20 @@ public final class DivKitComponents {
   public let showToolip: DivActionURLHandler.ShowTooltipAction?
   public let tooltipManager: TooltipManager
   public let triggersStorage: DivTriggersStorage
-  public let urlOpener: UrlOpener
+  public let urlHandler: DivUrlHandler
   public let variablesStorage: DivVariablesStorage
   public let visibilityCounter = DivVisibilityCounter()
+  public var updateCardSignal: Signal<[DivActionURLHandler.UpdateReason]> {
+    updateCardPipe.signal
+  }
 
   private let timerStorage: DivTimerStorage
   private let updateAggregator: RunLoopCardUpdateAggregator
   private let updateCard: DivActionURLHandler.UpdateCardAction
   private let variableTracker = DivVariableTracker()
   private let disposePool = AutodisposePool()
+  private let updateCardPipe: SignalPipe<[DivActionURLHandler.UpdateReason]>
+  private let persistentValuesStorage = DivPersistentValuesStorage()
 
   public init(
     divCustomBlockFactory: DivCustomBlockFactory = EmptyDivCustomBlockFactory(),
@@ -40,7 +51,7 @@ public final class DivKitComponents {
     flagsInfo: DivFlagsInfo = .default,
     fontProvider: DivFontProvider? = nil,
     imageHolderFactory: ImageHolderFactory? = nil,
-    layoutDirection: UserInterfaceLayoutDirection = UserInterfaceLayoutDirection.system,
+    layoutDirection: UserInterfaceLayoutDirection = .leftToRight,
     patchProvider: DivPatchProvider? = nil,
     requestPerformer: URLRequestPerforming? = nil,
     showTooltip: DivActionURLHandler.ShowTooltipAction? = nil,
@@ -48,25 +59,33 @@ public final class DivKitComponents {
     tooltipManager: TooltipManager? = nil,
     trackVisibility: @escaping DivActionHandler.TrackVisibility = { _, _ in },
     trackDisappear: @escaping DivActionHandler.TrackVisibility = { _, _ in },
-    updateCardAction: UpdateCardAction?,
+    updateCardAction: UpdateCardAction? = nil, // remove in next major release
     playerFactory: PlayerFactory? = nil,
-    urlOpener: @escaping UrlOpener,
+    urlHandler: DivUrlHandler? = nil,
+    urlOpener: @escaping UrlOpener = { _ in }, // remove in next major release
     variablesStorage: DivVariablesStorage = DivVariablesStorage()
   ) {
     self.divCustomBlockFactory = divCustomBlockFactory
     self.extensionHandlers = extensionHandlers
     self.flagsInfo = flagsInfo
     self.fontProvider = fontProvider ?? DefaultFontProvider()
+    self.layoutDirection = layoutDirection
     self.playerFactory = playerFactory ?? defaultPlayerFactory
     self.showToolip = showTooltip
     self.stateManagement = stateManagement
-    self.urlOpener = urlOpener
+    let urlHandler = urlHandler ?? DivUrlHandlerDelegate(urlOpener)
+    self.urlHandler = urlHandler
     self.variablesStorage = variablesStorage
-    self.layoutDirection = layoutDirection
+
+    let updateCardActionSignalPipe = SignalPipe<[DivActionURLHandler.UpdateReason]>()
+    self.updateCardPipe = updateCardActionSignalPipe
 
     safeAreaManager = DivSafeAreaManager(storage: variablesStorage)
 
-    updateAggregator = RunLoopCardUpdateAggregator(updateCardAction: updateCardAction ?? { _ in })
+    updateAggregator = RunLoopCardUpdateAggregator(updateCardAction: {
+      updateCardAction?($0)
+      updateCardActionSignalPipe.send($0.asArray())
+    })
     updateCard = updateAggregator.aggregate(_:)
 
     let requestPerformer = requestPerformer ?? URLRequestPerformer(urlTransform: nil)
@@ -80,16 +99,20 @@ public final class DivKitComponents {
     weak var weakTimerStorage: DivTimerStorage?
     weak var weakActionHandler: DivActionHandler?
 
+    #if os(iOS)
     self.tooltipManager = tooltipManager ?? DefaultTooltipManager(
-      shownDivTooltips: .init(),
+      shownTooltips: .init(),
       handleAction: {
         switch $0.payload {
         case let .divAction(params: params):
-          weakActionHandler?.handle(params: params, urlOpener: urlOpener)
+          weakActionHandler?.handle(params: params, sender: nil)
         default: break
         }
       }
     )
+    #else
+    self.tooltipManager = tooltipManager ?? DefaultTooltipManager()
+    #endif
 
     actionHandler = DivActionHandler(
       stateUpdater: stateManagement,
@@ -104,20 +127,22 @@ public final class DivKitComponents {
       ),
       trackVisibility: trackVisibility,
       trackDisappear: trackDisappear,
-      performTimerAction: { weakTimerStorage?.perform($0, $1, $2) }
+      performTimerAction: { weakTimerStorage?.perform($0, $1, $2) },
+      urlHandler: urlHandler,
+      persistentValuesStorage: persistentValuesStorage
     )
 
     triggersStorage = DivTriggersStorage(
       variablesStorage: variablesStorage,
       actionHandler: actionHandler,
-      urlOpener: urlOpener
+      persistentValuesStorage: persistentValuesStorage
     )
 
     timerStorage = DivTimerStorage(
       variablesStorage: variablesStorage,
       actionHandler: actionHandler,
-      urlOpener: urlOpener,
-      updateCard: updateCard
+      updateCard: updateCard,
+      persistentValuesStorage: persistentValuesStorage
     )
 
     weakActionHandler = actionHandler
@@ -136,6 +161,14 @@ public final class DivKitComponents {
     variablesStorage.reset()
     visibilityCounter.reset()
     timerStorage.reset()
+  }
+
+  public func reset(cardId: DivCardID) {
+    blockStateStorage.reset(cardId: cardId)
+    stateManagement.reset(cardId: cardId)
+    variablesStorage.reset(cardId: cardId)
+    visibilityCounter.reset(cardId: cardId)
+    timerStorage.reset(cardId: cardId)
   }
 
   public func parseDivData(
@@ -205,12 +238,9 @@ public final class DivKitComponents {
       debugParams: debugParams,
       parentScrollView: parentScrollView,
       layoutDirection: layoutDirection,
-      variableTracker: variableTracker
+      variableTracker: variableTracker,
+      persistentValuesStorage: persistentValuesStorage
     )
-  }
-
-  public func handleActions(params: UserInterfaceAction.DivActionParams) {
-    actionHandler.handle(params: params, urlOpener: urlOpener)
   }
 
   public func setVariablesAndTriggers(divData: DivData, cardId: DivCardID) {
@@ -237,7 +267,7 @@ public final class DivKitComponents {
     switch event.kind {
     case let .global(variables):
       let cardIds = variableTracker.getAffectedCards(variables: variables)
-      if (!cardIds.isEmpty) {
+      if !cardIds.isEmpty {
         updateCard(.variable(.specific(cardIds)))
       }
     case let .local(cardId, _):

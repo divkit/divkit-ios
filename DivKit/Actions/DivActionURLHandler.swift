@@ -34,6 +34,7 @@ public final class DivActionURLHandler {
   private let showTooltip: ShowTooltipAction?
   private let tooltipActionPerformer: TooltipActionPerformer?
   private let performTimerAction: PerformTimerAction
+  private let persistentValuesStorage: DivPersistentValuesStorage
 
   public init(
     stateUpdater: DivStateUpdater,
@@ -43,7 +44,8 @@ public final class DivActionURLHandler {
     updateCard: @escaping UpdateCardAction,
     showTooltip: ShowTooltipAction?,
     tooltipActionPerformer: TooltipActionPerformer?,
-    performTimerAction: @escaping PerformTimerAction = { _, _, _ in }
+    performTimerAction: @escaping PerformTimerAction = { _, _, _ in },
+    persistentValuesStorage: DivPersistentValuesStorage
   ) {
     self.stateUpdater = stateUpdater
     self.blockStateStorage = blockStateStorage
@@ -53,6 +55,7 @@ public final class DivActionURLHandler {
     self.showTooltip = showTooltip
     self.tooltipActionPerformer = tooltipActionPerformer
     self.performTimerAction = performTimerAction
+    self.persistentValuesStorage = persistentValuesStorage
   }
 
   public func canHandleURL(_ url: URL) -> Bool {
@@ -102,22 +105,25 @@ public final class DivActionURLHandler {
         value: value
       )
     case let .setCurrentItem(id, index):
-      setCurrentItem(id: id, index: index)
+      setCurrentItem(id: id, cardId: cardId, index: index)
       updateCard(.state(cardId))
     case let .setNextItem(id, overflow):
-      setNextItem(id: id, overflow: overflow)
+      setNextItem(id: id, cardId: cardId, overflow: overflow)
       updateCard(.state(cardId))
     case let .setPreviousItem(id, overflow):
-      setPreviousItem(id: id, overflow: overflow)
+      setPreviousItem(id: id, cardId: cardId, overflow: overflow)
       updateCard(.state(cardId))
     case let .video(id: id, action: action):
       blockStateStorage.setState(
         id: id,
+        cardId: cardId,
         state: VideoBlockViewState(state: action == .play ? .playing : .paused)
       )
       updateCard(.state(cardId))
     case let .timer(timerId, action):
       performTimerAction(cardId, timerId, action)
+    case let .setStoredValue(storedValue):
+      persistentValuesStorage.set(value: storedValue)
     }
 
     return true
@@ -137,29 +143,31 @@ public final class DivActionURLHandler {
     }
   }
 
-  private func setCurrentItem(id: String, index: Int) {
-    switch blockStateStorage.getStateUntyped(id) {
+  private func setCurrentItem(id: String, cardId: DivCardID, index: Int) {
+    switch blockStateStorage.getStateUntyped(id, cardId: cardId) {
     case let galleryState as GalleryViewState:
       setGalleryCurrentItem(
         id: id,
+        cardId: cardId,
         index: index,
         itemsCount: galleryState.itemsCount
       )
     case let pagerState as PagerViewState:
       setPagerCurrentItem(
         id: id,
+        cardId: cardId,
         index: index,
         numberOfPages: pagerState.numberOfPages
       )
     case let tabsState as TabViewState:
-      setTabsCurrentItem(id: id, index: index, countOfPages: tabsState.countOfPages)
+      setTabsCurrentItem(id: id, cardId: cardId, index: index, countOfPages: tabsState.countOfPages)
     default:
       return
     }
   }
 
-  private func setNextItem(id: String, overflow: OverflowMode) {
-    switch blockStateStorage.getStateUntyped(id) {
+  private func setNextItem(id: String, cardId: DivCardID, overflow: OverflowMode) {
+    switch blockStateStorage.getStateUntyped(id, cardId: cardId) {
     case let galleryState as GalleryViewState:
       let index = getNextIndex(
         current: galleryState.currentItemIndex,
@@ -168,6 +176,7 @@ public final class DivActionURLHandler {
       )
       setGalleryCurrentItem(
         id: id,
+        cardId: cardId,
         index: index,
         itemsCount: galleryState.itemsCount
       )
@@ -179,6 +188,7 @@ public final class DivActionURLHandler {
       )
       setPagerCurrentItem(
         id: id,
+        cardId: cardId,
         index: nextIndex,
         numberOfPages: pagerState.numberOfPages
       )
@@ -190,6 +200,7 @@ public final class DivActionURLHandler {
       )
       setTabsCurrentItem(
         id: id,
+        cardId: cardId,
         index: nextIndex,
         countOfPages: tabsState.countOfPages
       )
@@ -211,8 +222,8 @@ public final class DivActionURLHandler {
     }
   }
 
-  private func setPreviousItem(id: String, overflow: OverflowMode) {
-    switch blockStateStorage.getStateUntyped(id) {
+  private func setPreviousItem(id: String, cardId: DivCardID, overflow: OverflowMode) {
+    switch blockStateStorage.getStateUntyped(id, cardId: cardId) {
     case let galleryState as GalleryViewState:
       let index = getPreviousIndex(
         current: galleryState.currentItemIndex,
@@ -221,6 +232,7 @@ public final class DivActionURLHandler {
       )
       setGalleryCurrentItem(
         id: id,
+        cardId: cardId,
         index: index,
         itemsCount: galleryState.itemsCount
       )
@@ -232,6 +244,7 @@ public final class DivActionURLHandler {
       )
       setPagerCurrentItem(
         id: id,
+        cardId: cardId,
         index: prevIndex,
         numberOfPages: pagerState.numberOfPages
       )
@@ -243,6 +256,7 @@ public final class DivActionURLHandler {
       )
       setTabsCurrentItem(
         id: id,
+        cardId: cardId,
         index: prevIndex,
         countOfPages: tabsState.countOfPages
       )
@@ -266,11 +280,13 @@ public final class DivActionURLHandler {
 
   private func setGalleryCurrentItem(
     id: String,
+    cardId: DivCardID,
     index: Int,
     itemsCount: Int
   ) {
     blockStateStorage.setState(
       id: id,
+      cardId: cardId,
       state: GalleryViewState(
         contentPageIndex: CGFloat(max(0, index)),
         itemsCount: itemsCount
@@ -278,7 +294,7 @@ public final class DivActionURLHandler {
     )
   }
 
-  private func setPagerCurrentItem(id: String, index: Int, numberOfPages: Int) {
+  private func setPagerCurrentItem(id: String, cardId: DivCardID, index: Int, numberOfPages: Int) {
     let clampedIndex = clamp(index, min: 0, max: numberOfPages - 1)
     guard clampedIndex == index else {
       return
@@ -286,6 +302,7 @@ public final class DivActionURLHandler {
 
     blockStateStorage.setState(
       id: id,
+      cardId: cardId,
       state: PagerViewState(
         numberOfPages: numberOfPages,
         currentPage: clampedIndex
@@ -293,9 +310,10 @@ public final class DivActionURLHandler {
     )
   }
 
-  private func setTabsCurrentItem(id: String, index: Int, countOfPages: Int) {
+  private func setTabsCurrentItem(id: String, cardId: DivCardID, index: Int, countOfPages: Int) {
     blockStateStorage.setState(
       id: id,
+      cardId: cardId,
       state: TabViewState(
         selectedPageIndex: CGFloat(max(0, index)),
         countOfPages: countOfPages
