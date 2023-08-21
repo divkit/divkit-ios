@@ -14,7 +14,11 @@ extension TextInputBlock {
     renderingDelegate _: RenderingDelegate?
   ) {
     let inputView = view as! TextInputBlockView
+    inputView.setLayoutDirection(layoutDirection)
     inputView.setInputType(inputType)
+    inputView.setValidators(validators)
+    inputView.setTextAlignmentHorizontal(textAlignmentHorizontal)
+    inputView.setTextAlignmentVertical(textAlignmentVertical)
     inputView.setText(
       textValue: textValue,
       rawTextValue: rawTextValue,
@@ -54,11 +58,14 @@ private final class TextInputBlockView: BlockView, VisibleBoundsTrackingLeaf {
   private var onBlurActions: [UserInterfaceAction] = []
   private var path: UIElementPath?
   private weak var observer: ElementStateObserver?
-  private var isRightToLeft = false
   private var typo: Typo?
   private var selectionItems: [TextInputBlock.InputType.SelectionItem]?
   private let userInputPipe = SignalPipe<MaskedInputViewModel.Action>()
+  private var validators: [TextInputValidator]?
   private let disposePool = AutodisposePool()
+  private var layoutDirection: UserInterfaceLayoutDirection = .leftToRight
+  private var textAlignmentHorizontal: TextInputBlock.TextAlignmentHorizontal = .start
+  private var textAlignmentVertical: TextInputBlock.TextAlignmentVertical = .center
 
   var effectiveBackgroundColor: UIColor? { backgroundColor }
 
@@ -66,9 +73,6 @@ private final class TextInputBlockView: BlockView, VisibleBoundsTrackingLeaf {
     self._textValue = .empty
     self._rawTextValue = .empty
     super.init(frame: frame)
-
-    isRightToLeft = UIView
-      .userInterfaceLayoutDirection(for: singleLineInput.semanticContentAttribute) == .rightToLeft
 
     multiLineInput.isEditable = true
     multiLineInput.isSelectable = true
@@ -85,6 +89,7 @@ private final class TextInputBlockView: BlockView, VisibleBoundsTrackingLeaf {
     singleLineInput.backgroundColor = .clear
     singleLineInput.delegate = self
     singleLineInput.addTarget(self, action: #selector(textFieldDidChange), for: .editingChanged)
+    singleLineInput.contentVerticalAlignment = .top
 
     hintView.backgroundColor = .clear
     hintView.numberOfLines = 0
@@ -109,6 +114,7 @@ private final class TextInputBlockView: BlockView, VisibleBoundsTrackingLeaf {
     multiLineInput.frame = bounds
     updateMultiLineOffset()
     singleLineInput.frame = bounds
+    updateSingleLineOffset()
     hintView.frame = bounds
     hintView.sizeToFit()
     hintView.frame.origin = CGPoint(x: offsetX(hintView), y: offsetY(hintView))
@@ -132,6 +138,13 @@ private final class TextInputBlockView: BlockView, VisibleBoundsTrackingLeaf {
     return multiLineInput.attributedText.string
   }
 
+  func setLayoutDirection(_ layoutDirection: UserInterfaceLayoutDirection) {
+    if layoutDirection != self.layoutDirection {
+      self.layoutDirection = layoutDirection
+      hintView.frame.origin = CGPoint(x: offsetX(hintView), y: offsetY(hintView))
+    }
+  }
+
   func setInputType(_ type: TextInputBlock.InputType) {
     switch type {
     case let .keyboard(type):
@@ -145,6 +158,14 @@ private final class TextInputBlockView: BlockView, VisibleBoundsTrackingLeaf {
       multiLineInput.tintColor = multiLineInput.backgroundColor
       multiLineInput.inputView = selectionView
     }
+  }
+
+  func setTextAlignmentHorizontal(_ alignment: TextInputBlock.TextAlignmentHorizontal) {
+    textAlignmentHorizontal = alignment
+  }
+
+  func setTextAlignmentVertical(_ alignment: TextInputBlock.TextAlignmentVertical) {
+    textAlignmentVertical = alignment
   }
 
   func setMultiLineMode(_ multiLineMode: Bool) {
@@ -191,7 +212,7 @@ private final class TextInputBlockView: BlockView, VisibleBoundsTrackingLeaf {
     typo: Typo,
     mask: MaskValidator?
   ) {
-    self.typo = typo
+    self.typo = typo.with(alignment: textAlignment)
     if let mask = mask, let rawTextValue = rawTextValue {
       self._textValue = textValue
       setupMaskedViewModelIfNeeded(mask: mask, rawTextValue: rawTextValue)
@@ -209,6 +230,12 @@ private final class TextInputBlockView: BlockView, VisibleBoundsTrackingLeaf {
     }
     updateHintVisibility()
     updateMultiLineOffset()
+    updateSingleLineOffset()
+    updateValidation()
+  }
+
+  func setValidators(_ validators: [TextInputValidator]?) {
+    self.validators = validators
   }
 
   func setHint(_ value: NSAttributedString) {
@@ -225,10 +252,24 @@ private final class TextInputBlockView: BlockView, VisibleBoundsTrackingLeaf {
     multiLineInput.frame.origin = CGPoint(x: 0, y: multiLineOffsetY)
   }
 
+  private func updateSingleLineOffset() {
+    guard !singleLineInput.isHidden else { return }
+    singleLineInput.frame.origin = CGPoint(x: 0, y: singleLineOffsetY)
+  }
+
+  private func updateValidation() {
+    let accessibilityLabel = validators?.compactMap {
+      let isValid = $0.validate(currentText)
+      $0.isValid.setValue(isValid, responder: self)
+      return isValid ? nil : $0.message()
+    }.joined(separator: ". ")
+    singleLineInput.accessibilityLabel = accessibilityLabel
+    multiLineInput.accessibilityLabel = accessibilityLabel
+  }
+
   private func setTextData(_ text: String) {
     guard let typo else { return }
-    let textTypo = self.isRightToLeft ? typo.with(alignment: .right) : typo
-    let attributedText = text.with(typo: textTypo)
+    let attributedText = text.with(typo: typo)
     multiLineInput.attributedText = attributedText
     singleLineInput.attributedText = attributedText
     multiLineInput.typingAttributes = typo.attributes
@@ -268,7 +309,7 @@ private final class TextInputBlockView: BlockView, VisibleBoundsTrackingLeaf {
     maskedViewModel?.$text.currentAndNewValues
       .addObserver { [weak self] input in
         guard let self = self else { return }
-        setTextData(input)
+        self.setTextData(input)
         self._textValue.setValue(input, responder: self)
       }.dispose(in: disposePool)
   }
@@ -482,24 +523,44 @@ extension TextInputBlockView: UITextFieldDelegate {
 
 extension TextInputBlockView {
   private var multiLineOffsetY: CGFloat {
-    let emptySpace = multiLineInput.bounds.size.height - multiLineInput.contentSize.height
-    guard emptySpace > 0 else { return 0 }
-    return emptySpace / 2
+    offsetY(multiLineInput.bounds.height - multiLineInput.contentSize.height)
+  }
+
+  private var singleLineOffsetY: CGFloat {
+    offsetY(singleLineInput.bounds.height - singleLineInput.intrinsicContentSize.height)
   }
 
   private func offsetX(_ view: UIView) -> CGFloat {
-    if isRightToLeft {
-      let emptySpace = bounds.size.width - view.bounds.size.width
+    let emptySpace = bounds.size.width - view.bounds.size.width
+    switch textAlignment {
+    case .left:
+      return cusorOffset
+    case .center:
+      guard emptySpace > 0 else { return 0 }
+      return (emptySpace - cusorOffset) / 2
+    case .right:
       guard emptySpace > 0 else { return 0 }
       return emptySpace - cusorOffset
+    default:
+      assertionFailure("Only .left, .center and .right cases of textAlignment are implemented")
+      return cusorOffset
     }
-    return cusorOffset
   }
 
   private func offsetY(_ view: UIView) -> CGFloat {
-    let emptySpace = bounds.size.height - view.bounds.size.height
+    offsetY(bounds.size.height - view.bounds.size.height)
+  }
+
+  private func offsetY(_ emptySpace: CGFloat) -> CGFloat {
     guard emptySpace > 0 else { return 0 }
-    return emptySpace / 2
+    switch textAlignmentVertical {
+    case .top:
+      return 0
+    case .center:
+      return emptySpace / 2
+    case .bottom:
+      return emptySpace
+    }
   }
 
   private var cusorOffset: CGFloat {
@@ -558,6 +619,36 @@ extension TextInputBlock.InputType.KeyboardType {
       return .webSearch
     case .asciiCapableNumberPad:
       return .asciiCapableNumberPad
+    }
+  }
+}
+
+extension TextInputBlockView {
+  fileprivate var textAlignment: TextAlignment {
+    switch textAlignmentHorizontal {
+    case .left:
+      return .left
+    case .center:
+      return .center
+    case .right:
+      return .right
+    case .start:
+      return layoutDirection == .rightToLeft ? .right : .left
+    case .end:
+      return layoutDirection == .rightToLeft ? .left : .right
+    }
+  }
+}
+
+extension TextInputBlock.TextAlignmentVertical {
+  fileprivate var contentAlignment: UIControl.ContentVerticalAlignment {
+    switch self {
+    case .top:
+      return .top
+    case .center:
+      return .center
+    case .bottom:
+      return .bottom
     }
   }
 }

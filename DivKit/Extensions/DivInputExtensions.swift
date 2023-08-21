@@ -20,7 +20,7 @@ extension DivInput: DivBlockModeling {
 
   private func makeBaseBlock(context: DivBlockModelingContext) throws -> Block {
     let expressionResolver = context.expressionResolver
-    
+
     let font = context.fontProvider.font(
       family: resolveFontFamily(expressionResolver) ?? "",
       weight: resolveFontWeight(expressionResolver),
@@ -34,18 +34,22 @@ extension DivInput: DivBlockModeling {
       typo = typo.kerned(kern)
     }
 
-    if let lineHeight = resolveLineHeight(expressionResolver) {
-      typo = typo.with(height: CGFloat(lineHeight))
+    if let lineHeightInt = resolveLineHeight(expressionResolver) {
+      let lineHeight = CGFloat(lineHeightInt)
+      typo = typo.with(height: lineHeight)
+      if lineHeight > font.lineHeight {
+        typo = typo.with(baseline: (lineHeight - font.lineHeight) / 2)
+      }
     }
 
     let hintValue = resolveHintText(expressionResolver) ?? ""
     let keyboardType = resolveKeyboardType(expressionResolver)
 
     let onFocusActions = (focus?.onFocus ?? []).map {
-      $0.uiAction(context: context.actionContext)
+      $0.uiAction(context: context)
     }
     let onBlurActions = (focus?.onBlur ?? []).map {
-      $0.uiAction(context: context.actionContext)
+      $0.uiAction(context: context)
     }
 
     return TextInputBlock(
@@ -64,20 +68,98 @@ extension DivInput: DivBlockModeling {
       path: context.parentPath,
       onFocusActions: onFocusActions,
       onBlurActions: onBlurActions,
-      parentScrollView: context.parentScrollView
+      parentScrollView: context.parentScrollView,
+      validators: makeValidators(context),
+      layoutDirection: context.layoutDirection,
+      textAlignmentHorizontal: resolveTextAlignmentHorizontal(expressionResolver).textAlignment,
+      textAlignmentVertical: resolveTextAlignmentVertical(expressionResolver).textAlignment
     )
   }
 }
 
+extension DivInput {
+  fileprivate func makeValidators(_ context: DivBlockModelingContext) -> [TextInputValidator]? {
+    let expressionResolver = context.expressionResolver
+    return validators?.compactMap { validator -> TextInputValidator? in
+      switch validator {
+      case let .divInputValidatorRegex(regexValidator):
+        let pattern = regexValidator.resolvePattern(expressionResolver) ?? ""
+        guard let regex = try? NSRegularExpression(pattern: pattern) else {
+          DivKitLogger.error("Invalid regex pattern '\(pattern)'")
+          return nil
+        }
+        return TextInputValidator(
+          isValid: .init(context: context, name: regexValidator.variable),
+          allowEmpty: regexValidator.resolveAllowEmpty(expressionResolver),
+          validator: { $0.matchesRegex(regex) },
+          message: makeMessage(
+            from: regexValidator.resolveLabelId(expressionResolver),
+            storage: context.blockStateStorage,
+            cardId: context.cardId
+          )
+        )
+      case let .divInputValidatorExpression(expressionValidator):
+        return TextInputValidator(
+          isValid: .init(context: context, name: expressionValidator.variable),
+          allowEmpty: expressionValidator.resolveAllowEmpty(expressionResolver),
+          validator: { _ in expressionValidator.resolveCondition(expressionResolver) ?? true },
+          message: makeMessage(
+            from: expressionValidator.resolveLabelId(expressionResolver),
+            storage: context.blockStateStorage,
+            cardId: context.cardId
+          )
+        )
+      }
+    }
+  }
+
+  private func makeMessage(
+    from labelId: String?,
+    storage: DivBlockStateStorage,
+    cardId: DivCardID
+  ) -> () -> String? {
+    {
+      guard let labelId else {
+        return nil
+      }
+      guard let state: TextBlockViewState = storage.getState(labelId, cardId: cardId) else {
+        DivKitLogger.error("Can't find text with id '\(labelId)'")
+        return nil
+      }
+      return state.text
+    }
+  }
+}
+
 extension DivAlignmentHorizontal {
-  fileprivate var system: TextAlignment {
+  fileprivate var textAlignment: TextInputBlock.TextAlignmentHorizontal {
     switch self {
-    case .left, .start:
+    case .left:
       return .left
     case .center:
       return .center
-    case .right, .end:
+    case .right:
       return .right
+    case .start:
+      return .start
+    case .end:
+      return .end
+    }
+  }
+}
+
+extension DivAlignmentVertical {
+  fileprivate var textAlignment: TextInputBlock.TextAlignmentVertical {
+    switch self {
+    case .top:
+      return .top
+    case .center:
+      return .center
+    case .bottom:
+      return .bottom
+    case .baseline:
+      DivKitLogger.warning("Baseline alignment is not supported.")
+      return .center
     }
   }
 }
@@ -111,6 +193,8 @@ extension DivInputMask {
       )
     case .divCurrencyInputMask:
       return nil
+    case .divPhoneInputMask(_):
+      return nil
     }
   }
 
@@ -119,6 +203,8 @@ extension DivInputMask {
     case let .divFixedLengthInputMask(divFixedLengthInputMask):
       return .init(context: context, name: divFixedLengthInputMask.rawTextVariable)
     case .divCurrencyInputMask:
+      return nil
+    case .divPhoneInputMask(_):
       return nil
     }
   }

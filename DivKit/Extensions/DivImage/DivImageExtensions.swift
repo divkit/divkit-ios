@@ -10,10 +10,10 @@ extension DivImage: DivBlockModeling, DivImageProtocol {
     try applyBaseProperties(
       to: { try makeBaseBlock(context: context) },
       context: context,
-      actions: makeActions(context: context.actionContext),
+      actions: makeActions(context: context),
       actionAnimation: actionAnimation.makeActionAnimation(with: context.expressionResolver),
-      doubleTapActions: makeDoubleTapActions(context: context.actionContext),
-      longTapActions: makeLongTapActions(context: context.actionContext)
+      doubleTapActions: makeDoubleTapActions(context: context),
+      longTapActions: makeLongTapActions(context: context)
     )
   }
 
@@ -37,7 +37,7 @@ extension DivImage: DivBlockModeling, DivImageProtocol {
       imageHolder: imageHolder,
       widthTrait: makeContentWidthTrait(with: context),
       height: resolveHeight(context),
-      contentMode: resolveContentMode(expressionResolver),
+      contentMode: contentMode(context: context),
       tintColor: resolveTintColor(expressionResolver),
       tintMode: resolveTintMode(expressionResolver).tintMode,
       effects: makeEffects(with: expressionResolver),

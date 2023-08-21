@@ -48,10 +48,10 @@ extension DivSelect: DivBlockModeling {
     let textValue = Binding<String>(context: context, name: valueVariable)
 
     let onFocusActions = (focus?.onFocus ?? []).map {
-      $0.uiAction(context: context.actionContext)
+      $0.uiAction(context: context)
     }
     let onBlurActions = (focus?.onBlur ?? []).map {
-      $0.uiAction(context: context.actionContext)
+      $0.uiAction(context: context)
     }
 
     return TextInputBlock(
@@ -65,7 +65,8 @@ extension DivSelect: DivBlockModeling {
       path: context.parentPath,
       onFocusActions: onFocusActions,
       onBlurActions: onBlurActions,
-      parentScrollView: context.parentScrollView
+      parentScrollView: context.parentScrollView,
+      layoutDirection: context.layoutDirection
     )
   }
 }

@@ -36,7 +36,7 @@ public struct DivBlockModelingContext {
   public var childrenA11yDescription: String?
   public weak var parentScrollView: ScrollView?
   public let errorsStorage: DivErrorsStorage
-  private let variableTracker: DivVariableTracker?
+  internal let variableTracker: DivVariableTracker?
   private let persistentValuesStorage: DivPersistentValuesStorage
 
   var overridenWidth: DivOverridenSize?
@@ -47,7 +47,7 @@ public struct DivBlockModelingContext {
       variables: variables,
       persistentValuesStorage: persistentValuesStorage,
       errorTracker: { [weak errorsStorage] error in
-        errorsStorage?.add(DivBlockModelingRuntimeError(error, path: parentPath))
+        errorsStorage?.add(DivBlockModelingError(error.description, path: parentPath))
       },
       variableTracker: { [weak variableTracker] variables in
         variableTracker?.onVariablesUsed(cardId: cardId, variables: variables)

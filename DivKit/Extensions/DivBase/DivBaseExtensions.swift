@@ -67,7 +67,7 @@ extension DivBase {
       background,
       to: block,
       imageHolderFactory: context.imageHolderFactory,
-      expressionResolver: expressionResolver
+      context: context
     )
     .addingDecorations(
       boundary: border.makeBoundaryTrait(with: expressionResolver),
@@ -147,9 +147,8 @@ extension DivBase {
     context: DivBlockModelingContext
   ) -> [VisibilityAction] {
     (visibilityActions ?? visibilityAction.asArray())
-      .enumerated()
-      .compactMap { index, action in
-        action.makeVisibilityAction(context: context, index: index)
+      .compactMap { action in
+        action.makeVisibilityAction(context: context, logId: action.logId)
       }
   }
 
@@ -157,9 +156,8 @@ extension DivBase {
     context: DivBlockModelingContext
   ) -> [VisibilityAction] {
     disappearActions?
-      .enumerated()
-      .compactMap { index, action in
-        action.makeDisappearAction(context: context, index: index)
+      .compactMap { action in
+        action.makeDisappearAction(context: context, logId: action.logId)
       }
       ?? []
   }
@@ -247,7 +245,7 @@ extension DivBase {
     _ backgrounds: [DivBackground]?,
     to block: Block,
     imageHolderFactory: ImageHolderFactory,
-    expressionResolver: ExpressionResolver
+    context: DivBlockModelingContext
   ) -> Block {
     guard let backgrounds = backgrounds else {
       return block
@@ -257,7 +255,7 @@ extension DivBase {
     if backgrounds.count == 1 {
       guard let background = backgrounds[0].makeBlockBackground(
         with: imageHolderFactory,
-        expressionResolver: expressionResolver
+        context: context
       ) else {
         return block
       }
@@ -270,7 +268,7 @@ extension DivBase {
     let blockBackgrounds = backgrounds.compactMap {
       $0.makeBlockBackground(
         with: imageHolderFactory,
-        expressionResolver: expressionResolver
+        context: context
       )
     }
     guard let background = blockBackgrounds.composite() else {
