@@ -129,7 +129,10 @@ public final class DivKitComponents {
     let requestPerformer = requestPerformer ?? URLRequestPerformer(urlTransform: nil)
 
     self.imageHolderFactory = imageHolderFactory
-      ?? makeImageHolderFactory(requestPerformer: requestPerformer)
+      ?? makeImageHolderFactory(
+        requestPerformer: requestPerformer,
+        imageLoadingOptimizationEnabled: flagsInfo.imageLoadingOptimizationEnabled
+      )
 
     self.patchProvider = patchProvider
       ?? DivPatchDownloader(requestPerformer: requestPerformer)
@@ -278,7 +281,8 @@ public final class DivKitComponents {
       parentScrollView: parentScrollView,
       layoutDirection: layoutDirection,
       variableTracker: variableTracker,
-      persistentValuesStorage: persistentValuesStorage
+      persistentValuesStorage: persistentValuesStorage,
+      tooltipViewFactory: makeTooltipViewFactory(divKitComponents: self, cardId: cardId)
     )
   }
 
@@ -315,7 +319,10 @@ public final class DivKitComponents {
   }
 }
 
-func makeImageHolderFactory(requestPerformer: URLRequestPerforming) -> ImageHolderFactory {
+func makeImageHolderFactory(
+  requestPerformer: URLRequestPerforming,
+  imageLoadingOptimizationEnabled: Bool = false
+) -> ImageHolderFactory {
   ImageHolderFactory(
     requester: NetworkURLResourceRequester(
       performer: requestPerformer
@@ -323,7 +330,8 @@ func makeImageHolderFactory(requestPerformer: URLRequestPerforming) -> ImageHold
     imageProcessingQueue: OperationQueue(
       name: "tech.divkit.image-processing",
       qos: .userInitiated
-    )
+    ),
+    imageLoadingOptimizationEnabled: imageLoadingOptimizationEnabled
   )
 }
 
