@@ -56,7 +56,7 @@ extension DivInput: DivBlockModeling {
       widthTrait: makeContentWidthTrait(with: context),
       heightTrait: makeContentHeightTrait(with: context),
       hint: hintValue.with(typo: typo.with(color: resolveHintColor(expressionResolver))),
-      textValue: Binding<String>(context: context, name: textVariable),
+      textValue: context.makeBinding(variableName: textVariable, defaultValue: ""),
       rawTextValue: mask?.makeRawVariable(context),
       textTypo: typo.with(color: resolveTextColor(expressionResolver)),
       multiLineMode: keyboardType == .multiLineText,
@@ -89,7 +89,7 @@ extension DivInput {
           return nil
         }
         return TextInputValidator(
-          isValid: .init(context: context, name: regexValidator.variable),
+          isValid: context.makeBinding(variableName: regexValidator.variable, defaultValue: false),
           allowEmpty: regexValidator.resolveAllowEmpty(expressionResolver),
           validator: { $0.matchesRegex(regex) },
           message: makeMessage(
@@ -100,7 +100,10 @@ extension DivInput {
         )
       case let .divInputValidatorExpression(expressionValidator):
         return TextInputValidator(
-          isValid: .init(context: context, name: expressionValidator.variable),
+          isValid: context.makeBinding(
+            variableName: expressionValidator.variable,
+            defaultValue: false
+          ),
           allowEmpty: expressionValidator.resolveAllowEmpty(expressionResolver),
           validator: { _ in expressionValidator.resolveCondition(expressionResolver) ?? true },
           message: makeMessage(
@@ -185,27 +188,36 @@ extension DivInputMask {
   fileprivate func makeMaskValidator(_ resolver: ExpressionResolver) -> MaskValidator? {
     switch self {
     case let .divFixedLengthInputMask(divFixedLengthInputMask):
-      return MaskValidator(
+      return MaskValidator(formatter: FixedLengthMaskFormatter(
         pattern: divFixedLengthInputMask.resolvePattern(resolver) ?? "",
         alwaysVisible: divFixedLengthInputMask.resolveAlwaysVisible(resolver),
         patternElements: divFixedLengthInputMask.patternElements
           .map { $0.makePatternElement(resolver) }
-      )
+      ))
     case .divCurrencyInputMask:
       return nil
-    case .divPhoneInputMask(_):
-      return nil
+    case .divPhoneInputMask:
+      return MaskValidator(formatter: PhoneMaskFormatter(
+        masksByCountryCode: PhoneMasks().value.typedJSON(),
+        extraSymbols: PhoneMasks.extraNumbers
+      ))
     }
   }
 
   fileprivate func makeRawVariable(_ context: DivBlockModelingContext) -> Binding<String>? {
     switch self {
     case let .divFixedLengthInputMask(divFixedLengthInputMask):
-      return .init(context: context, name: divFixedLengthInputMask.rawTextVariable)
+      return context.makeBinding(
+        variableName: divFixedLengthInputMask.rawTextVariable,
+        defaultValue: ""
+      )
     case .divCurrencyInputMask:
       return nil
-    case .divPhoneInputMask(_):
-      return nil
+    case let .divPhoneInputMask(divPhoneInputMask):
+      return context.makeBinding(
+        variableName: divPhoneInputMask.rawTextVariable,
+        defaultValue: ""
+      )
     }
   }
 }
@@ -213,9 +225,9 @@ extension DivInputMask {
 extension DivFixedLengthInputMask.PatternElement {
   fileprivate func makePatternElement(_ resolver: ExpressionResolver) -> PatternElement {
     PatternElement(
-      key: (resolveKey(resolver) ?? "").first!,
-      regex: try! NSRegularExpression(pattern: resolveRegex(resolver) ?? ""),
-      placeholder: resolvePlaceholder(resolver).first!
+      key: (resolveKey(resolver) ?? "").first ?? " ".first!,
+      regex: try! NSRegularExpression(pattern: resolveRegex(resolver) ?? "a"),
+      placeholder: resolvePlaceholder(resolver).first ?? " ".first!
     )
   }
 }

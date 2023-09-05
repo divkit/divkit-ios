@@ -4,6 +4,10 @@ import Foundation
 import BaseUIPublic
 import CommonCorePublic
 
+#if canImport(UIKit)
+import UIKit
+#endif
+
 public final class ContainerBlock: BlockWithLayout {
   typealias Layout = ContainerBlockLayout
   public static let defaultAnchorPoint = AnchorPoint(
@@ -76,12 +80,6 @@ public final class ContainerBlock: BlockWithLayout {
     }
   }
 
-  public enum Error: BlockError, Equatable {
-    case noChildrenProvided
-    case childAndGapCountMismatch
-    case inconsistentChildLayoutTraits(details: String)
-  }
-
   private struct CachedSizes {
     var intrinsicWidth: CGFloat?
     var intrinsicHeight: (width: CGFloat, height: CGFloat)?
@@ -126,12 +124,15 @@ public final class ContainerBlock: BlockWithLayout {
     accessibilityElement: AccessibilityElement? = nil
   ) throws {
     if children.isEmpty {
-      throw Error.noChildrenProvided
+      throw BlockError("Container block error: no children provided")
     }
     let gaps = gaps ?? Array(repeating: 0, times: try! UInt(value: children.count + 1))
 
     if gaps.count != children.count + 1 {
-      throw Error.childAndGapCountMismatch
+      throw BlockError(
+        "Container block error: gaps count is not equal to children count plus 1 " +
+        "(\(gaps.count) != \(children.count) + 1)"
+      )
     }
 
     self.blockLayoutDirection = blockLayoutDirection
@@ -186,17 +187,11 @@ public final class ContainerBlock: BlockWithLayout {
       switch layoutDirection {
       case .horizontal:
         guard (children.map { $0.content }.allVerticallyNonResizable) else {
-          throw Error
-            .inconsistentChildLayoutTraits(
-              details: "failed to build horizontal wrap container with vertically resizable children"
-            )
+          throw BlockError("Container block error: horizontal wrap container has children with resizable height")
         }
       case .vertical:
         guard (children.map { $0.content }.allHorizontallyNonResizable) else {
-          throw Error
-            .inconsistentChildLayoutTraits(
-              details: "failed to build vertical wrap container with horizontally resizable children"
-            )
+          throw BlockError("Container block error: vertical wrap container has children with resizable width")
         }
       }
     }
@@ -205,17 +200,11 @@ public final class ContainerBlock: BlockWithLayout {
       switch layoutDirection {
       case .horizontal:
         guard (children.map { $0.content }.allHorizontallyNonResizable) else {
-          throw Error
-            .inconsistentChildLayoutTraits(
-              details: "failed to build intrinsic-width horizontal container with horizontally resizable children"
-            )
+          throw BlockError("Container block error: horizontal intrinsic-width container has children with resizable width")
         }
       case .vertical:
         guard (children.map { $0.content }.hasHorizontallyNonResizable) else {
-          throw Error
-            .inconsistentChildLayoutTraits(
-              details: "failed to build intrinsic-width vertical container wihtout any horizontally nonresizable children"
-            )
+          throw BlockError("Container block error: in vertical intrinsic-width container all children have resizable width")
         }
       }
     }
@@ -226,10 +215,7 @@ public final class ContainerBlock: BlockWithLayout {
         break // this is currently a valid case, see `.max() ?? 0` on line 163
       case .vertical:
         guard (children.map { $0.content }.allVerticallyNonResizable) else {
-          throw Error
-            .inconsistentChildLayoutTraits(
-              details: "failed to build intrinsic-height vertical container with vertically resizable children"
-            )
+          throw BlockError("Container block error: vertical intrinsic-height container has children with resizable height")
         }
       }
     }
@@ -595,25 +581,6 @@ extension Sequence where Element == ContainerBlock.Child {
     where S.Element == Block {
     zip(self, contents).map { child, newContent in
       modified(child) { $0.content = newContent }
-    }
-  }
-}
-
-extension ContainerBlock.Error {
-  public var errorMessage: NonEmptyString {
-    switch self {
-    case .noChildrenProvided: return "noChildrenProvided"
-    case .childAndGapCountMismatch: return "childAndGapCountMismatch"
-    case .inconsistentChildLayoutTraits: return "inconsistentChildLayoutTraits"
-    }
-  }
-
-  public var userInfo: [String: String] {
-    switch self {
-    case let .inconsistentChildLayoutTraits(details):
-      return ["details": details]
-    case .noChildrenProvided, .childAndGapCountMismatch:
-      return [:]
     }
   }
 }

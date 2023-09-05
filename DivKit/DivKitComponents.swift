@@ -33,18 +33,19 @@ public final class DivKitComponents {
   public let urlHandler: DivUrlHandler
   public let variablesStorage: DivVariablesStorage
   public let visibilityCounter = DivVisibilityCounter()
-  public let lastVisibleBoundsCache = DivLastVisibleBoundsCache()
+
   public var updateCardSignal: Signal<[DivActionURLHandler.UpdateReason]> {
     updateCardPipe.signal
   }
 
+  private let disposePool = AutodisposePool()
+  private let lastVisibleBoundsCache = DivLastVisibleBoundsCache()
+  private let persistentValuesStorage = DivPersistentValuesStorage()
   private let timerStorage: DivTimerStorage
   private let updateAggregator: RunLoopCardUpdateAggregator
   private let updateCard: DivActionURLHandler.UpdateCardAction
-  private let variableTracker = DivVariableTracker()
-  private let disposePool = AutodisposePool()
   private let updateCardPipe: SignalPipe<[DivActionURLHandler.UpdateReason]>
-  private let persistentValuesStorage = DivPersistentValuesStorage()
+  private let variableTracker = DivVariableTracker()
 
   /// You can create an instance of `DivKitComponents` with various optional parameters that allow
   /// you to customize the behavior and functionality of `DivKit` to suit your specific needs.
@@ -84,7 +85,7 @@ public final class DivKitComponents {
   ///   - variablesStorage: A ``DivVariablesStorage`` object that handles the storage and retrieval
   /// of variables.
   public init(
-    divCustomBlockFactory: DivCustomBlockFactory = EmptyDivCustomBlockFactory(),
+    divCustomBlockFactory: DivCustomBlockFactory? = nil,
     extensionHandlers: [DivExtensionHandler] = [],
     flagsInfo: DivFlagsInfo = .default,
     fontProvider: DivFontProvider? = nil,
@@ -103,7 +104,7 @@ public final class DivKitComponents {
     urlOpener: @escaping UrlOpener = { _ in }, // remove in next major release
     variablesStorage: DivVariablesStorage = DivVariablesStorage()
   ) {
-    self.divCustomBlockFactory = divCustomBlockFactory
+    self.divCustomBlockFactory = divCustomBlockFactory ?? EmptyDivCustomBlockFactory()
     self.extensionHandlers = extensionHandlers
     self.flagsInfo = flagsInfo
     self.fontProvider = fontProvider ?? DefaultFontProvider()
@@ -188,7 +189,6 @@ public final class DivKitComponents {
 
     weakActionHandler = actionHandler
     weakTimerStorage = timerStorage
-
     variablesStorage.changeEvents.addObserver { [weak self] event in
       self?.onVariablesChanged(event: event)
     }.dispose(in: disposePool)
@@ -232,7 +232,7 @@ public final class DivKitComponents {
     let result = DivData.resolve(
       card: rawDivData.card,
       templates: rawDivData.templates
-    )
+    ).asCardResult(cardId: cardId)
     if let divData = result.value {
       setVariablesAndTriggers(divData: divData, cardId: cardId)
       setTimers(divData: divData, cardId: cardId)
@@ -251,7 +251,10 @@ public final class DivKitComponents {
   ) throws -> DeserializationResult<DivData> {
     guard let jsonObj = try? JSONSerialization.jsonObject(with: jsonData),
           let jsonDict = jsonObj as? [String: Any] else {
-      throw DeserializationError.invalidJSONData(data: jsonData)
+      throw DeserializationError.nestedObjectError(
+        field: cardId.rawValue,
+        error: .invalidJSONData(data: jsonData)
+      )
     }
     return try parseDivDataWithTemplates(jsonDict, cardId: cardId)
   }
@@ -275,7 +278,7 @@ public final class DivKitComponents {
       fontProvider: fontProvider,
       flagsInfo: flagsInfo,
       extensionHandlers: extensionHandlers,
-      variables: variablesStorage.makeVariables(for: cardId),
+      variablesStorage: variablesStorage,
       playerFactory: playerFactory,
       debugParams: debugParams,
       parentScrollView: parentScrollView,

@@ -2,6 +2,12 @@
 
 import PackageDescription
 
+let vgsl = (
+  url: "https://github.com/yandex/vgsl.git",
+  packageName: "vgsl",
+  version: Version("1.8.0")
+)
+
 let package = Package(
   name: "DivKit",
   platforms: [
@@ -9,48 +15,21 @@ let package = Package(
   ],
   products: [
     .library(name: "DivKit", targets: ["DivKit"]),
-    .library(name: "DivKitExtensions", targets: ["DivKitExtensions"])
+    .library(name: "DivKitExtensions", targets: ["DivKitExtensions"]),
+  ],
+  dependencies: [
+    .package(
+      url: vgsl.url,
+      from: vgsl.version
+    )
   ],
   targets: [
     .target(
-      name: "BaseUIPublic",
-      dependencies: [
-        "BaseTinyPublic",
-      ],
-      path: "Core/BaseUIPublic"
-    ),
-    .target(
-      name: "BasePublic",
-      dependencies: [
-        "BaseTinyPublic",
-        "BaseUIPublic",
-      ],
-      path: "Core/BasePublic"
-    ),
-    .target(
-      name: "BaseTinyPublic",
-      path: "Core/BaseTinyPublic"
-    ),
-    .target(
-      name: "CommonCorePublic",
-      dependencies: [
-        "BasePublic",
-      ],
-      path: "Core/CommonCorePublic"
-    ),
-    .target(
-      name: "NetworkingPublic",
-      dependencies: [
-        "BasePublic",
-      ],
-      path: "Core/NetworkingPublic"
-    ),
-    .target(
       name: "DivKit",
       dependencies: [
-        "CommonCorePublic",
         "LayoutKit",
-        "NetworkingPublic",
+        .product(name: "CommonCorePublic", package: vgsl.packageName),
+        .product(name: "NetworkingPublic", package: vgsl.packageName),
         "Serialization",
       ],
       path: "DivKit",
@@ -68,7 +47,7 @@ let package = Package(
     .target(
       name: "LayoutKit",
       dependencies: [
-        "CommonCorePublic",
+        .product(name: "CommonCorePublic", package: vgsl.packageName),
         "LayoutKitInterface",
       ],
       path: "LayoutKit/LayoutKit"
@@ -76,14 +55,14 @@ let package = Package(
     .target(
       name: "LayoutKitInterface",
       dependencies: [
-        "BasePublic",
+        .product(name: "BasePublic", package: vgsl.packageName)
       ],
       path: "LayoutKit/Interface"
     ),
     .target(
       name: "Serialization",
       dependencies: [
-        "CommonCorePublic",
+        .product(name: "CommonCorePublic", package: vgslPackageName)
       ],
       path: "Serialization"
     ),

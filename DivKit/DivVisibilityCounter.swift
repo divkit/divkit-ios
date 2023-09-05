@@ -1,4 +1,3 @@
-import CommonCorePublic
 import LayoutKit
 
 public protocol DivVisibilityCounting {
@@ -6,7 +5,7 @@ public protocol DivVisibilityCounting {
   func incrementCount(for path: UIElementPath)
 }
 
-public final class DivVisibilityCounter: DivVisibilityCounting, Resetting {
+public final class DivVisibilityCounter: DivVisibilityCounting {
   private var storage: [UIElementPath: UInt] = [:]
 
   public init() {}
@@ -23,7 +22,7 @@ public final class DivVisibilityCounter: DivVisibilityCounting, Resetting {
     storage.removeAll()
   }
 
-  public func reset(cardId: DivCardID) {
+  func reset(cardId: DivCardID) {
     storage = storage.filter { $0.key.root != cardId.rawValue }
   }
 }

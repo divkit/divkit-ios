@@ -3,6 +3,10 @@ import CoreGraphics
 import BasePublic
 import LayoutKitInterface
 
+#if canImport(UIKit)
+import UIKit
+#endif
+
 public struct TabContentsViewModel: Equatable {
   public let path: UIElementPath!
   public var pages: [TabPageViewModel]
@@ -37,11 +41,11 @@ public struct TabContentsViewModel: Equatable {
 
   private func checkConstraints() throws {
     if pages.isEmpty {
-      throw TabError.missingChildren
+      throw BlockError("Tab error: no children provided")
     }
 
     if let footer = footer, footer.isVerticallyResizable {
-      throw TabError.unsupportedFooter
+      throw BlockError("Tab error: vertically resizable footer is unsupported")
     }
   }
 
