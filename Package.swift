@@ -62,7 +62,7 @@ let package = Package(
     .target(
       name: "Serialization",
       dependencies: [
-        .product(name: "CommonCorePublic", package: vgslPackageName)
+        .product(name: "CommonCorePublic", package: vgsl.packageName)
       ],
       path: "Serialization"
     ),
