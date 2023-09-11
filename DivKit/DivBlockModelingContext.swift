@@ -187,22 +187,24 @@ public struct DivBlockModelingContext {
   }
 
   func makeBinding<T>(variableName: String, defaultValue: T) -> Binding<T> {
+    let variableName = DivVariableName(rawValue: variableName)
     variableTracker?.onVariablesUsed(
       cardId: cardId,
-      variables: [DivVariableName(rawValue: variableName)]
+      variables: [variableName]
     )
-    let value: T = expressionResolver.getVariableValue(variableName) ?? defaultValue
-    let valueProp = Property<T>.init(
+    let value: T = variablesStorage
+      .getVariableValue(cardId: cardId, name: variableName) ?? defaultValue
+    let valueProp = Property<T>(
       getter: { value },
       setter: {
-        guard let divVariableValue = DivVariableValue($0) else { return }
+        guard let newValue = DivVariableValue($0) else { return }
         self.variablesStorage.update(
           cardId: cardId,
-          name: DivVariableName(rawValue: variableName),
-          value: divVariableValue
+          name: variableName,
+          value: newValue
         )
       }
     )
-    return Binding(name: variableName, value: valueProp)
+    return Binding(name: variableName.rawValue, value: valueProp)
   }
 }
