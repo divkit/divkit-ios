@@ -362,7 +362,6 @@
   "DivKit/generated_sources/UrlVariable.swift":"divkit/public-ios/DivKit/generated_sources/UrlVariable.swift",
   "DivKit/generated_sources/UrlVariableTemplate.swift":"divkit/public-ios/DivKit/generated_sources/UrlVariableTemplate.swift",
   "DivKit/shared_data_generated_sources/PhoneMasks.swift":"divkit/public-ios/DivKit/shared_data_generated_sources/PhoneMasks.swift",
-  "DivKit/shared_data_generator_config.json":"divkit/public-ios/DivKit/shared_data_generator_config.json",
   "DivKitExtensions/Animations/AnimatableView.swift":"divkit/public-ios/DivKitExtensions/Animations/AnimatableView.swift",
   "DivKitExtensions/Animations/AnimationBlockView+UIViewRenderableBlock.swift":"divkit/public-ios/DivKitExtensions/Animations/AnimationBlockView+UIViewRenderableBlock.swift",
   "DivKitExtensions/Animations/AnimationBlockView.swift":"divkit/public-ios/DivKitExtensions/Animations/AnimationBlockView.swift",
