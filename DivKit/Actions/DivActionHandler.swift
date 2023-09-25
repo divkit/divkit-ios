@@ -1,5 +1,3 @@
-import Foundation
-
 import BasePublic
 import LayoutKit
 import Serialization
@@ -14,6 +12,9 @@ public final class DivActionHandler {
   private let trackDisappear: TrackVisibility
   private let variablesStorage: DivVariablesStorage
   private let persistentValuesStorage: DivPersistentValuesStorage
+  private let reporter: DivReporter
+
+  private let setVariableActionHandler: SetVariableActionHandler
 
   init(
     divActionURLHandler: DivActionURLHandler,
@@ -22,7 +23,8 @@ public final class DivActionHandler {
     trackVisibility: @escaping TrackVisibility,
     trackDisappear: @escaping TrackVisibility,
     variablesStorage: DivVariablesStorage,
-    persistentValuesStorage: DivPersistentValuesStorage
+    persistentValuesStorage: DivPersistentValuesStorage,
+    reporter: DivReporter
   ) {
     self.divActionURLHandler = divActionURLHandler
     self.urlHandler = urlHandler
@@ -31,6 +33,11 @@ public final class DivActionHandler {
     self.trackDisappear = trackDisappear
     self.variablesStorage = variablesStorage
     self.persistentValuesStorage = persistentValuesStorage
+    self.reporter = reporter
+
+    setVariableActionHandler = SetVariableActionHandler(
+      variableStorage: variablesStorage
+    )
   }
 
   public convenience init(
@@ -46,7 +53,8 @@ public final class DivActionHandler {
     trackDisappear: @escaping TrackVisibility = { _, _ in },
     performTimerAction: @escaping DivActionURLHandler.PerformTimerAction = { _, _, _ in },
     urlHandler: DivUrlHandler,
-    persistentValuesStorage: DivPersistentValuesStorage = DivPersistentValuesStorage()
+    persistentValuesStorage: DivPersistentValuesStorage = DivPersistentValuesStorage(),
+    reporter: DivReporter? = nil
   ) {
     self.init(
       divActionURLHandler: DivActionURLHandler(
@@ -65,7 +73,8 @@ public final class DivActionHandler {
       trackVisibility: trackVisibility,
       trackDisappear: trackDisappear,
       variablesStorage: variablesStorage,
-      persistentValuesStorage: persistentValuesStorage
+      persistentValuesStorage: persistentValuesStorage,
+      reporter: reporter ?? DefaultDivReporter()
     )
   }
 
@@ -100,35 +109,25 @@ public final class DivActionHandler {
     source: UserInterfaceAction.DivActionSource,
     sender: AnyObject?
   ) {
-    let variables = variablesStorage.makeVariables(for: cardId)
-    let expressionResolver = ExpressionResolver(variables: variables, persistentValuesStorage: persistentValuesStorage)
-    if let url = action.resolveUrl(expressionResolver) {
-      let isDivActionURLHandled = divActionURLHandler.handleURL(
-        url,
-        cardId: cardId,
-        completion: { [unowned self] result in
-          let callbackActions: [DivAction]
-          switch result {
-          case .success:
-            callbackActions = action.downloadCallbacks?.onSuccessActions ?? []
-          case .failure:
-            callbackActions = action.downloadCallbacks?.onFailActions ?? []
-          }
-          callbackActions.forEach {
-            self.handle($0, cardId: cardId, source: source, sender: sender)
-          }
-        }
-      )
-      if !isDivActionURLHandled {
-        switch source {
-        case .tap, .custom:
-          urlHandler.handle(url, sender: sender)
-        case .visibility, .disappear:
-          // For visibility actions url is treated as logUrl.
-          let referer = action.resolveReferer(expressionResolver)
-          logger.log(url: url, referer: referer, payload: action.payload)
-        }
-      }
+    let expressionResolver = makeExpressionResolver(cardId: cardId)
+    let context = DivActionHandlingContext(
+      cardId: cardId,
+      expressionResolver: expressionResolver
+    )
+
+    var isHandled = true
+    switch action.typed {
+    case let .divActionSetVariable(action):
+      setVariableActionHandler.handle(action, context: context)
+    case .none:
+      isHandled = false
+    default:
+      DivKitLogger.error("Action not supported")
+      isHandled = false
+    }
+
+    if !isHandled {
+      handleUrl(action, context: context, source: source, sender: sender)
     }
 
     if let logUrl = action.resolveLogUrl(expressionResolver) {
@@ -136,11 +135,64 @@ public final class DivActionHandler {
       logger.log(url: logUrl, referer: referer, payload: action.payload)
     }
 
+    reporter.reportAction(cardId: cardId, info: DivActionInfo(logId: action.logId, source: source))
+
     if source == .visibility {
       trackVisibility(action.logId, cardId)
     } else if source == .disappear {
       trackDisappear(action.logId, cardId)
     }
+  }
+
+  private func handleUrl(
+    _ action: DivActionBase,
+    context: DivActionHandlingContext,
+    source: UserInterfaceAction.DivActionSource,
+    sender: AnyObject?
+  ) {
+    let expressionResolver = context.expressionResolver
+    guard let url = action.resolveUrl(expressionResolver) else {
+      return
+    }
+
+    let isDivActionURLHandled = divActionURLHandler.handleURL(
+      url,
+      cardId: context.cardId,
+      completion: { [weak self] result in
+        guard let self = self else {
+          return
+        }
+        let callbackActions: [DivAction]
+        switch result {
+        case .success:
+          callbackActions = action.downloadCallbacks?.onSuccessActions ?? []
+        case .failure:
+          callbackActions = action.downloadCallbacks?.onFailActions ?? []
+        }
+        callbackActions.forEach {
+          self.handle($0, cardId: context.cardId, source: source, sender: sender)
+        }
+      }
+    )
+
+    if !isDivActionURLHandled {
+      switch source {
+      case .tap, .custom:
+        urlHandler.handle(url, sender: sender)
+      case .visibility, .disappear:
+        // For visibility actions url is treated as logUrl.
+        let referer = action.resolveReferer(expressionResolver)
+        logger.log(url: url, referer: referer, payload: action.payload)
+      }
+    }
+  }
+
+  private func makeExpressionResolver(cardId: DivCardID) -> ExpressionResolver {
+    ExpressionResolver(
+      variables: variablesStorage.makeVariables(for: cardId),
+      persistentValuesStorage: persistentValuesStorage,
+      errorTracker: reporter.asExpressionErrorTracker(cardId: cardId)
+    )
   }
 
   private func parseAction<T: TemplateValue>(

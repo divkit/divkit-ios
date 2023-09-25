@@ -53,7 +53,8 @@ final class DivBlockProvider {
     self.onCardSizeChanged = onCardSizeChanged
 
     divKitComponents.updateCardSignal
-      .addObserver { [weak self] in self?.update(reasons: $0) }.dispose(in: disposePool)
+      .addObserver { [weak self] in self?.update(reasons: $0) }
+      .dispose(in: disposePool)
   }
 
   func setSource(
@@ -120,10 +121,15 @@ final class DivBlockProvider {
           context: context
         )
       }
-      let errors = context.errorsStorage.errors
       debugParams.processMeasurements((cardId: cardId, measurements: measurements))
-      debugParams.processErrors((cardId: cardId, errors: errors))
+      context.errorsStorage.errors.forEach {
+        divKitComponents.reporter.reportError(cardId: cardId, error: $0)
+      }
     } catch {
+      divKitComponents.reporter.reportError(
+        cardId: cardId,
+        error: DivUnknownError(error, path: UIElementPath(cardId.rawValue))
+      )
       block = handleError(error: error, message: "Failed to build block", context: context)
     }
     cardSize = DivViewSize(block: block)
@@ -187,8 +193,6 @@ final class DivBlockProvider {
     message: String,
     context: DivBlockModelingContext? = nil
   ) -> Block {
-    guard debugParams.isDebugInfoEnabled else { return noDataBlock }
-
     var errors: [DivError] = []
     if let divError = error as? DivError {
       errors.append(divError)
@@ -196,9 +200,15 @@ final class DivBlockProvider {
       errors.append(DivUnknownError(error, path: UIElementPath(cardId.rawValue)))
     }
     errors.append(contentsOf: context?.errorsStorage.errors ?? dataErrors)
-    DivKitLogger.error("\(message). Error: \(error).")
-    debugParams.processErrors((cardId: cardId, errors: errors))
-    return makeErrorsBlock(errors.map { $0.prettyMessage })
+    errors.forEach {
+      divKitComponents.reporter.reportError(cardId: cardId, error: $0)
+    }
+
+    if debugParams.isDebugInfoEnabled {
+      return makeErrorsBlock(errors.map { $0.prettyMessage })
+    } else {
+      return noDataBlock
+    }
   }
 
   private func makeErrorsBlock(_ errors: [String]) -> Block {
