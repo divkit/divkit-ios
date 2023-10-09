@@ -15,6 +15,9 @@ public final class DivActionHandler {
   private let reporter: DivReporter
 
   private let setVariableActionHandler: SetVariableActionHandler
+  private let arrayInsertValueActionHandler: ArrayInsertValueActionHandler
+  private let arrayRemoveValueActionHandler: ArrayRemoveValueActionHandler
+  private let copyToClipboardActionHandler: CopyToClipboardActionHandler
 
   init(
     divActionURLHandler: DivActionURLHandler,
@@ -35,9 +38,10 @@ public final class DivActionHandler {
     self.persistentValuesStorage = persistentValuesStorage
     self.reporter = reporter
 
-    setVariableActionHandler = SetVariableActionHandler(
-      variableStorage: variablesStorage
-    )
+    setVariableActionHandler = SetVariableActionHandler()
+    arrayInsertValueActionHandler = ArrayInsertValueActionHandler()
+    arrayRemoveValueActionHandler = ArrayRemoveValueActionHandler()
+    copyToClipboardActionHandler = CopyToClipboardActionHandler()
   }
 
   public convenience init(
@@ -112,13 +116,20 @@ public final class DivActionHandler {
     let expressionResolver = makeExpressionResolver(cardId: cardId)
     let context = DivActionHandlingContext(
       cardId: cardId,
-      expressionResolver: expressionResolver
+      expressionResolver: expressionResolver,
+      variablesStorage: variablesStorage
     )
 
     var isHandled = true
     switch action.typed {
     case let .divActionSetVariable(action):
       setVariableActionHandler.handle(action, context: context)
+    case let .divActionArrayInsertValue(action):
+      arrayInsertValueActionHandler.handle(action, context: context)
+    case let .divActionArrayRemoveValue(action):
+      arrayRemoveValueActionHandler.handle(action, context: context)
+    case let .divActionCopyToClipboard(action):
+      copyToClipboardActionHandler.handle(action)
     case .none:
       isHandled = false
     default:
