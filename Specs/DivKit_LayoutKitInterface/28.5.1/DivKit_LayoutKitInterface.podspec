@@ -1,8 +1,7 @@
 Pod::Spec.new do |s|
-  s.name             = 'DivKit_Serialization'
-  s.module_name      = 'Serialization'
-  s.version          = '28.5.0'
-  s.summary          = 'Serialization'
+  s.name             = 'DivKit_LayoutKitInterface'
+  s.module_name      = 'LayoutKitInterface'
+  s.version          = '28.5.1'
   s.summary          = 'Part of DivKit framework'
   s.description      = 'Part of DivKit framework'
   s.homepage         = 'https://divkit.tech'
@@ -16,9 +15,11 @@ Pod::Spec.new do |s|
   s.prefix_header_file = false
   s.platforms = { :ios => '11.0' }
 
-  s.dependency 'VGSLCommonCore', '~> 2.2'
+  s.dependency 'VGSLBase', '~> 2.2'
+  s.dependency 'VGSLBaseTiny', '~> 2.2'
+  s.dependency 'VGSLBaseUI', '~> 2.2'
 
   s.source_files = [
-    'Serialization/**/*'
+    'LayoutKit/Interface/**/*'
   ]
 end
