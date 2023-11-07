@@ -15,6 +15,10 @@ final class CorePlayerImpl: CorePlayer {
     playerStatusPipe.signal
   }
 
+  var playerDurationDidChange: Signal<CMTime> {
+    playerDurationPipe.signal
+  }
+
   var playbackStatusDidChange: Signal<PlaybackStatus> {
     playbackStatusPipe.signal
   }
@@ -33,6 +37,7 @@ final class CorePlayerImpl: CorePlayer {
   private let itemObservers = AutodisposePool()
 
   private let playerStatusPipe = SignalPipe<PlayerStatus>()
+  private let playerDurationPipe = SignalPipe<CMTime>()
   private let playbackStatusPipe = SignalPipe<PlaybackStatus>()
   private let playerErrorPipe = SignalPipe<PlayerError>()
   private let playbackFinishPipe = SignalPipe<Void>()
@@ -100,38 +105,43 @@ final class CorePlayerImpl: CorePlayer {
   }
 
   private func configureObservers(for player: AVPlayer) {
-    weak var `self` = self
+    weak var weakSelf = self
 
     observe(player, path: \.timeControlStatus) { _, timeControlStatus in
-      self?.playbackStatusDidChange(timeControlStatus.playbackStatus)
+      weakSelf?.playbackStatusDidChange(timeControlStatus.playbackStatus)
     }.dispose(in: playerObservers)
 
-    observe(player, path: \.status) { player, status in
+    observe(player, path: \.status) { player, _ in
       let status = PlayerStatus(player: player, item: player.currentItem)
-      self?.playerStatusDidChange(status)
+      weakSelf?.playerStatusDidChange(status)
     }.dispose(in: playerObservers)
   }
 
   private func configureObservers(for item: AVPlayerItem) {
-    weak var `self` = self
+    weak var weakSelf = self
 
-    observe(item, path: \.status) { item, status in
-      guard let self = self, self.player.currentItem == item else { return }
+    observe(item, path: \.status) { item, _ in
+      guard let self = weakSelf, self.player.currentItem == item else { return }
 
       let status = PlayerStatus(player: self.player, item: item)
       self.playerStatusDidChange(status)
     }.dispose(in: itemObservers)
 
+    observe(item, path: \.duration) { item, duration in
+      guard let self = weakSelf, self.player.currentItem == item else { return }
+      self.playerDurationDidChange(duration)
+    }.dispose(in: itemObservers)
+
     NotificationCenter.default
       .observe(item, name: .AVPlayerItemDidPlayToEndTime) { item, _ in
-        guard let self = self, self.player.currentItem == item else { return }
+        guard let self = weakSelf, self.player.currentItem == item else { return }
 
         self.playbackDidFinish(item)
       }.dispose(in: itemObservers)
 
     NotificationCenter.default
       .observe(item, name: .AVPlayerItemFailedToPlayToEndTime) { item, notification in
-        guard let self = self, self.player.currentItem == item else { return }
+        guard let self = weakSelf, self.player.currentItem == item else { return }
 
         let nserror = notification.userInfo?[AVPlayerItemFailedToPlayToEndTimeErrorKey] as? NSError
         self.playbackDidFail(nserror.map(BasePlayerError.init) ?? UnknownPlayerError())
@@ -153,11 +163,15 @@ final class CorePlayerImpl: CorePlayer {
     }
   }
 
+  private func playerDurationDidChange(_ duration: CMTime) {
+    playerDurationPipe.send(duration)
+  }
+
   private func playbackDidFail(_ error: PlayerError) {
     playerErrorPipe.send(error)
   }
 
-  private func playbackDidFinish(_ item: AVPlayerItem) {
+  private func playbackDidFinish(_: AVPlayerItem) {
     playbackFinishPipe.send()
   }
 
@@ -176,8 +190,8 @@ final class CorePlayerImpl: CorePlayer {
   }
 }
 
-private extension Video {
-  var avPlayerItem: AVPlayerItem {
+extension Video {
+  fileprivate var avPlayerItem: AVPlayerItem {
     AVPlayerItem(url: url)
   }
 }
