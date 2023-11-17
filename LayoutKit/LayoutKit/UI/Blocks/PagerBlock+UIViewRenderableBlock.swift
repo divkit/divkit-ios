@@ -37,8 +37,6 @@ private final class PagerView: BlockView {
 
   private var model: GalleryViewModel!
   private var selectedActions: [[UserInterfaceAction]]!
-  private var layout: PagerViewLayout!
-  private var currentPageIndex: FractionalPageIndex = 0
   private var lastState: (UIElementPath, PagerViewState)?
   private weak var observer: ElementStateObserver?
   private weak var overscrollDelegate: ScrollDelegate?
@@ -57,21 +55,19 @@ private final class PagerView: BlockView {
     self.observer = observer
     self.overscrollDelegate = overscrollDelegate
 
+    let currentPage = state.currentPage + CGFloat(model.infiniteCorrection)
     let galleryState = GalleryViewState(
-      contentPageIndex: CGFloat(state.currentPage),
+      contentPageIndex: currentPage,
       itemsCount: model.items.count
     )
-    let layoutFactory: GalleryView.LayoutFactory = { [unowned self] model, boundsSize in
-      let pagerLayout = PagerViewLayout(
+    let layoutFactory: GalleryView.LayoutFactory = { model, boundsSize in
+      PagerViewLayout(
         model: model,
-        pageIndex: Int(round(state.currentPage)),
+        pageIndex: Int(round(currentPage)),
         layoutMode: layoutMode,
         boundsSize: boundsSize
       )
-      self.layout = pagerLayout
-      return pagerLayout
     }
-
     galleryView.configure(
       model: model,
       state: galleryState,
@@ -96,15 +92,13 @@ private final class PagerView: BlockView {
   }
 
   private func setState(_ state: PagerViewState) {
-    let currentPage = state.currentPage
     let path = model.path
-    currentPageIndex = FractionalPageIndex(rawValue: CGFloat(currentPage))
     if lastState?.0 != path || lastState?.1 != state {
       lastState = (path, state)
 
       observer?.elementStateChanged(state, forPath: path)
 
-      let pageIndex = Int(round(currentPage))
+      let pageIndex = Int(round(state.currentPage))
 
       PagerSelectedPageChangedEvent(
         path: path,
@@ -143,8 +137,8 @@ extension PagerView: ElementStateObserver {
     if !galleryState.isScrolling {
       setState(
         PagerViewState(
-          numberOfPages: model.items.count,
-          currentPage: Int(pageIndex.rounded())
+          numberOfPages: model.itemsCountWithoutInfinite,
+          currentPage: Int(pageIndex.rounded()) - model.infiniteCorrection
         )
       )
     }
@@ -156,6 +150,3 @@ extension PagerView: VisibleBoundsTrackingContainer {
     [galleryView]
   }
 }
-
-private typealias CellType = GenericCollectionViewCell
-private typealias FractionalPageIndex = Tagged<PagerView, CGFloat>
