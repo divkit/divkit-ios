@@ -11,10 +11,7 @@ extension DivState: DivBlockModeling {
       to: applyBaseProperties(
         to: { try makeBaseBlock(context: context) },
         context: context,
-        actions: nil,
-        actionAnimation: nil,
-        doubleTapActions: nil,
-        longTapActions: nil
+        actionsHolder: nil
       ),
       context: context
     )
@@ -93,12 +90,12 @@ extension DivState: DivBlockModeling {
       vertical: .leading
     )
     let stateAlignment = activeStateDiv?
-      .alignment2D(withDefault: defaultStateAlignment, context: context) ??
-      defaultStateAlignment
+      .resolveAlignment(context, defaultAlignment: defaultStateAlignment)
+      ?? defaultStateAlignment
 
     return LayeredBlock(
-      widthTrait: makeContentWidthTrait(with: context),
-      heightTrait: makeContentHeightTrait(with: context),
+      widthTrait: resolveContentWidthTrait(context),
+      heightTrait: resolveContentHeightTrait(context),
       children: [
         LayeredBlock.Child(
           content: TransitioningBlock(
@@ -126,9 +123,7 @@ extension DivState: DivBlockModeling {
       child: child,
       state: .default,
       path: context.parentPath + DivState.type,
-      swipeOutActions: swipeOutActions.map {
-        $0.uiAction(context: context)
-      }
+      swipeOutActions: swipeOutActions.uiActions(context: context)
     )
   }
 

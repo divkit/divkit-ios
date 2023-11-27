@@ -7,16 +7,13 @@ extension DivSeparator: DivBlockModeling {
     try applyBaseProperties(
       to: { try makeBaseBlock(context: context) },
       context: context,
-      actions: makeActions(context: context),
-      actionAnimation: actionAnimation.makeActionAnimation(with: context.expressionResolver),
-      doubleTapActions: makeDoubleTapActions(context: context),
-      longTapActions: makeLongTapActions(context: context)
+      actionsHolder: self
     )
   }
 
   private func makeBaseBlock(context: DivBlockModelingContext) throws -> Block {
-    let widthTrait = makeContentWidthTrait(with: context)
-    let heightTrait = makeContentHeightTrait(with: context)
+    let widthTrait = resolveContentWidthTrait(context)
+    let heightTrait = resolveContentHeightTrait(context)
 
     let needsBeWrappedInContainer: Bool
     let trait: LayoutTrait

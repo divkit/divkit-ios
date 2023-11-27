@@ -9,10 +9,7 @@ extension DivGallery: DivBlockModeling, DivGalleryProtocol {
     try applyBaseProperties(
       to: { try makeBaseBlock(context: context) },
       context: context,
-      actions: nil,
-      actionAnimation: nil,
-      doubleTapActions: nil,
-      longTapActions: nil,
+      actionsHolder: nil,
       options: .noPaddings
     )
   }
@@ -27,9 +24,6 @@ extension DivGallery: DivBlockModeling, DivGalleryProtocol {
       .blockAlignment
     let itemSpacing = resolveItemSpacing(expressionResolver)
 
-    let width = context.override(width: width)
-    let height = context.override(height: height)
-
     return try modifyError({ DivBlockModelingError($0.message, path: galleryPath) }) {
       let model = try makeGalleryModel(
         context: galleryContext,
@@ -43,9 +37,8 @@ extension DivGallery: DivBlockModeling, DivGalleryProtocol {
       return try GalleryBlock(
         model: model,
         state: getState(context: galleryContext, itemsCount: model.items.count),
-        widthTrait: width.makeLayoutTrait(with: expressionResolver),
-        // horizontal paddings are managed by gallery internally
-        heightTrait: height.makeLayoutTrait(with: expressionResolver)
+        widthTrait: resolveWidthTrait(context),
+        heightTrait: resolveHeightTrait(context)
       )
     }
   }

@@ -9,10 +9,7 @@ extension DivPager: DivBlockModeling, DivGalleryProtocol {
     try applyBaseProperties(
       to: { try makeBaseBlock(context: context) },
       context: context,
-      actions: nil,
-      actionAnimation: nil,
-      doubleTapActions: nil,
-      longTapActions: nil,
+      actionsHolder: nil,
       options: .noPaddings
     )
   }
@@ -29,8 +26,6 @@ extension DivPager: DivBlockModeling, DivGalleryProtocol {
         pagerId: $0
       )
     }
-    let width = context.override(width: width)
-    let height = context.override(height: height)
 
     return try modifyError({ DivBlockModelingError($0.message, path: pagerPath) }) {
       let gallery = try makeGalleryModel(
@@ -44,12 +39,12 @@ extension DivPager: DivBlockModeling, DivGalleryProtocol {
       )
       return try PagerBlock(
         pagerPath: pagerModelPath,
-        layoutMode: layoutMode.cast(with: expressionResolver),
+        layoutMode: layoutMode.resolve(expressionResolver),
         gallery: gallery,
         selectedActions: items.map { $0.value.makeSelectedActions(context: itemContext) },
         state: getState(context: context, path: pagerPath, numberOfPages: items.count),
-        widthTrait: width.makeLayoutTrait(with: expressionResolver),
-        heightTrait: height.makeLayoutTrait(with: expressionResolver)
+        widthTrait: resolveWidthTrait(context),
+        heightTrait: resolveHeightTrait(context)
       )
     }
   }
@@ -81,7 +76,7 @@ extension DivPager.Orientation {
 }
 
 extension DivPagerLayoutMode {
-  func cast(with expressionResolver: ExpressionResolver) -> PagerBlock.LayoutMode {
+  fileprivate func resolve(_ expressionResolver: ExpressionResolver) -> PagerBlock.LayoutMode {
     switch self {
     case let .divPageSize(pageSize):
       return .pageSize(
@@ -100,6 +95,6 @@ extension DivBase {
   fileprivate func makeSelectedActions(
     context: DivBlockModelingContext
   ) -> [UserInterfaceAction] {
-    selectedActions?.map { $0.uiAction(context: context) } ?? []
+    selectedActions?.uiActions(context: context) ?? []
   }
 }

@@ -8,12 +8,9 @@ extension DivContainer: DivBlockModeling {
     try applyBaseProperties(
       to: { try makeBaseBlock(context: context) },
       context: modified(context) {
-        $0.childrenA11yDescription = makeChildrenA11yDescription(context: $0)
+        $0.childrenA11yDescription = resolveChildrenA11yDescription($0)
       },
-      actions: makeActions(context: context),
-      actionAnimation: actionAnimation.makeActionAnimation(with: context.expressionResolver),
-      doubleTapActions: makeDoubleTapActions(context: context),
-      longTapActions: makeLongTapActions(context: context)
+      actionsHolder: self
     )
   }
 
@@ -35,66 +32,16 @@ extension DivContainer: DivBlockModeling {
     }
   }
 
-  private func makeChildrenA11yDescription(context: DivBlockModelingContext) -> String? {
+  private func resolveChildrenA11yDescription(_ context: DivBlockModelingContext) -> String? {
     var result = ""
     func traverse(div: Div) {
-      result = [result, div.makeA11yDecription(context: context)].compactMap { $0 }
+      result = [result, div.resolveA11yDecription(context)]
+        .compactMap { $0 }
         .joined(separator: " ")
       div.children.forEach(traverse(div:))
     }
     items.forEach(traverse)
     return result.isEmpty ? nil : result
-  }
-
-  private func getFallbackWidth(
-    orientation: Orientation,
-    context: DivBlockModelingContext
-  ) -> DivOverridenSize? {
-    if context.override(width: width).isIntrinsic {
-      switch orientation {
-      case .horizontal:
-        if items.hasHorizontallyMatchParent {
-          context.addWarning(
-            message: "Horizontal DivContainer with wrap_content width contains item with match_parent width"
-          )
-          return defaultFallbackSize
-        }
-      case .vertical, .overlap:
-        if items.allHorizontallyMatchParent {
-          context.addWarning(
-            message: "All items in DivContainer with wrap_content width has match_parent width"
-          )
-          return defaultFallbackSize
-        }
-      }
-    }
-
-    return nil
-  }
-
-  private func getFallbackHeight(
-    orientation: Orientation,
-    context: DivBlockModelingContext
-  ) -> DivOverridenSize? {
-    if context.override(height: height).isIntrinsic {
-      switch orientation {
-      case .horizontal, .overlap:
-        if items.allVerticallyMatchParent {
-          context.addWarning(
-            message: "All items in DivContainer with wrap_content height has match_parent height"
-          )
-          return defaultFallbackSize
-        }
-      case .vertical:
-        if items.hasVerticallyMatchParent {
-          context.addWarning(
-            message: "Vertical DivContainer with wrap_content height contains item with match_parent height"
-          )
-          return defaultFallbackSize
-        }
-      }
-    }
-    return nil
   }
 
   private func makeOverlapBlock(context: DivBlockModelingContext) throws -> Block {
@@ -104,23 +51,20 @@ extension DivContainer: DivBlockModeling {
       vertical: resolveContentAlignmentVertical(expressionResolver).alignment
     )
 
-    let fallbackWidth = getFallbackWidth(orientation: .overlap, context: context)
-    let fallbackHeight = getFallbackHeight(orientation: .overlap, context: context)
-
     let childrenContext = modified(context) {
       $0.errorsStorage = DivErrorsStorage(errors: [])
     }
     let children = items.makeBlocks(
       context: childrenContext,
-      overridenWidth: fallbackWidth,
-      overridenHeight: fallbackHeight,
+      sizeModifier: DivContainerSizeModifier(
+        context: context,
+        container: self,
+        orientation: .overlap
+      ),
       mappedBy: { div, block in
         LayeredBlock.Child(
           content: block,
-          alignment: div.value.alignment2D(
-            withDefault: defaultAlignment,
-            context: context
-          )
+          alignment: div.value.resolveAlignment(context, defaultAlignment: defaultAlignment)
         )
       }
     )
@@ -136,8 +80,8 @@ extension DivContainer: DivBlockModeling {
 
     let aspectRatio = aspect.resolveAspectRatio(expressionResolver)
     let layeredBlock = LayeredBlock(
-      widthTrait: makeContentWidthTrait(with: context),
-      heightTrait: makeHeightTrait(context: context, aspectRatio: aspectRatio),
+      widthTrait: resolveContentWidthTrait(context),
+      heightTrait: resolveContentHeightTrait(context, aspectRatio: aspectRatio),
       children: children
     )
 
@@ -173,16 +117,10 @@ extension DivContainer: DivBlockModeling {
       uiLayoutDirection: context.layoutDirection
     )
 
-    let fallbackWidth = getFallbackWidth(
-      orientation: orientation,
-      context: context
-    )
-    let fallbackHeight = getFallbackHeight(
-      orientation: orientation,
-      context: context
-    )
+    let childrenContext = modified(context) {
+      $0.errorsStorage = DivErrorsStorage(errors: [])
+    }
 
-    let childrenContext = modified(context) { $0.errorsStorage = DivErrorsStorage(errors: []) }
     // Before block's making we need to filter items and remove
     // what has "matchParent" for opposite directions
     let filtredItems = items.filter {
@@ -212,8 +150,11 @@ extension DivContainer: DivBlockModeling {
 
     let children = filtredItems.makeBlocks(
       context: childrenContext,
-      overridenWidth: fallbackWidth,
-      overridenHeight: fallbackHeight,
+      sizeModifier: DivContainerSizeModifier(
+        context: context,
+        container: self,
+        orientation: orientation
+      ),
       mappedBy: { div, block in
         ContainerBlock.Child(
           content: block,
@@ -235,19 +176,18 @@ extension DivContainer: DivBlockModeling {
       context.errorsStorage.add(contentsOf: childrenContext.errorsStorage)
     }
 
-    let widthTrait = makeContentWidthTrait(with: context)
     let aspectRatio = aspect.resolveAspectRatio(expressionResolver)
     let containerBlock = try ContainerBlock(
       blockLayoutDirection: context.layoutDirection,
       layoutDirection: layoutDirection,
       layoutMode: layoutMode.system,
-      widthTrait: widthTrait,
-      heightTrait: makeHeightTrait(context: context, aspectRatio: aspectRatio),
+      widthTrait: resolveContentWidthTrait(context),
+      heightTrait: resolveContentHeightTrait(context, aspectRatio: aspectRatio),
       axialAlignment: axialAlignment,
       crossAlignment: crossAlignment,
       children: children,
-      separator: makeSeparator(with: context),
-      lineSeparator: makeLineSeparator(with: context)
+      separator: resolveSeparator(context),
+      lineSeparator: resolveLineSeparator(context)
     )
 
     if let aspectRatio = aspectRatio {
@@ -262,25 +202,25 @@ extension DivContainer: DivBlockModeling {
     return containerBlock
   }
 
-  private func makeHeightTrait(
-    context: DivBlockModelingContext,
+  private func resolveContentHeightTrait(
+    _ context: DivBlockModelingContext,
     aspectRatio: CGFloat?
   ) -> LayoutTrait {
     if aspectRatio != nil {
       return .resizable
     }
-    return makeContentHeightTrait(with: context)
+    return resolveContentHeightTrait(context)
   }
 
-  private func makeSeparator(
-    with context: DivBlockModelingContext
+  private func resolveSeparator(
+    _ context: DivBlockModelingContext
   ) throws -> ContainerBlock.Separator? {
     guard let separator = separator else {
       return nil
     }
     let separatorBlock = separator.style.makeBlock(
       context: context, corners: .all
-    ).addingEdgeInsets(separator.margins.makeEdgeInsets(context: context))
+    ).addingEdgeInsets(separator.margins.resolve(context))
 
     let style = ContainerBlock.Child(
       content: separatorBlock,
@@ -296,15 +236,15 @@ extension DivContainer: DivBlockModeling {
     )
   }
 
-  private func makeLineSeparator(
-    with context: DivBlockModelingContext
+  private func resolveLineSeparator(
+    _ context: DivBlockModelingContext
   ) -> ContainerBlock.Separator? {
     guard let lineSeparator = lineSeparator else {
       return nil
     }
     let lineSeparatorBlock = lineSeparator.style.makeBlock(
       context: context, corners: .all
-    ).addingEdgeInsets(lineSeparator.margins.makeEdgeInsets(context: context))
+    ).addingEdgeInsets(lineSeparator.margins.resolve(context))
 
     let style = ContainerBlock.Child(
       content: lineSeparatorBlock,
@@ -466,10 +406,12 @@ extension DivContainer.LayoutMode {
 }
 
 extension Div {
-  fileprivate func makeA11yDecription(context: DivBlockModelingContext) -> String? {
+  fileprivate func resolveA11yDecription(_ context: DivBlockModelingContext) -> String? {
     let expressionResolver = context.expressionResolver
-    guard value.accessibility.resolveMode(expressionResolver) != .exclude
-    else { return nil }
+    let accessibility = value.accessibility
+    guard accessibility.resolveMode(expressionResolver) != .exclude else {
+      return nil
+    }
     switch self {
     case .divContainer,
          .divCustom,
@@ -486,7 +428,7 @@ extension Div {
          .divSlider,
          .divVideo,
          .divState:
-      return value.accessibility.resolveDescription(expressionResolver)
+      return accessibility.resolveDescription(expressionResolver)
     case let .divText(divText):
       let handlerDescription = context
         .getExtensionHandlers(for: divText)
@@ -498,11 +440,6 @@ extension Div {
     }
   }
 }
-
-private let defaultFallbackSize = DivOverridenSize(
-  original: .divMatchParentSize(DivMatchParentSize()),
-  overriden: .divWrapContentSize(DivWrapContentSize(constrained: .value(true)))
-)
 
 fileprivate func makeCrossAlignment(
   _ direction: ContainerBlock.LayoutDirection,

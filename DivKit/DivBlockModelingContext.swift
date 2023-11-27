@@ -36,24 +36,24 @@ public struct DivBlockModelingContext {
   private let persistentValuesStorage: DivPersistentValuesStorage
   let tooltipViewFactory: DivTooltipViewFactory?
   public let variablesStorage: DivVariablesStorage
-  private let variableTracker: DivVariableTracker?
   public private(set) var expressionResolver: ExpressionResolver
+  private let variableValueProvider: (String) -> Any?
+  private let functionsProvider: FunctionsProvider
+  private let variableTracker: ExpressionResolver.VariableTracker
 
   public internal(set) var parentPath: UIElementPath {
     didSet {
       expressionResolver = makeExpressionResolver(
-        cardId: cardId,
+        variableValueProvider: variableValueProvider,
+        functionsProvider: functionsProvider,
         parentPath: parentPath,
-        variablesStorage: variablesStorage,
-        persistentValuesStorage: persistentValuesStorage,
         errorsStorage: errorsStorage,
         variableTracker: variableTracker
       )
     }
   }
 
-  var overridenWidth: DivOverridenSize?
-  var overridenHeight: DivOverridenSize?
+  var sizeModifier: DivSizeModifier?
 
   public init(
     cardId: DivCardID,
@@ -104,6 +104,9 @@ public struct DivBlockModelingContext {
     self.parentScrollView = parentScrollView
     self.errorsStorage = errorsStorage ?? DivErrorsStorage(errors: [])
     self.layoutDirection = layoutDirection
+    let variableTracker: ExpressionResolver.VariableTracker = { variables in
+      variableTracker?.onVariablesUsed(cardId: cardId, variables: variables)
+    }
     self.variableTracker = variableTracker
     let persistentValuesStorage = persistentValuesStorage ?? DivPersistentValuesStorage()
     self.persistentValuesStorage = persistentValuesStorage
@@ -132,11 +135,24 @@ public struct DivBlockModelingContext {
     }
     self.stateInterceptors = stateInterceptorsDictionary
 
+    let variableValueProvider: (String) -> Any? = {
+      variablesStorage.getVariableValue(
+        cardId: cardId,
+        name: DivVariableName(rawValue: $0)
+      )
+    }
+    self.variableValueProvider = variableValueProvider
+    functionsProvider = FunctionsProvider(
+      variableValueProvider: {
+        variableTracker([DivVariableName(rawValue: $0)])
+        return variableValueProvider($0)
+      },
+      persistentValuesStorage: persistentValuesStorage
+    )
     expressionResolver = makeExpressionResolver(
-      cardId: cardId,
+      variableValueProvider: variableValueProvider,
+      functionsProvider: functionsProvider,
       parentPath: parentPath,
-      variablesStorage: variablesStorage,
-      persistentValuesStorage: persistentValuesStorage,
       errorsStorage: errorsStorage,
       variableTracker: variableTracker
     )
@@ -175,32 +191,9 @@ public struct DivBlockModelingContext {
     errorsStorage.add(DivUnknownError(error, path: parentPath))
   }
 
-  func override(width: DivSize) -> DivSize {
-    guard let overridenWidth = overridenWidth else {
-      return width
-    }
-    if overridenWidth.original == width {
-      return overridenWidth.overriden
-    }
-    return width
-  }
-
-  func override(height: DivSize) -> DivSize {
-    guard let overridenHeight = overridenHeight else {
-      return height
-    }
-    if overridenHeight.original == height {
-      return overridenHeight.overriden
-    }
-    return height
-  }
-
   func makeBinding<T>(variableName: String, defaultValue: T) -> Binding<T> {
     let variableName = DivVariableName(rawValue: variableName)
-    variableTracker?.onVariablesUsed(
-      cardId: cardId,
-      variables: [variableName]
-    )
+    variableTracker([variableName])
     let value: T = variablesStorage
       .getVariableValue(cardId: cardId, name: variableName) ?? defaultValue
     let valueProp = Property<T>(
@@ -219,22 +212,18 @@ public struct DivBlockModelingContext {
 }
 
 private func makeExpressionResolver(
-  cardId: DivCardID,
+  variableValueProvider: @escaping AnyCalcExpression.ValueProvider,
+  functionsProvider: FunctionsProvider,
   parentPath: UIElementPath,
-  variablesStorage: DivVariablesStorage,
-  persistentValuesStorage: DivPersistentValuesStorage,
   errorsStorage: DivErrorsStorage?,
-  variableTracker: DivVariableTracker?
+  variableTracker: @escaping ExpressionResolver.VariableTracker
 ) -> ExpressionResolver {
   ExpressionResolver(
-    cardId: cardId,
-    variablesStorage: variablesStorage,
-    persistentValuesStorage: persistentValuesStorage,
+    variableValueProvider: variableValueProvider,
+    functionsProvider: functionsProvider,
     errorTracker: { [weak errorsStorage] error in
       errorsStorage?.add(DivExpressionError(error, path: parentPath))
     },
-    variableTracker: { [weak variableTracker] variables in
-      variableTracker?.onVariablesUsed(cardId: cardId, variables: variables)
-    }
+    variableTracker: variableTracker
   )
 }

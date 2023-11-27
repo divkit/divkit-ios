@@ -20,13 +20,16 @@ extension DivGalleryProtocol {
     infiniteScroll: Bool = false
   ) throws -> GalleryViewModel {
     let expressionResolver = context.expressionResolver
-    let fallbackWidth = getFallbackWidth(direction: direction, context: context)
-    let fallbackHeight = getFallbackHeight(direction: direction, context: context)
-    let childrenContext = modified(context) { $0.errorsStorage = DivErrorsStorage(errors: []) }
+    let childrenContext = modified(context) {
+      $0.errorsStorage = DivErrorsStorage(errors: [])
+    }
     var children: [GalleryViewModel.Item] = items.makeBlocks(
       context: childrenContext,
-      overridenWidth: fallbackWidth,
-      overridenHeight: fallbackHeight,
+      sizeModifier: DivGallerySizeModifier(
+        context: context,
+        gallery: self,
+        direction: direction
+      ),
       mappedBy: {
         GalleryViewModel.Item(
           crossAlignment: (
@@ -89,8 +92,8 @@ extension DivGalleryProtocol {
 
     let axialInsets: SideInsets
     let crossInsets: SideInsets
-    let horizontalInsets = paddings.makeHorizontalInsets(with: expressionResolver)
-    let verticalInsets = paddings.makeVerticalInsets(with: expressionResolver)
+    let horizontalInsets = paddings.resolveHorizontalInsets(expressionResolver)
+    let verticalInsets = paddings.resolveVerticalInsets(expressionResolver)
     switch direction {
     case .horizontal:
       axialInsets = horizontalInsets
@@ -108,56 +111,10 @@ extension DivGalleryProtocol {
     )
   }
 
-  private func getFallbackWidth(
-    direction: GalleryViewModel.Direction,
-    context: DivBlockModelingContext
-  ) -> DivOverridenSize? {
-    if width.isIntrinsic {
-      switch direction {
-      case .vertical:
-        if items.allHorizontallyMatchParent {
-          context.addWarning(
-            message: "All items in vertical \(typeName) with wrap_content width has match_parent width"
-          )
-          return defaultFallbackSize
-        }
-      case .horizontal:
-        break
-      }
-    }
-
-    return nil
-  }
-
-  private func getFallbackHeight(
-    direction: GalleryViewModel.Direction,
-    context: DivBlockModelingContext
-  ) -> DivOverridenSize? {
-    if height.isIntrinsic {
-      switch direction {
-      case .horizontal:
-        if items.allVerticallyMatchParent {
-          context.addWarning(
-            message: "All items in horizontal \(typeName) with wrap_content height has match_parent height"
-          )
-          return defaultFallbackSize
-        }
-      case .vertical:
-        break
-      }
-    }
-    return nil
-  }
-
-  private var typeName: String {
+  var typeName: String {
     guard let typeName = String(describing: self).split(separator: ".").last else {
       return "DivGallery"
     }
     return String(typeName)
   }
 }
-
-private let defaultFallbackSize = DivOverridenSize(
-  original: .divMatchParentSize(DivMatchParentSize()),
-  overriden: .divWrapContentSize(DivWrapContentSize(constrained: .value(true)))
-)

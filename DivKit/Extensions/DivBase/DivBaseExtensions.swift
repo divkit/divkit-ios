@@ -9,10 +9,7 @@ extension DivBase {
   func applyBaseProperties(
     to block: () throws -> Block,
     context: DivBlockModelingContext,
-    actions: NonEmptyArray<UserInterfaceAction>?,
-    actionAnimation: ActionAnimation?,
-    doubleTapActions: NonEmptyArray<UserInterfaceAction>?,
-    longTapActions: NonEmptyArray<UserInterfaceAction>?,
+    actionsHolder: DivActionsHolder?,
     options: BasePropertiesOptions = [],
     customA11yElement: AccessibilityElement? = nil
   ) throws -> Block {
@@ -35,10 +32,10 @@ extension DivBase {
 
     let internalInsets = options.contains(.noPaddings)
       ? .zero
-      : paddings.makeEdgeInsets(context: context)
+      : paddings.resolve(context)
     block = block.addingEdgeInsets(internalInsets)
 
-    let externalInsets = margins.makeEdgeInsets(context: context)
+    let externalInsets = margins.resolve(context)
     if visibility == .invisible {
       context.lastVisibleBoundsCache.dropVisibleBounds(forMatchingPrefix: context.parentPath)
       context.stateManager.setBlockVisibility(statePath: statePath, div: self, isVisible: false)
@@ -61,7 +58,7 @@ extension DivBase {
       .getState(context.parentPath) ?? .default
     let background = getBackground(focusState)
     let border = getBorder(focusState)
-    let anchorPoint = transform.makeAnchorPoint(expressionResolver: expressionResolver)
+    let anchorPoint = transform.resolveAnchorPoint(expressionResolver)
 
     block = try applyBackground(
       background,
@@ -69,9 +66,9 @@ extension DivBase {
       context: context
     )
     .addingDecorations(
-      boundary: border.makeBoundaryTrait(with: expressionResolver),
-      border: border.makeBlockBorder(with: expressionResolver),
-      shadow: border.makeBlockShadow(with: expressionResolver),
+      boundary: .clipCorner(border.resolveCornerRadii(expressionResolver)),
+      border: border.resolveBorder(expressionResolver),
+      shadow: border.resolveShadow(expressionResolver),
       visibilityActions: visibilityActions.isEmpty ? nil : visibilityActions,
       lastVisibleBounds: visibilityActions.isEmpty ? nil : Property<CGRect>(
         getter: { context.lastVisibleBoundsCache.lastVisibleBounds(for: context.parentPath) },
@@ -92,21 +89,12 @@ extension DivBase {
     )
 
     block = applyTransitioningAnimations(to: block, context: context, statePath: statePath)
-      .addingDecorations(
-        actions: actions,
-        actionAnimation: actionAnimation,
-        doubleTapActions: doubleTapActions,
-        longTapActions: longTapActions.map(LongTapActions.actions)
-      )
+      .addActions(context: context, actionsHolder: actionsHolder)
       .addingEdgeInsets(externalInsets, clipsToBounds: false)
       .addingDecorations(
         boundary: transform.resolveRotation(expressionResolver).flatMap { _ in .noClip },
         alpha: CGFloat(resolveAlpha(expressionResolver)),
-        accessibilityElement: customA11yElement ?? makeAccessibilityElement(
-          accessibility,
-          expressionResolver: expressionResolver,
-          childrenA11yDescription: context.childrenA11yDescription
-        )
+        accessibilityElement: customA11yElement ?? resolveAccessibilityElement(context)
       )
 
     return applyExtensionHandlersAfterBaseProperties(
@@ -132,15 +120,16 @@ extension DivBase {
     return focusedBorder
   }
 
-  func alignment2D(
-    withDefault defaultAlignment: BlockAlignment2D,
-    context: DivBlockModelingContext
+  func resolveAlignment(
+    _ context: DivBlockModelingContext,
+    defaultAlignment: BlockAlignment2D
   ) -> BlockAlignment2D {
-    BlockAlignment2D(
-      horizontal: resolveAlignmentHorizontal(context.expressionResolver)?
+    let expressionResolver = context.expressionResolver
+    return BlockAlignment2D(
+      horizontal: resolveAlignmentHorizontal(expressionResolver)?
         .makeContentAlignment(uiLayoutDirection: context.layoutDirection)
         ?? defaultAlignment.horizontal,
-      vertical: resolveAlignmentVertical(context.expressionResolver)?.alignment
+      vertical: resolveAlignmentVertical(expressionResolver)?.alignment
         ?? defaultAlignment.vertical
     )
   }
@@ -149,35 +138,23 @@ extension DivBase {
     context: DivBlockModelingContext
   ) -> [VisibilityAction] {
     (visibilityActions ?? visibilityAction.asArray())
-      .compactMap { action in
-        action.makeVisibilityAction(context: context, logId: action.logId)
-      }
+      .map { $0.makeVisibilityAction(context: context) }
   }
 
   private func makeDisappearActions(
     context: DivBlockModelingContext
   ) -> [VisibilityAction] {
-    disappearActions?
-      .compactMap { action in
-        action.makeDisappearAction(context: context, logId: action.logId)
-      }
-      ?? []
+    disappearActions?.map { $0.makeDisappearAction(context: context) } ?? []
   }
 
-  private func makeAccessibilityElement(
-    _ accessibility: DivAccessibility?,
-    expressionResolver: ExpressionResolver,
-    childrenA11yDescription: String?
-  ) -> AccessibilityElement? {
-    if let accessibility = accessibility {
-      return accessibility.accessibilityElement(
-        divId: id,
-        expressionResolver: expressionResolver,
-        childrenA11yDescription: childrenA11yDescription
-      )
-    }
-
-    return nil
+  private func resolveAccessibilityElement(
+    _ context: DivBlockModelingContext
+  ) -> AccessibilityElement {
+    accessibility.accessibilityElement(
+      divId: id,
+      expressionResolver: context.expressionResolver,
+      childrenA11yDescription: context.childrenA11yDescription
+    )
   }
 
   private func applyTransitioningAnimations(
@@ -192,8 +169,7 @@ extension DivBase {
     let expressionResolver = context.expressionResolver
     let animationIn: [TransitioningAnimation]?
     if isAppearing(statePath: statePath, id: id, context: context) {
-      animationIn = transitionIn?
-        .makeTransitioningAnimations(for: .appearing, with: expressionResolver)
+      animationIn = transitionIn?.resolveAnimations(expressionResolver, type: .appearing)
     } else {
       animationIn = nil
     }
@@ -204,10 +180,8 @@ extension DivBase {
       isVisible: true
     )
 
-    let animationOut = transitionOut?
-      .makeTransitioningAnimations(for: .disappearing, with: expressionResolver)
-    let animationChange = transitionChange?
-      .makeChangeBoundsTransition(with: expressionResolver)
+    let animationOut = transitionOut?.resolveAnimations(expressionResolver, type: .disappearing)
+    let animationChange = transitionChange?.resolveTransition(expressionResolver)
     if animationIn != nil || animationOut != nil || animationChange != nil {
       return DetachableAnimationBlock(
         child: block,
@@ -281,23 +255,35 @@ extension DivBase {
 }
 
 extension DivBase {
-  func makeContentWidthTrait(with context: DivBlockModelingContext) -> LayoutTrait {
-    let overridenWidth = context.override(width: width)
-    return overridenWidth.makeLayoutTrait(with: context.expressionResolver).contentTrait(
-      consideringInsets: paddings.makeEdgeInsets(context: context).horizontalInsets
-    )
+  func getTransformedWidth(_ context: DivBlockModelingContext) -> DivSize {
+    context.sizeModifier?.transformWidth(width) ?? width
   }
 
-  func makeContentHeightTrait(with context: DivBlockModelingContext) -> LayoutTrait {
-    let overridenHeight = context.override(height: height)
-    return overridenHeight.makeLayoutTrait(with: context.expressionResolver).contentTrait(
-      consideringInsets: paddings.makeEdgeInsets(context: context).verticalInsets
-    )
+  func resolveWidthTrait(_ context: DivBlockModelingContext) -> LayoutTrait {
+    getTransformedWidth(context).resolveLayoutTrait(context.expressionResolver)
+  }
+
+  func resolveContentWidthTrait(_ context: DivBlockModelingContext) -> LayoutTrait {
+    resolveWidthTrait(context)
+      .trim(paddings.resolve(context).horizontalInsets)
+  }
+
+  func getTransformedHeight(_ context: DivBlockModelingContext) -> DivSize {
+    context.sizeModifier?.transformHeight(height) ?? height
+  }
+
+  func resolveHeightTrait(_ context: DivBlockModelingContext) -> LayoutTrait {
+    getTransformedHeight(context).resolveLayoutTrait(context.expressionResolver)
+  }
+
+  func resolveContentHeightTrait(_ context: DivBlockModelingContext) -> LayoutTrait {
+    resolveHeightTrait(context)
+      .trim(paddings.resolve(context).verticalInsets)
   }
 }
 
 extension LayoutTrait {
-  fileprivate func contentTrait(consideringInsets insets: SideInsets) -> LayoutTrait {
+  fileprivate func trim(_ insets: SideInsets) -> LayoutTrait {
     switch self {
     case let .fixed(value):
       return .fixed(value - insets.sum)
@@ -309,8 +295,10 @@ extension LayoutTrait {
 }
 
 extension DivBorder {
-  fileprivate func makeBlockBorder(with expressionResolver: ExpressionResolver) -> BlockBorder? {
-    guard let stroke = stroke else { return nil }
+  fileprivate func resolveBorder(_ expressionResolver: ExpressionResolver) -> BlockBorder? {
+    guard let stroke = stroke else {
+      return nil
+    }
     return BlockBorder(
       color: stroke.resolveColor(expressionResolver) ?? .black,
       width: stroke.resolveUnit(expressionResolver)
@@ -318,24 +306,22 @@ extension DivBorder {
     )
   }
 
-  fileprivate func makeBlockShadow(with expressionResolver: ExpressionResolver) -> BlockShadow? {
-    guard resolveHasShadow(expressionResolver) else { return nil }
+  fileprivate func resolveShadow(_ expressionResolver: ExpressionResolver) -> BlockShadow? {
+    guard resolveHasShadow(expressionResolver) else {
+      return nil
+    }
 
     return BlockShadow(
-      cornerRadii: makeCornerRadii(with: expressionResolver),
+      cornerRadii: resolveCornerRadii(expressionResolver),
       blurRadius: CGFloat(shadow?.resolveBlur(expressionResolver) ?? 2),
-      offset: shadow?.offset.cast(with: expressionResolver) ?? .zero,
+      offset: shadow?.offset.resolve(expressionResolver) ?? .zero,
       opacity: (shadow?.resolveAlpha(expressionResolver)).map(Float.init)
         ?? BlockShadow.Defaults.opacity,
       color: shadow?.resolveColor(expressionResolver) ?? BlockShadow.Defaults.color
     )
   }
 
-  fileprivate func makeBoundaryTrait(with expressionResolver: ExpressionResolver) -> BoundaryTrait {
-    .clipCorner(makeCornerRadii(with: expressionResolver))
-  }
-
-  private func makeCornerRadii(with expressionResolver: ExpressionResolver) -> CornerRadii {
+  fileprivate func resolveCornerRadii(_ expressionResolver: ExpressionResolver) -> CornerRadii {
     let cornerRadius = resolveCornerRadius(expressionResolver)
     let topLeft = cornersRadius?.resolveTopLeft(expressionResolver)
       ?? cornerRadius ?? 0
@@ -345,7 +331,6 @@ extension DivBorder {
       ?? cornerRadius ?? 0
     let bottomRight = cornersRadius?.resolveBottomRight(expressionResolver)
       ?? cornerRadius ?? 0
-
     return CornerRadii(
       topLeft: CGFloat(topLeft),
       topRight: CGFloat(topRight),

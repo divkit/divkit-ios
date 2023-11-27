@@ -8,10 +8,7 @@ extension DivGifImage: DivBlockModeling, DivImageProtocol {
     try applyBaseProperties(
       to: { try makeBaseBlock(context: context) },
       context: context,
-      actions: makeActions(context: context),
-      actionAnimation: actionAnimation.makeActionAnimation(with: context.expressionResolver),
-      doubleTapActions: makeDoubleTapActions(context: context),
-      longTapActions: makeLongTapActions(context: context)
+      actionsHolder: self
     )
   }
 
@@ -25,9 +22,9 @@ extension DivGifImage: DivBlockModeling, DivImageProtocol {
     )
     return AnimatableImageBlock(
       imageHolder: imageHolder,
-      widthTrait: makeContentWidthTrait(with: context),
+      widthTrait: resolveContentWidthTrait(context),
       height: resolveHeight(context),
-      contentMode: contentMode(context: context)
+      contentMode: resolveContentMode(context)
     )
   }
 }

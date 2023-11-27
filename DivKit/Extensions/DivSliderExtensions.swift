@@ -10,10 +10,7 @@ extension DivSlider: DivBlockModeling {
     try applyBaseProperties(
       to: { try makeBaseBlock(context: context) },
       context: context,
-      actions: nil,
-      actionAnimation: nil,
-      doubleTapActions: nil,
-      longTapActions: nil
+      actionsHolder: nil
     )
   }
 
@@ -40,8 +37,8 @@ extension DivSlider: DivBlockModeling {
       ),
       value: firstThumbValue,
       size: CGSize(
-        width: thumbStyle.getWidth(context: context),
-        height: thumbStyle.getHeight(context: context)
+        width: thumbStyle.resolveWidth(context),
+        height: thumbStyle.resolveHeight(context)
       ),
       offsetX: thumbTextStyle?.offset?.x.resolveValue(expressionResolver) ?? 0,
       offsetY: thumbTextStyle?.offset?.y.resolveValue(expressionResolver) ?? 0
@@ -69,10 +66,10 @@ extension DivSlider: DivBlockModeling {
         ),
         value: secondThumbValue,
         size: CGSize(
-          width: thumbSecondaryStyle?.getWidth(context: context) ?? thumbStyle
-            .getWidth(context: context),
-          height: thumbSecondaryStyle?.getHeight(context: context) ?? thumbStyle
-            .getHeight(context: context)
+          width: thumbSecondaryStyle?.resolveWidth(context)
+            ?? thumbStyle.resolveWidth(context),
+          height: thumbSecondaryStyle?.resolveHeight(context)
+            ?? thumbStyle.resolveHeight(context)
         ),
         offsetX: thumbSecondaryTextStyle?.offset?.x.resolveValue(expressionResolver) ?? 0,
         offsetY: thumbSecondaryTextStyle?.offset?.y.resolveValue(expressionResolver) ?? 0
@@ -98,25 +95,19 @@ extension DivSlider: DivBlockModeling {
       layoutDirection: context.layoutDirection
     )
 
-    let sliderRanges = makeRanges(ranges, with: context)
-
     let sliderModel = SliderModel(
       firstThumb: firstThumb,
       secondThumb: secondThumb,
       minValue: minValue,
       maxValue: maxValue,
       marksConfiguration: marksConfiguration,
-      ranges: sliderRanges,
+      ranges: makeRanges(ranges, with: context),
       layoutDirection: context.layoutDirection
     )
-
-    let width = context.override(width: width)
-    let height = context.override(height: height)
-
     return SliderBlock(
       sliderModel: sliderModel,
-      widthTrait: width.makeLayoutTrait(with: expressionResolver),
-      heightTrait: height.makeLayoutTrait(with: expressionResolver)
+      widthTrait: resolveWidthTrait(context),
+      heightTrait: resolveHeightTrait(context)
     )
   }
 
@@ -133,7 +124,7 @@ extension DivSlider: DivBlockModeling {
       SliderModel.RangeModel(
         start: range.resolveStart(expressionResolver) ?? minValue,
         end: range.resolveEnd(expressionResolver) ?? maxValue,
-        margins: range.margins.makeEdgeInsets(context: context),
+        margins: range.margins.resolve(context),
         activeTrack: range.trackActiveStyle?.makeBlock(
           context: context,
           widthTrait: .resizable,
