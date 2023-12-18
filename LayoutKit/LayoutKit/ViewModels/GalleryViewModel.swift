@@ -40,6 +40,20 @@ public struct GalleryViewModel: Equatable {
     }
   }
 
+  public enum Scrollbar: Equatable {
+    case none
+    case auto
+
+    public var show: Bool {
+      switch self {
+      case .none:
+        return false
+      case .auto:
+        return true
+      }
+    }
+  }
+
   public var items: [Item]
   public let layoutDirection: UserInterfaceLayoutDirection
   public let metrics: GalleryViewMetrics
@@ -51,6 +65,7 @@ public struct GalleryViewModel: Equatable {
   public let alwaysBounceVertical: Bool
   public let bounces: Bool
   public let infiniteScroll: Bool
+  public let scrollbar: Scrollbar
 
   public init(
     blocks: [Block],
@@ -64,7 +79,8 @@ public struct GalleryViewModel: Equatable {
     areEmptySpaceTouchesEnabled: Bool = true,
     alwaysBounceVertical: Bool = false,
     bounces: Bool = true,
-    infiniteScroll: Bool = false
+    infiniteScroll: Bool = false,
+    scrollbar: Scrollbar = .none
   ) {
     self.init(
       items: blocks.map { Item(crossAlignment: crossAlignment, content: $0) },
@@ -77,7 +93,8 @@ public struct GalleryViewModel: Equatable {
       areEmptySpaceTouchesEnabled: areEmptySpaceTouchesEnabled,
       alwaysBounceVertical: alwaysBounceVertical,
       bounces: bounces,
-      infiniteScroll: infiniteScroll
+      infiniteScroll: infiniteScroll,
+      scrollbar: scrollbar
     )
   }
 
@@ -92,9 +109,10 @@ public struct GalleryViewModel: Equatable {
     areEmptySpaceTouchesEnabled: Bool = true,
     alwaysBounceVertical: Bool = false,
     bounces: Bool = true,
-    infiniteScroll: Bool = false
+    infiniteScroll: Bool = false,
+    scrollbar: Scrollbar = .none
   ) {
-    validateContent(of: items, for: metrics, with: direction)
+    validateContent(of: items, with: direction)
 
     precondition(columnCount > 0)
 
@@ -109,6 +127,7 @@ public struct GalleryViewModel: Equatable {
     self.alwaysBounceVertical = alwaysBounceVertical
     self.bounces = bounces
     self.infiniteScroll = infiniteScroll
+    self.scrollbar = scrollbar
   }
 
   public func modifying(
@@ -146,11 +165,8 @@ extension GalleryViewModel.Item {
 
 private func validateContent(
   of items: [GalleryViewModel.Item],
-  for metrics: GalleryViewMetrics,
   with direction: GalleryViewModel.Direction
 ) {
-  precondition(!items.isEmpty)
-
   let blocks = items.map { $0.content }
   switch direction {
   case .horizontal:
@@ -166,6 +182,4 @@ private func validateContent(
       }
     )
   }
-
-  precondition(items.count - 1 == metrics.spacings.count)
 }

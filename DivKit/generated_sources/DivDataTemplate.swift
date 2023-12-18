@@ -113,21 +113,18 @@ public final class DivDataTemplate: TemplateValue {
     }
   }
 
-  public let logId: Field<String>? // at least 1 char
-  public let states: Field<[StateTemplate]>? // at least 1 elements; all received elements must be valid
-  public let timers: Field<[DivTimerTemplate]>? // at least 1 elements
+  public let logId: Field<String>?
+  public let states: Field<[StateTemplate]>? // at least 1 elements
+  public let timers: Field<[DivTimerTemplate]>?
   public let transitionAnimationSelector: Field<Expression<DivTransitionSelector>>? // default value: none
-  public let variableTriggers: Field<[DivTriggerTemplate]>? // at least 1 elements
-  public let variables: Field<[DivVariableTemplate]>? // at least 1 elements
-
-  static let statesValidator: AnyArrayValueValidator<DivDataTemplate.StateTemplate> =
-    makeStrictArrayValidator(minItems: 1)
+  public let variableTriggers: Field<[DivTriggerTemplate]>?
+  public let variables: Field<[DivVariableTemplate]>?
 
   public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
     do {
       self.init(
         logId: try dictionary.getOptionalField("log_id"),
-        states: try dictionary.getOptionalArray("states", templateToType: templateToType, validator: Self.statesValidator),
+        states: try dictionary.getOptionalArray("states", templateToType: templateToType),
         timers: try dictionary.getOptionalArray("timers", templateToType: templateToType),
         transitionAnimationSelector: try dictionary.getOptionalExpressionField("transition_animation_selector"),
         variableTriggers: try dictionary.getOptionalArray("variable_triggers", templateToType: templateToType),
@@ -155,12 +152,12 @@ public final class DivDataTemplate: TemplateValue {
   }
 
   private static func resolveOnlyLinks(context: TemplatesContext, parent: DivDataTemplate?) -> DeserializationResult<DivData> {
-    let logIdValue = parent?.logId?.resolveValue(context: context, validator: ResolvedValue.logIdValidator) ?? .noValue
+    let logIdValue = parent?.logId?.resolveValue(context: context) ?? .noValue
     let statesValue = parent?.states?.resolveValue(context: context, validator: ResolvedValue.statesValidator, useOnlyLinks: true) ?? .noValue
-    let timersValue = parent?.timers?.resolveOptionalValue(context: context, validator: ResolvedValue.timersValidator, useOnlyLinks: true) ?? .noValue
-    let transitionAnimationSelectorValue = parent?.transitionAnimationSelector?.resolveOptionalValue(context: context, validator: ResolvedValue.transitionAnimationSelectorValidator) ?? .noValue
-    let variableTriggersValue = parent?.variableTriggers?.resolveOptionalValue(context: context, validator: ResolvedValue.variableTriggersValidator, useOnlyLinks: true) ?? .noValue
-    let variablesValue = parent?.variables?.resolveOptionalValue(context: context, validator: ResolvedValue.variablesValidator, useOnlyLinks: true) ?? .noValue
+    let timersValue = parent?.timers?.resolveOptionalValue(context: context, useOnlyLinks: true) ?? .noValue
+    let transitionAnimationSelectorValue = parent?.transitionAnimationSelector?.resolveOptionalValue(context: context) ?? .noValue
+    let variableTriggersValue = parent?.variableTriggers?.resolveOptionalValue(context: context, useOnlyLinks: true) ?? .noValue
+    let variablesValue = parent?.variables?.resolveOptionalValue(context: context, useOnlyLinks: true) ?? .noValue
     var errors = mergeErrors(
       logIdValue.errorsOrWarnings?.map { .nestedObjectError(field: "log_id", error: $0) },
       statesValue.errorsOrWarnings?.map { .nestedObjectError(field: "states", error: $0) },
@@ -196,7 +193,7 @@ public final class DivDataTemplate: TemplateValue {
     if useOnlyLinks {
       return resolveOnlyLinks(context: context, parent: parent)
     }
-    var logIdValue: DeserializationResult<String> = parent?.logId?.value(validatedBy: ResolvedValue.logIdValidator) ?? .noValue
+    var logIdValue: DeserializationResult<String> = parent?.logId?.value() ?? .noValue
     var statesValue: DeserializationResult<[DivData.State]> = .noValue
     var timersValue: DeserializationResult<[DivTimer]> = .noValue
     var transitionAnimationSelectorValue: DeserializationResult<Expression<DivTransitionSelector>> = parent?.transitionAnimationSelector?.value() ?? .noValue
@@ -205,37 +202,37 @@ public final class DivDataTemplate: TemplateValue {
     context.templateData.forEach { key, __dictValue in
       switch key {
       case "log_id":
-        logIdValue = deserialize(__dictValue, validator: ResolvedValue.logIdValidator).merged(with: logIdValue)
+        logIdValue = deserialize(__dictValue).merged(with: logIdValue)
       case "states":
         statesValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, validator: ResolvedValue.statesValidator, type: DivDataTemplate.StateTemplate.self).merged(with: statesValue)
       case "timers":
-        timersValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, validator: ResolvedValue.timersValidator, type: DivTimerTemplate.self).merged(with: timersValue)
+        timersValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivTimerTemplate.self).merged(with: timersValue)
       case "transition_animation_selector":
-        transitionAnimationSelectorValue = deserialize(__dictValue, validator: ResolvedValue.transitionAnimationSelectorValidator).merged(with: transitionAnimationSelectorValue)
+        transitionAnimationSelectorValue = deserialize(__dictValue).merged(with: transitionAnimationSelectorValue)
       case "variable_triggers":
-        variableTriggersValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, validator: ResolvedValue.variableTriggersValidator, type: DivTriggerTemplate.self).merged(with: variableTriggersValue)
+        variableTriggersValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivTriggerTemplate.self).merged(with: variableTriggersValue)
       case "variables":
-        variablesValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, validator: ResolvedValue.variablesValidator, type: DivVariableTemplate.self).merged(with: variablesValue)
+        variablesValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivVariableTemplate.self).merged(with: variablesValue)
       case parent?.logId?.link:
-        logIdValue = logIdValue.merged(with: deserialize(__dictValue, validator: ResolvedValue.logIdValidator))
+        logIdValue = logIdValue.merged(with: deserialize(__dictValue))
       case parent?.states?.link:
         statesValue = statesValue.merged(with: deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, validator: ResolvedValue.statesValidator, type: DivDataTemplate.StateTemplate.self))
       case parent?.timers?.link:
-        timersValue = timersValue.merged(with: deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, validator: ResolvedValue.timersValidator, type: DivTimerTemplate.self))
+        timersValue = timersValue.merged(with: deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivTimerTemplate.self))
       case parent?.transitionAnimationSelector?.link:
-        transitionAnimationSelectorValue = transitionAnimationSelectorValue.merged(with: deserialize(__dictValue, validator: ResolvedValue.transitionAnimationSelectorValidator))
+        transitionAnimationSelectorValue = transitionAnimationSelectorValue.merged(with: deserialize(__dictValue))
       case parent?.variableTriggers?.link:
-        variableTriggersValue = variableTriggersValue.merged(with: deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, validator: ResolvedValue.variableTriggersValidator, type: DivTriggerTemplate.self))
+        variableTriggersValue = variableTriggersValue.merged(with: deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivTriggerTemplate.self))
       case parent?.variables?.link:
-        variablesValue = variablesValue.merged(with: deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, validator: ResolvedValue.variablesValidator, type: DivVariableTemplate.self))
+        variablesValue = variablesValue.merged(with: deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivVariableTemplate.self))
       default: break
       }
     }
     if let parent = parent {
       statesValue = statesValue.merged(with: parent.states?.resolveValue(context: context, validator: ResolvedValue.statesValidator, useOnlyLinks: true))
-      timersValue = timersValue.merged(with: parent.timers?.resolveOptionalValue(context: context, validator: ResolvedValue.timersValidator, useOnlyLinks: true))
-      variableTriggersValue = variableTriggersValue.merged(with: parent.variableTriggers?.resolveOptionalValue(context: context, validator: ResolvedValue.variableTriggersValidator, useOnlyLinks: true))
-      variablesValue = variablesValue.merged(with: parent.variables?.resolveOptionalValue(context: context, validator: ResolvedValue.variablesValidator, useOnlyLinks: true))
+      timersValue = timersValue.merged(with: parent.timers?.resolveOptionalValue(context: context, useOnlyLinks: true))
+      variableTriggersValue = variableTriggersValue.merged(with: parent.variableTriggers?.resolveOptionalValue(context: context, useOnlyLinks: true))
+      variablesValue = variablesValue.merged(with: parent.variables?.resolveOptionalValue(context: context, useOnlyLinks: true))
     }
     var errors = mergeErrors(
       logIdValue.errorsOrWarnings?.map { .nestedObjectError(field: "log_id", error: $0) },
@@ -277,7 +274,7 @@ public final class DivDataTemplate: TemplateValue {
 
     return DivDataTemplate(
       logId: merged.logId,
-      states: try merged.states?.resolveParent(templates: templates, validator: Self.statesValidator),
+      states: try merged.states?.resolveParent(templates: templates),
       timers: merged.timers?.tryResolveParent(templates: templates),
       transitionAnimationSelector: merged.transitionAnimationSelector,
       variableTriggers: merged.variableTriggers?.tryResolveParent(templates: templates),

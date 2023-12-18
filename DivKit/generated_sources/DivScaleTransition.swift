@@ -14,34 +14,31 @@ public final class DivScaleTransition: DivTransitionBase {
   public let startDelay: Expression<Int> // constraint: number >= 0; default value: 0
 
   public func resolveDuration(_ resolver: ExpressionResolver) -> Int {
-    resolver.resolveNumericValue(expression: duration) ?? 200
+    resolver.resolveNumeric(duration) ?? 200
   }
 
   public func resolveInterpolator(_ resolver: ExpressionResolver) -> DivAnimationInterpolator {
-    resolver.resolveStringBasedValue(expression: interpolator, initializer: DivAnimationInterpolator.init(rawValue:)) ?? DivAnimationInterpolator.easeInOut
+    resolver.resolveEnum(interpolator) ?? DivAnimationInterpolator.easeInOut
   }
 
   public func resolvePivotX(_ resolver: ExpressionResolver) -> Double {
-    resolver.resolveNumericValue(expression: pivotX) ?? 0.5
+    resolver.resolveNumeric(pivotX) ?? 0.5
   }
 
   public func resolvePivotY(_ resolver: ExpressionResolver) -> Double {
-    resolver.resolveNumericValue(expression: pivotY) ?? 0.5
+    resolver.resolveNumeric(pivotY) ?? 0.5
   }
 
   public func resolveScale(_ resolver: ExpressionResolver) -> Double {
-    resolver.resolveNumericValue(expression: scale) ?? 0.0
+    resolver.resolveNumeric(scale) ?? 0.0
   }
 
   public func resolveStartDelay(_ resolver: ExpressionResolver) -> Int {
-    resolver.resolveNumericValue(expression: startDelay) ?? 0
+    resolver.resolveNumeric(startDelay) ?? 0
   }
 
   static let durationValidator: AnyValueValidator<Int> =
     makeValueValidator(valueValidator: { $0 >= 0 })
-
-  static let interpolatorValidator: AnyValueValidator<DivAnimationInterpolator> =
-    makeNoOpValueValidator()
 
   static let pivotXValidator: AnyValueValidator<Double> =
     makeValueValidator(valueValidator: { $0 >= 0.0 && $0 <= 1.0 })

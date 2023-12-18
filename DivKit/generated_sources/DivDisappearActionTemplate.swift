@@ -7,7 +7,8 @@ import Serialization
 public final class DivDisappearActionTemplate: TemplateValue {
   public let disappearDuration: Field<Expression<Int>>? // constraint: number >= 0; default value: 800
   public let downloadCallbacks: Field<DivDownloadCallbacksTemplate>?
-  public let logId: Field<String>? // at least 1 char
+  public let isEnabled: Field<Expression<Bool>>? // default value: true
+  public let logId: Field<String>?
   public let logLimit: Field<Expression<Int>>? // constraint: number >= 0; default value: 1
   public let payload: Field<[String: Any]>?
   public let referer: Field<Expression<URL>>?
@@ -20,6 +21,7 @@ public final class DivDisappearActionTemplate: TemplateValue {
       self.init(
         disappearDuration: try dictionary.getOptionalExpressionField("disappear_duration"),
         downloadCallbacks: try dictionary.getOptionalField("download_callbacks", templateToType: templateToType),
+        isEnabled: try dictionary.getOptionalExpressionField("is_enabled"),
         logId: try dictionary.getOptionalField("log_id"),
         logLimit: try dictionary.getOptionalExpressionField("log_limit"),
         payload: try dictionary.getOptionalField("payload"),
@@ -36,6 +38,7 @@ public final class DivDisappearActionTemplate: TemplateValue {
   init(
     disappearDuration: Field<Expression<Int>>? = nil,
     downloadCallbacks: Field<DivDownloadCallbacksTemplate>? = nil,
+    isEnabled: Field<Expression<Bool>>? = nil,
     logId: Field<String>? = nil,
     logLimit: Field<Expression<Int>>? = nil,
     payload: Field<[String: Any]>? = nil,
@@ -46,6 +49,7 @@ public final class DivDisappearActionTemplate: TemplateValue {
   ) {
     self.disappearDuration = disappearDuration
     self.downloadCallbacks = downloadCallbacks
+    self.isEnabled = isEnabled
     self.logId = logId
     self.logLimit = logLimit
     self.payload = payload
@@ -57,17 +61,19 @@ public final class DivDisappearActionTemplate: TemplateValue {
 
   private static func resolveOnlyLinks(context: TemplatesContext, parent: DivDisappearActionTemplate?) -> DeserializationResult<DivDisappearAction> {
     let disappearDurationValue = parent?.disappearDuration?.resolveOptionalValue(context: context, validator: ResolvedValue.disappearDurationValidator) ?? .noValue
-    let downloadCallbacksValue = parent?.downloadCallbacks?.resolveOptionalValue(context: context, validator: ResolvedValue.downloadCallbacksValidator, useOnlyLinks: true) ?? .noValue
-    let logIdValue = parent?.logId?.resolveValue(context: context, validator: ResolvedValue.logIdValidator) ?? .noValue
+    let downloadCallbacksValue = parent?.downloadCallbacks?.resolveOptionalValue(context: context, useOnlyLinks: true) ?? .noValue
+    let isEnabledValue = parent?.isEnabled?.resolveOptionalValue(context: context) ?? .noValue
+    let logIdValue = parent?.logId?.resolveValue(context: context) ?? .noValue
     let logLimitValue = parent?.logLimit?.resolveOptionalValue(context: context, validator: ResolvedValue.logLimitValidator) ?? .noValue
-    let payloadValue = parent?.payload?.resolveOptionalValue(context: context, validator: ResolvedValue.payloadValidator) ?? .noValue
-    let refererValue = parent?.referer?.resolveOptionalValue(context: context, transform: URL.init(string:), validator: ResolvedValue.refererValidator) ?? .noValue
-    let typedValue = parent?.typed?.resolveOptionalValue(context: context, validator: ResolvedValue.typedValidator, useOnlyLinks: true) ?? .noValue
-    let urlValue = parent?.url?.resolveOptionalValue(context: context, transform: URL.init(string:), validator: ResolvedValue.urlValidator) ?? .noValue
+    let payloadValue = parent?.payload?.resolveOptionalValue(context: context) ?? .noValue
+    let refererValue = parent?.referer?.resolveOptionalValue(context: context, transform: URL.init(string:)) ?? .noValue
+    let typedValue = parent?.typed?.resolveOptionalValue(context: context, useOnlyLinks: true) ?? .noValue
+    let urlValue = parent?.url?.resolveOptionalValue(context: context, transform: URL.init(string:)) ?? .noValue
     let visibilityPercentageValue = parent?.visibilityPercentage?.resolveOptionalValue(context: context, validator: ResolvedValue.visibilityPercentageValidator) ?? .noValue
     var errors = mergeErrors(
       disappearDurationValue.errorsOrWarnings?.map { .nestedObjectError(field: "disappear_duration", error: $0) },
       downloadCallbacksValue.errorsOrWarnings?.map { .nestedObjectError(field: "download_callbacks", error: $0) },
+      isEnabledValue.errorsOrWarnings?.map { .nestedObjectError(field: "is_enabled", error: $0) },
       logIdValue.errorsOrWarnings?.map { .nestedObjectError(field: "log_id", error: $0) },
       logLimitValue.errorsOrWarnings?.map { .nestedObjectError(field: "log_limit", error: $0) },
       payloadValue.errorsOrWarnings?.map { .nestedObjectError(field: "payload", error: $0) },
@@ -87,6 +93,7 @@ public final class DivDisappearActionTemplate: TemplateValue {
     let result = DivDisappearAction(
       disappearDuration: disappearDurationValue.value,
       downloadCallbacks: downloadCallbacksValue.value,
+      isEnabled: isEnabledValue.value,
       logId: logIdNonNil,
       logLimit: logLimitValue.value,
       payload: payloadValue.value,
@@ -104,9 +111,10 @@ public final class DivDisappearActionTemplate: TemplateValue {
     }
     var disappearDurationValue: DeserializationResult<Expression<Int>> = parent?.disappearDuration?.value() ?? .noValue
     var downloadCallbacksValue: DeserializationResult<DivDownloadCallbacks> = .noValue
-    var logIdValue: DeserializationResult<String> = parent?.logId?.value(validatedBy: ResolvedValue.logIdValidator) ?? .noValue
+    var isEnabledValue: DeserializationResult<Expression<Bool>> = parent?.isEnabled?.value() ?? .noValue
+    var logIdValue: DeserializationResult<String> = parent?.logId?.value() ?? .noValue
     var logLimitValue: DeserializationResult<Expression<Int>> = parent?.logLimit?.value() ?? .noValue
-    var payloadValue: DeserializationResult<[String: Any]> = parent?.payload?.value(validatedBy: ResolvedValue.payloadValidator) ?? .noValue
+    var payloadValue: DeserializationResult<[String: Any]> = parent?.payload?.value() ?? .noValue
     var refererValue: DeserializationResult<Expression<URL>> = parent?.referer?.value() ?? .noValue
     var typedValue: DeserializationResult<DivActionTyped> = .noValue
     var urlValue: DeserializationResult<Expression<URL>> = parent?.url?.value() ?? .noValue
@@ -116,49 +124,54 @@ public final class DivDisappearActionTemplate: TemplateValue {
       case "disappear_duration":
         disappearDurationValue = deserialize(__dictValue, validator: ResolvedValue.disappearDurationValidator).merged(with: disappearDurationValue)
       case "download_callbacks":
-        downloadCallbacksValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, validator: ResolvedValue.downloadCallbacksValidator, type: DivDownloadCallbacksTemplate.self).merged(with: downloadCallbacksValue)
+        downloadCallbacksValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivDownloadCallbacksTemplate.self).merged(with: downloadCallbacksValue)
+      case "is_enabled":
+        isEnabledValue = deserialize(__dictValue).merged(with: isEnabledValue)
       case "log_id":
-        logIdValue = deserialize(__dictValue, validator: ResolvedValue.logIdValidator).merged(with: logIdValue)
+        logIdValue = deserialize(__dictValue).merged(with: logIdValue)
       case "log_limit":
         logLimitValue = deserialize(__dictValue, validator: ResolvedValue.logLimitValidator).merged(with: logLimitValue)
       case "payload":
-        payloadValue = deserialize(__dictValue, validator: ResolvedValue.payloadValidator).merged(with: payloadValue)
+        payloadValue = deserialize(__dictValue).merged(with: payloadValue)
       case "referer":
-        refererValue = deserialize(__dictValue, transform: URL.init(string:), validator: ResolvedValue.refererValidator).merged(with: refererValue)
+        refererValue = deserialize(__dictValue, transform: URL.init(string:)).merged(with: refererValue)
       case "typed":
-        typedValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, validator: ResolvedValue.typedValidator, type: DivActionTypedTemplate.self).merged(with: typedValue)
+        typedValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivActionTypedTemplate.self).merged(with: typedValue)
       case "url":
-        urlValue = deserialize(__dictValue, transform: URL.init(string:), validator: ResolvedValue.urlValidator).merged(with: urlValue)
+        urlValue = deserialize(__dictValue, transform: URL.init(string:)).merged(with: urlValue)
       case "visibility_percentage":
         visibilityPercentageValue = deserialize(__dictValue, validator: ResolvedValue.visibilityPercentageValidator).merged(with: visibilityPercentageValue)
       case parent?.disappearDuration?.link:
         disappearDurationValue = disappearDurationValue.merged(with: deserialize(__dictValue, validator: ResolvedValue.disappearDurationValidator))
       case parent?.downloadCallbacks?.link:
-        downloadCallbacksValue = downloadCallbacksValue.merged(with: deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, validator: ResolvedValue.downloadCallbacksValidator, type: DivDownloadCallbacksTemplate.self))
+        downloadCallbacksValue = downloadCallbacksValue.merged(with: deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivDownloadCallbacksTemplate.self))
+      case parent?.isEnabled?.link:
+        isEnabledValue = isEnabledValue.merged(with: deserialize(__dictValue))
       case parent?.logId?.link:
-        logIdValue = logIdValue.merged(with: deserialize(__dictValue, validator: ResolvedValue.logIdValidator))
+        logIdValue = logIdValue.merged(with: deserialize(__dictValue))
       case parent?.logLimit?.link:
         logLimitValue = logLimitValue.merged(with: deserialize(__dictValue, validator: ResolvedValue.logLimitValidator))
       case parent?.payload?.link:
-        payloadValue = payloadValue.merged(with: deserialize(__dictValue, validator: ResolvedValue.payloadValidator))
+        payloadValue = payloadValue.merged(with: deserialize(__dictValue))
       case parent?.referer?.link:
-        refererValue = refererValue.merged(with: deserialize(__dictValue, transform: URL.init(string:), validator: ResolvedValue.refererValidator))
+        refererValue = refererValue.merged(with: deserialize(__dictValue, transform: URL.init(string:)))
       case parent?.typed?.link:
-        typedValue = typedValue.merged(with: deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, validator: ResolvedValue.typedValidator, type: DivActionTypedTemplate.self))
+        typedValue = typedValue.merged(with: deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivActionTypedTemplate.self))
       case parent?.url?.link:
-        urlValue = urlValue.merged(with: deserialize(__dictValue, transform: URL.init(string:), validator: ResolvedValue.urlValidator))
+        urlValue = urlValue.merged(with: deserialize(__dictValue, transform: URL.init(string:)))
       case parent?.visibilityPercentage?.link:
         visibilityPercentageValue = visibilityPercentageValue.merged(with: deserialize(__dictValue, validator: ResolvedValue.visibilityPercentageValidator))
       default: break
       }
     }
     if let parent = parent {
-      downloadCallbacksValue = downloadCallbacksValue.merged(with: parent.downloadCallbacks?.resolveOptionalValue(context: context, validator: ResolvedValue.downloadCallbacksValidator, useOnlyLinks: true))
-      typedValue = typedValue.merged(with: parent.typed?.resolveOptionalValue(context: context, validator: ResolvedValue.typedValidator, useOnlyLinks: true))
+      downloadCallbacksValue = downloadCallbacksValue.merged(with: parent.downloadCallbacks?.resolveOptionalValue(context: context, useOnlyLinks: true))
+      typedValue = typedValue.merged(with: parent.typed?.resolveOptionalValue(context: context, useOnlyLinks: true))
     }
     var errors = mergeErrors(
       disappearDurationValue.errorsOrWarnings?.map { .nestedObjectError(field: "disappear_duration", error: $0) },
       downloadCallbacksValue.errorsOrWarnings?.map { .nestedObjectError(field: "download_callbacks", error: $0) },
+      isEnabledValue.errorsOrWarnings?.map { .nestedObjectError(field: "is_enabled", error: $0) },
       logIdValue.errorsOrWarnings?.map { .nestedObjectError(field: "log_id", error: $0) },
       logLimitValue.errorsOrWarnings?.map { .nestedObjectError(field: "log_limit", error: $0) },
       payloadValue.errorsOrWarnings?.map { .nestedObjectError(field: "payload", error: $0) },
@@ -178,6 +191,7 @@ public final class DivDisappearActionTemplate: TemplateValue {
     let result = DivDisappearAction(
       disappearDuration: disappearDurationValue.value,
       downloadCallbacks: downloadCallbacksValue.value,
+      isEnabled: isEnabledValue.value,
       logId: logIdNonNil,
       logLimit: logLimitValue.value,
       payload: payloadValue.value,
@@ -199,6 +213,7 @@ public final class DivDisappearActionTemplate: TemplateValue {
     return DivDisappearActionTemplate(
       disappearDuration: merged.disappearDuration,
       downloadCallbacks: merged.downloadCallbacks?.tryResolveParent(templates: templates),
+      isEnabled: merged.isEnabled,
       logId: merged.logId,
       logLimit: merged.logLimit,
       payload: merged.payload,

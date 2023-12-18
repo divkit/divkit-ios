@@ -10,19 +10,16 @@ public final class DivStroke {
   public let width: Expression<Int> // constraint: number >= 0; default value: 1
 
   public func resolveColor(_ resolver: ExpressionResolver) -> Color? {
-    resolver.resolveStringBasedValue(expression: color, initializer: Color.color(withHexString:))
+    resolver.resolveColor(color)
   }
 
   public func resolveUnit(_ resolver: ExpressionResolver) -> DivSizeUnit {
-    resolver.resolveStringBasedValue(expression: unit, initializer: DivSizeUnit.init(rawValue:)) ?? DivSizeUnit.dp
+    resolver.resolveEnum(unit) ?? DivSizeUnit.dp
   }
 
   public func resolveWidth(_ resolver: ExpressionResolver) -> Int {
-    resolver.resolveNumericValue(expression: width) ?? 1
+    resolver.resolveNumeric(width) ?? 1
   }
-
-  static let unitValidator: AnyValueValidator<DivSizeUnit> =
-    makeNoOpValueValidator()
 
   static let widthValidator: AnyValueValidator<Int> =
     makeValueValidator(valueValidator: { $0 >= 0 })

@@ -6,8 +6,8 @@ import Serialization
 
 public final class DivPatchTemplate: TemplateValue {
   public final class ChangeTemplate: TemplateValue {
-    public let id: Field<String>? // at least 1 char
-    public let items: Field<[DivTemplate]>? // at least 1 elements
+    public let id: Field<String>?
+    public let items: Field<[DivTemplate]>?
 
     public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
       do {
@@ -29,8 +29,8 @@ public final class DivPatchTemplate: TemplateValue {
     }
 
     private static func resolveOnlyLinks(context: TemplatesContext, parent: ChangeTemplate?) -> DeserializationResult<DivPatch.Change> {
-      let idValue = parent?.id?.resolveValue(context: context, validator: ResolvedValue.idValidator) ?? .noValue
-      let itemsValue = parent?.items?.resolveOptionalValue(context: context, validator: ResolvedValue.itemsValidator, useOnlyLinks: true) ?? .noValue
+      let idValue = parent?.id?.resolveValue(context: context) ?? .noValue
+      let itemsValue = parent?.items?.resolveOptionalValue(context: context, useOnlyLinks: true) ?? .noValue
       var errors = mergeErrors(
         idValue.errorsOrWarnings?.map { .nestedObjectError(field: "id", error: $0) },
         itemsValue.errorsOrWarnings?.map { .nestedObjectError(field: "items", error: $0) }
@@ -54,23 +54,23 @@ public final class DivPatchTemplate: TemplateValue {
       if useOnlyLinks {
         return resolveOnlyLinks(context: context, parent: parent)
       }
-      var idValue: DeserializationResult<String> = parent?.id?.value(validatedBy: ResolvedValue.idValidator) ?? .noValue
+      var idValue: DeserializationResult<String> = parent?.id?.value() ?? .noValue
       var itemsValue: DeserializationResult<[Div]> = .noValue
       context.templateData.forEach { key, __dictValue in
         switch key {
         case "id":
-          idValue = deserialize(__dictValue, validator: ResolvedValue.idValidator).merged(with: idValue)
+          idValue = deserialize(__dictValue).merged(with: idValue)
         case "items":
-          itemsValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, validator: ResolvedValue.itemsValidator, type: DivTemplate.self).merged(with: itemsValue)
+          itemsValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivTemplate.self).merged(with: itemsValue)
         case parent?.id?.link:
-          idValue = idValue.merged(with: deserialize(__dictValue, validator: ResolvedValue.idValidator))
+          idValue = idValue.merged(with: deserialize(__dictValue))
         case parent?.items?.link:
-          itemsValue = itemsValue.merged(with: deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, validator: ResolvedValue.itemsValidator, type: DivTemplate.self))
+          itemsValue = itemsValue.merged(with: deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivTemplate.self))
         default: break
         }
       }
       if let parent = parent {
-        itemsValue = itemsValue.merged(with: parent.items?.resolveOptionalValue(context: context, validator: ResolvedValue.itemsValidator, useOnlyLinks: true))
+        itemsValue = itemsValue.merged(with: parent.items?.resolveOptionalValue(context: context, useOnlyLinks: true))
       }
       var errors = mergeErrors(
         idValue.errorsOrWarnings?.map { .nestedObjectError(field: "id", error: $0) },
@@ -131,7 +131,7 @@ public final class DivPatchTemplate: TemplateValue {
 
   private static func resolveOnlyLinks(context: TemplatesContext, parent: DivPatchTemplate?) -> DeserializationResult<DivPatch> {
     let changesValue = parent?.changes?.resolveValue(context: context, validator: ResolvedValue.changesValidator, useOnlyLinks: true) ?? .noValue
-    let modeValue = parent?.mode?.resolveOptionalValue(context: context, validator: ResolvedValue.modeValidator) ?? .noValue
+    let modeValue = parent?.mode?.resolveOptionalValue(context: context) ?? .noValue
     var errors = mergeErrors(
       changesValue.errorsOrWarnings?.map { .nestedObjectError(field: "changes", error: $0) },
       modeValue.errorsOrWarnings?.map { .nestedObjectError(field: "mode", error: $0) }
@@ -162,11 +162,11 @@ public final class DivPatchTemplate: TemplateValue {
       case "changes":
         changesValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, validator: ResolvedValue.changesValidator, type: DivPatchTemplate.ChangeTemplate.self).merged(with: changesValue)
       case "mode":
-        modeValue = deserialize(__dictValue, validator: ResolvedValue.modeValidator).merged(with: modeValue)
+        modeValue = deserialize(__dictValue).merged(with: modeValue)
       case parent?.changes?.link:
         changesValue = changesValue.merged(with: deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, validator: ResolvedValue.changesValidator, type: DivPatchTemplate.ChangeTemplate.self))
       case parent?.mode?.link:
-        modeValue = modeValue.merged(with: deserialize(__dictValue, validator: ResolvedValue.modeValidator))
+        modeValue = modeValue.merged(with: deserialize(__dictValue))
       default: break
       }
     }

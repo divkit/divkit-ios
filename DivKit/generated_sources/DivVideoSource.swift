@@ -11,11 +11,11 @@ public final class DivVideoSource {
     public let width: Expression<Int> // constraint: number > 0
 
     public func resolveHeight(_ resolver: ExpressionResolver) -> Int? {
-      resolver.resolveNumericValue(expression: height)
+      resolver.resolveNumeric(height)
     }
 
     public func resolveWidth(_ resolver: ExpressionResolver) -> Int? {
-      resolver.resolveNumericValue(expression: width)
+      resolver.resolveNumeric(width)
     }
 
     static let heightValidator: AnyValueValidator<Int> =
@@ -40,19 +40,16 @@ public final class DivVideoSource {
   public let url: Expression<URL>
 
   public func resolveBitrate(_ resolver: ExpressionResolver) -> Int? {
-    resolver.resolveNumericValue(expression: bitrate)
+    resolver.resolveNumeric(bitrate)
   }
 
   public func resolveMimeType(_ resolver: ExpressionResolver) -> String? {
-    resolver.resolveStringBasedValue(expression: mimeType, initializer: { $0 })
+    resolver.resolveString(mimeType, initializer: { $0 })
   }
 
   public func resolveUrl(_ resolver: ExpressionResolver) -> URL? {
-    resolver.resolveStringBasedValue(expression: url, initializer: URL.init(string:))
+    resolver.resolveUrl(url)
   }
-
-  static let resolutionValidator: AnyValueValidator<DivVideoSource.Resolution> =
-    makeNoOpValueValidator()
 
   init(
     bitrate: Expression<Int>? = nil,

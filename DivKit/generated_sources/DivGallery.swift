@@ -24,33 +24,40 @@ public final class DivGallery: DivBase {
     case `default` = "default"
   }
 
+  @frozen
+  public enum Scrollbar: String, CaseIterable {
+    case none = "none"
+    case auto = "auto"
+  }
+
   public static let type: String = "gallery"
   public let accessibility: DivAccessibility
   public let alignmentHorizontal: Expression<DivAlignmentHorizontal>?
   public let alignmentVertical: Expression<DivAlignmentVertical>?
   public let alpha: Expression<Double> // constraint: number >= 0.0 && number <= 1.0; default value: 1.0
-  public let background: [DivBackground]? // at least 1 elements
+  public let background: [DivBackground]?
   public let border: DivBorder
   public let columnCount: Expression<Int>? // constraint: number > 0
   public let columnSpan: Expression<Int>? // constraint: number >= 0
   public let crossContentAlignment: Expression<CrossContentAlignment> // default value: start
   public let crossSpacing: Expression<Int>? // constraint: number >= 0
   public let defaultItem: Expression<Int> // constraint: number >= 0; default value: 0
-  public let disappearActions: [DivDisappearAction]? // at least 1 elements
-  public let extensions: [DivExtension]? // at least 1 elements
+  public let disappearActions: [DivDisappearAction]?
+  public let extensions: [DivExtension]?
   public let focus: DivFocus?
   public let height: DivSize // default value: .divWrapContentSize(DivWrapContentSize())
-  public let id: String? // at least 1 char
+  public let id: String?
   public let itemSpacing: Expression<Int> // constraint: number >= 0; default value: 8
-  public let items: [Div] // at least 1 elements
+  public let items: [Div]?
   public let margins: DivEdgeInsets
   public let orientation: Expression<Orientation> // default value: horizontal
   public let paddings: DivEdgeInsets
   public let restrictParentScroll: Expression<Bool> // default value: false
   public let rowSpan: Expression<Int>? // constraint: number >= 0
   public let scrollMode: Expression<ScrollMode> // default value: default
-  public let selectedActions: [DivAction]? // at least 1 elements
-  public let tooltips: [DivTooltip]? // at least 1 elements
+  public let scrollbar: Expression<Scrollbar> // default value: none
+  public let selectedActions: [DivAction]?
+  public let tooltips: [DivTooltip]?
   public let transform: DivTransform
   public let transitionChange: DivChangeTransition?
   public let transitionIn: DivAppearanceTransition?
@@ -58,82 +65,71 @@ public final class DivGallery: DivBase {
   public let transitionTriggers: [DivTransitionTrigger]? // at least 1 elements
   public let visibility: Expression<DivVisibility> // default value: visible
   public let visibilityAction: DivVisibilityAction?
-  public let visibilityActions: [DivVisibilityAction]? // at least 1 elements
+  public let visibilityActions: [DivVisibilityAction]?
   public let width: DivSize // default value: .divMatchParentSize(DivMatchParentSize())
 
   public func resolveAlignmentHorizontal(_ resolver: ExpressionResolver) -> DivAlignmentHorizontal? {
-    resolver.resolveStringBasedValue(expression: alignmentHorizontal, initializer: DivAlignmentHorizontal.init(rawValue:))
+    resolver.resolveEnum(alignmentHorizontal)
   }
 
   public func resolveAlignmentVertical(_ resolver: ExpressionResolver) -> DivAlignmentVertical? {
-    resolver.resolveStringBasedValue(expression: alignmentVertical, initializer: DivAlignmentVertical.init(rawValue:))
+    resolver.resolveEnum(alignmentVertical)
   }
 
   public func resolveAlpha(_ resolver: ExpressionResolver) -> Double {
-    resolver.resolveNumericValue(expression: alpha) ?? 1.0
+    resolver.resolveNumeric(alpha) ?? 1.0
   }
 
   public func resolveColumnCount(_ resolver: ExpressionResolver) -> Int? {
-    resolver.resolveNumericValue(expression: columnCount)
+    resolver.resolveNumeric(columnCount)
   }
 
   public func resolveColumnSpan(_ resolver: ExpressionResolver) -> Int? {
-    resolver.resolveNumericValue(expression: columnSpan)
+    resolver.resolveNumeric(columnSpan)
   }
 
   public func resolveCrossContentAlignment(_ resolver: ExpressionResolver) -> CrossContentAlignment {
-    resolver.resolveStringBasedValue(expression: crossContentAlignment, initializer: CrossContentAlignment.init(rawValue:)) ?? CrossContentAlignment.start
+    resolver.resolveEnum(crossContentAlignment) ?? CrossContentAlignment.start
   }
 
   public func resolveCrossSpacing(_ resolver: ExpressionResolver) -> Int? {
-    resolver.resolveNumericValue(expression: crossSpacing)
+    resolver.resolveNumeric(crossSpacing)
   }
 
   public func resolveDefaultItem(_ resolver: ExpressionResolver) -> Int {
-    resolver.resolveNumericValue(expression: defaultItem) ?? 0
+    resolver.resolveNumeric(defaultItem) ?? 0
   }
 
   public func resolveItemSpacing(_ resolver: ExpressionResolver) -> Int {
-    resolver.resolveNumericValue(expression: itemSpacing) ?? 8
+    resolver.resolveNumeric(itemSpacing) ?? 8
   }
 
   public func resolveOrientation(_ resolver: ExpressionResolver) -> Orientation {
-    resolver.resolveStringBasedValue(expression: orientation, initializer: Orientation.init(rawValue:)) ?? Orientation.horizontal
+    resolver.resolveEnum(orientation) ?? Orientation.horizontal
   }
 
   public func resolveRestrictParentScroll(_ resolver: ExpressionResolver) -> Bool {
-    resolver.resolveNumericValue(expression: restrictParentScroll) ?? false
+    resolver.resolveNumeric(restrictParentScroll) ?? false
   }
 
   public func resolveRowSpan(_ resolver: ExpressionResolver) -> Int? {
-    resolver.resolveNumericValue(expression: rowSpan)
+    resolver.resolveNumeric(rowSpan)
   }
 
   public func resolveScrollMode(_ resolver: ExpressionResolver) -> ScrollMode {
-    resolver.resolveStringBasedValue(expression: scrollMode, initializer: ScrollMode.init(rawValue:)) ?? ScrollMode.default
+    resolver.resolveEnum(scrollMode) ?? ScrollMode.default
+  }
+
+  public func resolveScrollbar(_ resolver: ExpressionResolver) -> Scrollbar {
+    resolver.resolveEnum(scrollbar) ?? Scrollbar.none
   }
 
   public func resolveVisibility(_ resolver: ExpressionResolver) -> DivVisibility {
-    resolver.resolveStringBasedValue(expression: visibility, initializer: DivVisibility.init(rawValue:)) ?? DivVisibility.visible
+    resolver.resolveEnum(visibility) ?? DivVisibility.visible
   }
-
-  static let accessibilityValidator: AnyValueValidator<DivAccessibility> =
-    makeNoOpValueValidator()
-
-  static let alignmentHorizontalValidator: AnyValueValidator<DivAlignmentHorizontal> =
-    makeNoOpValueValidator()
-
-  static let alignmentVerticalValidator: AnyValueValidator<DivAlignmentVertical> =
-    makeNoOpValueValidator()
 
   static let alphaValidator: AnyValueValidator<Double> =
     makeValueValidator(valueValidator: { $0 >= 0.0 && $0 <= 1.0 })
-
-  static let backgroundValidator: AnyArrayValueValidator<DivBackground> =
-    makeArrayValidator(minItems: 1)
-
-  static let borderValidator: AnyValueValidator<DivBorder> =
-    makeNoOpValueValidator()
 
   static let columnCountValidator: AnyValueValidator<Int> =
     makeValueValidator(valueValidator: { $0 > 0 })
@@ -141,86 +137,20 @@ public final class DivGallery: DivBase {
   static let columnSpanValidator: AnyValueValidator<Int> =
     makeValueValidator(valueValidator: { $0 >= 0 })
 
-  static let crossContentAlignmentValidator: AnyValueValidator<DivGallery.CrossContentAlignment> =
-    makeNoOpValueValidator()
-
   static let crossSpacingValidator: AnyValueValidator<Int> =
     makeValueValidator(valueValidator: { $0 >= 0 })
 
   static let defaultItemValidator: AnyValueValidator<Int> =
     makeValueValidator(valueValidator: { $0 >= 0 })
 
-  static let disappearActionsValidator: AnyArrayValueValidator<DivDisappearAction> =
-    makeArrayValidator(minItems: 1)
-
-  static let extensionsValidator: AnyArrayValueValidator<DivExtension> =
-    makeArrayValidator(minItems: 1)
-
-  static let focusValidator: AnyValueValidator<DivFocus> =
-    makeNoOpValueValidator()
-
-  static let heightValidator: AnyValueValidator<DivSize> =
-    makeNoOpValueValidator()
-
-  static let idValidator: AnyValueValidator<String> =
-    makeStringValidator(minLength: 1)
-
   static let itemSpacingValidator: AnyValueValidator<Int> =
     makeValueValidator(valueValidator: { $0 >= 0 })
-
-  static let itemsValidator: AnyArrayValueValidator<Div> =
-    makeArrayValidator(minItems: 1)
-
-  static let marginsValidator: AnyValueValidator<DivEdgeInsets> =
-    makeNoOpValueValidator()
-
-  static let orientationValidator: AnyValueValidator<DivGallery.Orientation> =
-    makeNoOpValueValidator()
-
-  static let paddingsValidator: AnyValueValidator<DivEdgeInsets> =
-    makeNoOpValueValidator()
-
-  static let restrictParentScrollValidator: AnyValueValidator<Bool> =
-    makeNoOpValueValidator()
 
   static let rowSpanValidator: AnyValueValidator<Int> =
     makeValueValidator(valueValidator: { $0 >= 0 })
 
-  static let scrollModeValidator: AnyValueValidator<DivGallery.ScrollMode> =
-    makeNoOpValueValidator()
-
-  static let selectedActionsValidator: AnyArrayValueValidator<DivAction> =
-    makeArrayValidator(minItems: 1)
-
-  static let tooltipsValidator: AnyArrayValueValidator<DivTooltip> =
-    makeArrayValidator(minItems: 1)
-
-  static let transformValidator: AnyValueValidator<DivTransform> =
-    makeNoOpValueValidator()
-
-  static let transitionChangeValidator: AnyValueValidator<DivChangeTransition> =
-    makeNoOpValueValidator()
-
-  static let transitionInValidator: AnyValueValidator<DivAppearanceTransition> =
-    makeNoOpValueValidator()
-
-  static let transitionOutValidator: AnyValueValidator<DivAppearanceTransition> =
-    makeNoOpValueValidator()
-
   static let transitionTriggersValidator: AnyArrayValueValidator<DivTransitionTrigger> =
     makeArrayValidator(minItems: 1)
-
-  static let visibilityValidator: AnyValueValidator<DivVisibility> =
-    makeNoOpValueValidator()
-
-  static let visibilityActionValidator: AnyValueValidator<DivVisibilityAction> =
-    makeNoOpValueValidator()
-
-  static let visibilityActionsValidator: AnyArrayValueValidator<DivVisibilityAction> =
-    makeArrayValidator(minItems: 1)
-
-  static let widthValidator: AnyValueValidator<DivSize> =
-    makeNoOpValueValidator()
 
   init(
     accessibility: DivAccessibility?,
@@ -240,13 +170,14 @@ public final class DivGallery: DivBase {
     height: DivSize?,
     id: String?,
     itemSpacing: Expression<Int>?,
-    items: [Div],
+    items: [Div]?,
     margins: DivEdgeInsets?,
     orientation: Expression<Orientation>?,
     paddings: DivEdgeInsets?,
     restrictParentScroll: Expression<Bool>?,
     rowSpan: Expression<Int>?,
     scrollMode: Expression<ScrollMode>?,
+    scrollbar: Expression<Scrollbar>?,
     selectedActions: [DivAction]?,
     tooltips: [DivTooltip]?,
     transform: DivTransform?,
@@ -283,6 +214,7 @@ public final class DivGallery: DivBase {
     self.restrictParentScroll = restrictParentScroll ?? .value(false)
     self.rowSpan = rowSpan
     self.scrollMode = scrollMode ?? .value(.default)
+    self.scrollbar = scrollbar ?? .value(.none)
     self.selectedActions = selectedActions
     self.tooltips = tooltips
     self.transform = transform ?? DivTransform()
@@ -357,27 +289,28 @@ extension DivGallery: Equatable {
       return false
     }
     guard
+      lhs.scrollbar == rhs.scrollbar,
       lhs.selectedActions == rhs.selectedActions,
-      lhs.tooltips == rhs.tooltips,
-      lhs.transform == rhs.transform
+      lhs.tooltips == rhs.tooltips
     else {
       return false
     }
     guard
+      lhs.transform == rhs.transform,
       lhs.transitionChange == rhs.transitionChange,
-      lhs.transitionIn == rhs.transitionIn,
-      lhs.transitionOut == rhs.transitionOut
+      lhs.transitionIn == rhs.transitionIn
     else {
       return false
     }
     guard
+      lhs.transitionOut == rhs.transitionOut,
       lhs.transitionTriggers == rhs.transitionTriggers,
-      lhs.visibility == rhs.visibility,
-      lhs.visibilityAction == rhs.visibilityAction
+      lhs.visibility == rhs.visibility
     else {
       return false
     }
     guard
+      lhs.visibilityAction == rhs.visibilityAction,
       lhs.visibilityActions == rhs.visibilityActions,
       lhs.width == rhs.width
     else {
@@ -409,13 +342,14 @@ extension DivGallery: Serializable {
     result["height"] = height.toDictionary()
     result["id"] = id
     result["item_spacing"] = itemSpacing.toValidSerializationValue()
-    result["items"] = items.map { $0.toDictionary() }
+    result["items"] = items?.map { $0.toDictionary() }
     result["margins"] = margins.toDictionary()
     result["orientation"] = orientation.toValidSerializationValue()
     result["paddings"] = paddings.toDictionary()
     result["restrict_parent_scroll"] = restrictParentScroll.toValidSerializationValue()
     result["row_span"] = rowSpan?.toValidSerializationValue()
     result["scroll_mode"] = scrollMode.toValidSerializationValue()
+    result["scrollbar"] = scrollbar.toValidSerializationValue()
     result["selected_actions"] = selectedActions?.map { $0.toDictionary() }
     result["tooltips"] = tooltips?.map { $0.toDictionary() }
     result["transform"] = transform.toDictionary()

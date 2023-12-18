@@ -22,32 +22,20 @@ public final class DivTooltip {
   public let animationOut: DivAnimation?
   public let div: Div
   public let duration: Expression<Int> // constraint: number >= 0; default value: 5000
-  public let id: String // at least 1 char
+  public let id: String
   public let offset: DivPoint?
   public let position: Expression<Position>
 
   public func resolveDuration(_ resolver: ExpressionResolver) -> Int {
-    resolver.resolveNumericValue(expression: duration) ?? 5000
+    resolver.resolveNumeric(duration) ?? 5000
   }
 
   public func resolvePosition(_ resolver: ExpressionResolver) -> Position? {
-    resolver.resolveStringBasedValue(expression: position, initializer: Position.init(rawValue:))
+    resolver.resolveEnum(position)
   }
-
-  static let animationInValidator: AnyValueValidator<DivAnimation> =
-    makeNoOpValueValidator()
-
-  static let animationOutValidator: AnyValueValidator<DivAnimation> =
-    makeNoOpValueValidator()
 
   static let durationValidator: AnyValueValidator<Int> =
     makeValueValidator(valueValidator: { $0 >= 0 })
-
-  static let idValidator: AnyValueValidator<String> =
-    makeStringValidator(minLength: 1)
-
-  static let offsetValidator: AnyValueValidator<DivPoint> =
-    makeNoOpValueValidator()
 
   init(
     animationIn: DivAnimation? = nil,

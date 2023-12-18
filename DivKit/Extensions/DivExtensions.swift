@@ -3,10 +3,10 @@ import Foundation
 extension Div {
   var children: [Div] {
     switch self {
-    case let .divContainer(div): return div.items
-    case let .divGrid(div): return div.items
-    case let .divGallery(div): return div.items
-    case let .divPager(div): return div.items
+    case let .divContainer(div): return div.nonNilItems
+    case let .divGrid(div): return div.nonNilItems
+    case let .divGallery(div): return div.nonNilItems
+    case let .divPager(div): return div.nonNilItems
     case let .divTabs(div): return div.items.map(\.div)
     case let .divCustom(div): return div.items ?? []
     case let .divState(div): return div.states.compactMap(\.div)
@@ -20,6 +20,42 @@ extension Div {
          .divVideo,
          .divText:
       return []
+    }
+  }
+}
+
+extension Div {
+  func resolveA11yDescription(_ context: DivBlockModelingContext) -> String? {
+    let expressionResolver = context.expressionResolver
+    let accessibility = value.accessibility
+    guard accessibility.resolveMode(expressionResolver) != .exclude else {
+      return nil
+    }
+    switch self {
+    case .divContainer,
+         .divCustom,
+         .divGallery,
+         .divGifImage,
+         .divGrid,
+         .divImage,
+         .divIndicator,
+         .divInput,
+         .divPager,
+         .divTabs,
+         .divSelect,
+         .divSeparator,
+         .divSlider,
+         .divVideo,
+         .divState:
+      return accessibility.resolveDescription(expressionResolver)
+    case let .divText(divText):
+      let handlerDescription = context
+        .getExtensionHandlers(for: divText)
+        .compactMap { $0.accessibilityElement?.strings.label }
+        .reduce(nil) { $0?.appending(" " + $1) ?? $1 }
+      return handlerDescription ??
+        divText.accessibility.resolveDescription(expressionResolver) ??
+        divText.resolveText(expressionResolver) as String?
     }
   }
 }

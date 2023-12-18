@@ -21,14 +21,14 @@ public final class DivIndicator: DivBase {
   public let alignmentVertical: Expression<DivAlignmentVertical>?
   public let alpha: Expression<Double> // constraint: number >= 0.0 && number <= 1.0; default value: 1.0
   public let animation: Expression<Animation> // default value: scale
-  public let background: [DivBackground]? // at least 1 elements
+  public let background: [DivBackground]?
   public let border: DivBorder
   public let columnSpan: Expression<Int>? // constraint: number >= 0
-  public let disappearActions: [DivDisappearAction]? // at least 1 elements
-  public let extensions: [DivExtension]? // at least 1 elements
+  public let disappearActions: [DivDisappearAction]?
+  public let extensions: [DivExtension]?
   public let focus: DivFocus?
   public let height: DivSize // default value: .divWrapContentSize(DivWrapContentSize())
-  public let id: String? // at least 1 char
+  public let id: String?
   public let inactiveItemColor: Expression<Color> // default value: #33919cb5
   public let inactiveMinimumShape: DivRoundedRectangleShape?
   public let inactiveShape: DivRoundedRectangleShape?
@@ -36,12 +36,12 @@ public final class DivIndicator: DivBase {
   public let margins: DivEdgeInsets
   public let minimumItemSize: Expression<Double> // constraint: number > 0; default value: 0.5
   public let paddings: DivEdgeInsets
-  public let pagerId: String? // at least 1 char
+  public let pagerId: String?
   public let rowSpan: Expression<Int>? // constraint: number >= 0
-  public let selectedActions: [DivAction]? // at least 1 elements
+  public let selectedActions: [DivAction]?
   public let shape: DivShape // default value: .divRoundedRectangleShape(DivRoundedRectangleShape())
   public let spaceBetweenCenters: DivFixedSize // default value: DivFixedSize(value: .value(15))
-  public let tooltips: [DivTooltip]? // at least 1 elements
+  public let tooltips: [DivTooltip]?
   public let transform: DivTransform
   public let transitionChange: DivChangeTransition?
   public let transitionIn: DivAppearanceTransition?
@@ -49,166 +49,70 @@ public final class DivIndicator: DivBase {
   public let transitionTriggers: [DivTransitionTrigger]? // at least 1 elements
   public let visibility: Expression<DivVisibility> // default value: visible
   public let visibilityAction: DivVisibilityAction?
-  public let visibilityActions: [DivVisibilityAction]? // at least 1 elements
+  public let visibilityActions: [DivVisibilityAction]?
   public let width: DivSize // default value: .divMatchParentSize(DivMatchParentSize())
 
   public func resolveActiveItemColor(_ resolver: ExpressionResolver) -> Color {
-    resolver.resolveStringBasedValue(expression: activeItemColor, initializer: Color.color(withHexString:)) ?? Color.colorWithARGBHexCode(0xFFFFDC60)
+    resolver.resolveColor(activeItemColor) ?? Color.colorWithARGBHexCode(0xFFFFDC60)
   }
 
   public func resolveActiveItemSize(_ resolver: ExpressionResolver) -> Double {
-    resolver.resolveNumericValue(expression: activeItemSize) ?? 1.3
+    resolver.resolveNumeric(activeItemSize) ?? 1.3
   }
 
   public func resolveAlignmentHorizontal(_ resolver: ExpressionResolver) -> DivAlignmentHorizontal? {
-    resolver.resolveStringBasedValue(expression: alignmentHorizontal, initializer: DivAlignmentHorizontal.init(rawValue:))
+    resolver.resolveEnum(alignmentHorizontal)
   }
 
   public func resolveAlignmentVertical(_ resolver: ExpressionResolver) -> DivAlignmentVertical? {
-    resolver.resolveStringBasedValue(expression: alignmentVertical, initializer: DivAlignmentVertical.init(rawValue:))
+    resolver.resolveEnum(alignmentVertical)
   }
 
   public func resolveAlpha(_ resolver: ExpressionResolver) -> Double {
-    resolver.resolveNumericValue(expression: alpha) ?? 1.0
+    resolver.resolveNumeric(alpha) ?? 1.0
   }
 
   public func resolveAnimation(_ resolver: ExpressionResolver) -> Animation {
-    resolver.resolveStringBasedValue(expression: animation, initializer: Animation.init(rawValue:)) ?? Animation.scale
+    resolver.resolveEnum(animation) ?? Animation.scale
   }
 
   public func resolveColumnSpan(_ resolver: ExpressionResolver) -> Int? {
-    resolver.resolveNumericValue(expression: columnSpan)
+    resolver.resolveNumeric(columnSpan)
   }
 
   public func resolveInactiveItemColor(_ resolver: ExpressionResolver) -> Color {
-    resolver.resolveStringBasedValue(expression: inactiveItemColor, initializer: Color.color(withHexString:)) ?? Color.colorWithARGBHexCode(0x33919CB5)
+    resolver.resolveColor(inactiveItemColor) ?? Color.colorWithARGBHexCode(0x33919CB5)
   }
 
   public func resolveMinimumItemSize(_ resolver: ExpressionResolver) -> Double {
-    resolver.resolveNumericValue(expression: minimumItemSize) ?? 0.5
+    resolver.resolveNumeric(minimumItemSize) ?? 0.5
   }
 
   public func resolveRowSpan(_ resolver: ExpressionResolver) -> Int? {
-    resolver.resolveNumericValue(expression: rowSpan)
+    resolver.resolveNumeric(rowSpan)
   }
 
   public func resolveVisibility(_ resolver: ExpressionResolver) -> DivVisibility {
-    resolver.resolveStringBasedValue(expression: visibility, initializer: DivVisibility.init(rawValue:)) ?? DivVisibility.visible
+    resolver.resolveEnum(visibility) ?? DivVisibility.visible
   }
-
-  static let accessibilityValidator: AnyValueValidator<DivAccessibility> =
-    makeNoOpValueValidator()
-
-  static let activeItemColorValidator: AnyValueValidator<Color> =
-    makeNoOpValueValidator()
 
   static let activeItemSizeValidator: AnyValueValidator<Double> =
     makeValueValidator(valueValidator: { $0 > 0 })
 
-  static let activeShapeValidator: AnyValueValidator<DivRoundedRectangleShape> =
-    makeNoOpValueValidator()
-
-  static let alignmentHorizontalValidator: AnyValueValidator<DivAlignmentHorizontal> =
-    makeNoOpValueValidator()
-
-  static let alignmentVerticalValidator: AnyValueValidator<DivAlignmentVertical> =
-    makeNoOpValueValidator()
-
   static let alphaValidator: AnyValueValidator<Double> =
     makeValueValidator(valueValidator: { $0 >= 0.0 && $0 <= 1.0 })
-
-  static let animationValidator: AnyValueValidator<DivIndicator.Animation> =
-    makeNoOpValueValidator()
-
-  static let backgroundValidator: AnyArrayValueValidator<DivBackground> =
-    makeArrayValidator(minItems: 1)
-
-  static let borderValidator: AnyValueValidator<DivBorder> =
-    makeNoOpValueValidator()
 
   static let columnSpanValidator: AnyValueValidator<Int> =
     makeValueValidator(valueValidator: { $0 >= 0 })
 
-  static let disappearActionsValidator: AnyArrayValueValidator<DivDisappearAction> =
-    makeArrayValidator(minItems: 1)
-
-  static let extensionsValidator: AnyArrayValueValidator<DivExtension> =
-    makeArrayValidator(minItems: 1)
-
-  static let focusValidator: AnyValueValidator<DivFocus> =
-    makeNoOpValueValidator()
-
-  static let heightValidator: AnyValueValidator<DivSize> =
-    makeNoOpValueValidator()
-
-  static let idValidator: AnyValueValidator<String> =
-    makeStringValidator(minLength: 1)
-
-  static let inactiveItemColorValidator: AnyValueValidator<Color> =
-    makeNoOpValueValidator()
-
-  static let inactiveMinimumShapeValidator: AnyValueValidator<DivRoundedRectangleShape> =
-    makeNoOpValueValidator()
-
-  static let inactiveShapeValidator: AnyValueValidator<DivRoundedRectangleShape> =
-    makeNoOpValueValidator()
-
-  static let itemsPlacementValidator: AnyValueValidator<DivIndicatorItemPlacement> =
-    makeNoOpValueValidator()
-
-  static let marginsValidator: AnyValueValidator<DivEdgeInsets> =
-    makeNoOpValueValidator()
-
   static let minimumItemSizeValidator: AnyValueValidator<Double> =
     makeValueValidator(valueValidator: { $0 > 0 })
-
-  static let paddingsValidator: AnyValueValidator<DivEdgeInsets> =
-    makeNoOpValueValidator()
-
-  static let pagerIdValidator: AnyValueValidator<String> =
-    makeStringValidator(minLength: 1)
 
   static let rowSpanValidator: AnyValueValidator<Int> =
     makeValueValidator(valueValidator: { $0 >= 0 })
 
-  static let selectedActionsValidator: AnyArrayValueValidator<DivAction> =
-    makeArrayValidator(minItems: 1)
-
-  static let shapeValidator: AnyValueValidator<DivShape> =
-    makeNoOpValueValidator()
-
-  static let spaceBetweenCentersValidator: AnyValueValidator<DivFixedSize> =
-    makeNoOpValueValidator()
-
-  static let tooltipsValidator: AnyArrayValueValidator<DivTooltip> =
-    makeArrayValidator(minItems: 1)
-
-  static let transformValidator: AnyValueValidator<DivTransform> =
-    makeNoOpValueValidator()
-
-  static let transitionChangeValidator: AnyValueValidator<DivChangeTransition> =
-    makeNoOpValueValidator()
-
-  static let transitionInValidator: AnyValueValidator<DivAppearanceTransition> =
-    makeNoOpValueValidator()
-
-  static let transitionOutValidator: AnyValueValidator<DivAppearanceTransition> =
-    makeNoOpValueValidator()
-
   static let transitionTriggersValidator: AnyArrayValueValidator<DivTransitionTrigger> =
     makeArrayValidator(minItems: 1)
-
-  static let visibilityValidator: AnyValueValidator<DivVisibility> =
-    makeNoOpValueValidator()
-
-  static let visibilityActionValidator: AnyValueValidator<DivVisibilityAction> =
-    makeNoOpValueValidator()
-
-  static let visibilityActionsValidator: AnyArrayValueValidator<DivVisibilityAction> =
-    makeArrayValidator(minItems: 1)
-
-  static let widthValidator: AnyValueValidator<DivSize> =
-    makeNoOpValueValidator()
 
   init(
     accessibility: DivAccessibility? = nil,

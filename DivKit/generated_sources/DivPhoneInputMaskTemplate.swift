@@ -6,16 +6,13 @@ import Serialization
 
 public final class DivPhoneInputMaskTemplate: TemplateValue {
   public static let type: String = "phone"
-  public let parent: String? // at least 1 char
-  public let rawTextVariable: Field<String>? // at least 1 char
-
-  static let parentValidator: AnyValueValidator<String> =
-    makeStringValidator(minLength: 1)
+  public let parent: String?
+  public let rawTextVariable: Field<String>?
 
   public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
     do {
       self.init(
-        parent: try dictionary.getOptionalField("type", validator: Self.parentValidator),
+        parent: try dictionary.getOptionalField("type"),
         rawTextVariable: try dictionary.getOptionalField("raw_text_variable")
       )
     } catch let DeserializationError.invalidFieldRepresentation(field: field, representation: representation) {
@@ -32,7 +29,7 @@ public final class DivPhoneInputMaskTemplate: TemplateValue {
   }
 
   private static func resolveOnlyLinks(context: TemplatesContext, parent: DivPhoneInputMaskTemplate?) -> DeserializationResult<DivPhoneInputMask> {
-    let rawTextVariableValue = parent?.rawTextVariable?.resolveValue(context: context, validator: ResolvedValue.rawTextVariableValidator) ?? .noValue
+    let rawTextVariableValue = parent?.rawTextVariable?.resolveValue(context: context) ?? .noValue
     var errors = mergeErrors(
       rawTextVariableValue.errorsOrWarnings?.map { .nestedObjectError(field: "raw_text_variable", error: $0) }
     )
@@ -54,13 +51,13 @@ public final class DivPhoneInputMaskTemplate: TemplateValue {
     if useOnlyLinks {
       return resolveOnlyLinks(context: context, parent: parent)
     }
-    var rawTextVariableValue: DeserializationResult<String> = parent?.rawTextVariable?.value(validatedBy: ResolvedValue.rawTextVariableValidator) ?? .noValue
+    var rawTextVariableValue: DeserializationResult<String> = parent?.rawTextVariable?.value() ?? .noValue
     context.templateData.forEach { key, __dictValue in
       switch key {
       case "raw_text_variable":
-        rawTextVariableValue = deserialize(__dictValue, validator: ResolvedValue.rawTextVariableValidator).merged(with: rawTextVariableValue)
+        rawTextVariableValue = deserialize(__dictValue).merged(with: rawTextVariableValue)
       case parent?.rawTextVariable?.link:
-        rawTextVariableValue = rawTextVariableValue.merged(with: deserialize(__dictValue, validator: ResolvedValue.rawTextVariableValidator))
+        rawTextVariableValue = rawTextVariableValue.merged(with: deserialize(__dictValue))
       default: break
       }
     }

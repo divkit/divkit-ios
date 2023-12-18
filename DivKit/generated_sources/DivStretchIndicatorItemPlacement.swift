@@ -10,11 +10,8 @@ public final class DivStretchIndicatorItemPlacement {
   public let maxVisibleItems: Expression<Int> // constraint: number > 0; default value: 10
 
   public func resolveMaxVisibleItems(_ resolver: ExpressionResolver) -> Int {
-    resolver.resolveNumericValue(expression: maxVisibleItems) ?? 10
+    resolver.resolveNumeric(maxVisibleItems) ?? 10
   }
-
-  static let itemSpacingValidator: AnyValueValidator<DivFixedSize> =
-    makeNoOpValueValidator()
 
   static let maxVisibleItemsValidator: AnyValueValidator<Int> =
     makeValueValidator(valueValidator: { $0 > 0 })

@@ -9,15 +9,12 @@ public final class DivDimension {
   public let value: Expression<Double>
 
   public func resolveUnit(_ resolver: ExpressionResolver) -> DivSizeUnit {
-    resolver.resolveStringBasedValue(expression: unit, initializer: DivSizeUnit.init(rawValue:)) ?? DivSizeUnit.dp
+    resolver.resolveEnum(unit) ?? DivSizeUnit.dp
   }
 
   public func resolveValue(_ resolver: ExpressionResolver) -> Double? {
-    resolver.resolveNumericValue(expression: value)
+    resolver.resolveNumeric(value)
   }
-
-  static let unitValidator: AnyValueValidator<DivSizeUnit> =
-    makeNoOpValueValidator()
 
   init(
     unit: Expression<DivSizeUnit>? = nil,

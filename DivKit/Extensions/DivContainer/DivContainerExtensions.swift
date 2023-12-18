@@ -7,76 +7,73 @@ extension DivContainer: DivBlockModeling {
   public func makeBlock(context: DivBlockModelingContext) throws -> Block {
     try applyBaseProperties(
       to: { try makeBaseBlock(context: context) },
-      context: modified(context) {
-        $0.childrenA11yDescription = resolveChildrenA11yDescription($0)
-      },
-      actionsHolder: self
+      context: context.modifying(
+        childrenA11yDescription: resolveChildrenA11yDescription(context)
+      ),
+      actionsHolder: self,
+      clipToBounds: resolveClipToBounds(context.expressionResolver)
     )
   }
 
+  var nonNilItems: [Div] {
+    items ?? []
+  }
+
   private func makeBaseBlock(context: DivBlockModelingContext) throws -> Block {
-    let childContext = modified(context) {
-      $0.parentPath = $0.parentPath + (id ?? DivContainer.type)
-    }
+    let childContext = context.modifying(
+      parentPath: context.parentPath + (id ?? DivContainer.type)
+    )
     let expressionResolver = context.expressionResolver
     let orientation = resolveOrientation(expressionResolver)
+    let block: Block
     switch orientation {
     case .overlap:
-      return try makeOverlapBlock(context: childContext)
+      block = try makeOverlapBlock(context: childContext)
     case .horizontal, .vertical:
-      return try makeContainerBlock(
+      block = try makeContainerBlock(
         context: childContext,
         orientation: orientation,
         layoutMode: resolveLayoutMode(expressionResolver)
       )
     }
+
+    let aspectRatio = aspect.resolveAspectRatio(expressionResolver)
+    if let aspectRatio = aspectRatio {
+      if block.calculateWidthFirst {
+        return block.aspectRatio(aspectRatio)
+      }
+    }
+
+    return block
   }
 
   private func resolveChildrenA11yDescription(_ context: DivBlockModelingContext) -> String? {
     var result = ""
     func traverse(div: Div) {
-      result = [result, div.resolveA11yDecription(context)]
-        .compactMap { $0 }
+      result = [result, div.resolveA11yDescription(context)].compactMap { $0 }
         .joined(separator: " ")
       div.children.forEach(traverse(div:))
     }
-    items.forEach(traverse)
+    nonNilItems.forEach(traverse)
     return result.isEmpty ? nil : result
   }
 
-  private func makeOverlapBlock(context: DivBlockModelingContext) throws -> Block {
+  private func makeOverlapBlock(context: DivBlockModelingContext) throws -> LayeredBlock {
     let expressionResolver = context.expressionResolver
     let defaultAlignment = BlockAlignment2D(
       horizontal: resolveContentAlignmentHorizontal(expressionResolver).alignment,
       vertical: resolveContentAlignmentVertical(expressionResolver).alignment
     )
 
-    let childrenContext = modified(context) {
-      $0.errorsStorage = DivErrorsStorage(errors: [])
-    }
-    let children = items.makeBlocks(
-      context: childrenContext,
-      sizeModifier: DivContainerSizeModifier(
-        context: context,
-        container: self,
-        orientation: .overlap
-      ),
-      mappedBy: { div, block in
+    let children = try makeChildren(
+      containerContext: context,
+      mappedBy: { div, block, context in
         LayeredBlock.Child(
           content: block,
           alignment: div.value.resolveAlignment(context, defaultAlignment: defaultAlignment)
         )
       }
     )
-    if children.isEmpty {
-      throw DivBlockModelingError(
-        "DivContainer is empty",
-        path: context.parentPath,
-        causes: childrenContext.errorsStorage.errors
-      )
-    } else {
-      context.errorsStorage.add(contentsOf: childrenContext.errorsStorage)
-    }
 
     let aspectRatio = aspect.resolveAspectRatio(expressionResolver)
     let layeredBlock = LayeredBlock(
@@ -85,10 +82,6 @@ extension DivContainer: DivBlockModeling {
       children: children
     )
 
-    if let aspectRatio = aspectRatio {
-      return AspectBlock(content: layeredBlock, aspectRatio: aspectRatio)
-    }
-
     return layeredBlock
   }
 
@@ -96,7 +89,7 @@ extension DivContainer: DivBlockModeling {
     context: DivBlockModelingContext,
     orientation: Orientation,
     layoutMode: LayoutMode
-  ) throws -> Block {
+  ) throws -> ContainerBlock {
     let expressionResolver = context.expressionResolver
     let layoutDirection = orientation.layoutDirection
 
@@ -117,29 +110,6 @@ extension DivContainer: DivBlockModeling {
       uiLayoutDirection: context.layoutDirection
     )
 
-    let childrenContext = modified(context) {
-      $0.errorsStorage = DivErrorsStorage(errors: [])
-    }
-
-    // Before block's making we need to filter items and remove
-    // what has "matchParent" for opposite directions
-    let filtredItems = items.filter {
-      guard layoutMode == .wrap else { return true }
-      if orientation == .vertical && $0.isHorizontallyMatchParent {
-        childrenContext.addWarning(
-          message: "Vertical DivContainer with wrap layout mode contains item with match_parent width"
-        )
-        return false
-      }
-      if orientation == .horizontal && $0.isVerticallyMatchParent {
-        childrenContext.addWarning(
-          message: "Horizontal DivContainer with wrap layout mode contains item with match_parent height"
-        )
-        return false
-      }
-      return true
-    }
-
     let defaultCrossAlignment: ContainerBlock.CrossAlignment
     switch layoutMode {
     case .noWrap:
@@ -147,15 +117,9 @@ extension DivContainer: DivBlockModeling {
     case .wrap:
       defaultCrossAlignment = ContainerBlock.CrossAlignment.leading
     }
-
-    let children = filtredItems.makeBlocks(
-      context: childrenContext,
-      sizeModifier: DivContainerSizeModifier(
-        context: context,
-        container: self,
-        orientation: orientation
-      ),
-      mappedBy: { div, block in
+    let children: [ContainerBlock.Child] = try makeChildren(
+      containerContext: context,
+      mappedBy: { div, block, context in
         ContainerBlock.Child(
           content: block,
           crossAlignment: div.value.crossAlignment(
@@ -165,16 +129,6 @@ extension DivContainer: DivBlockModeling {
         )
       }
     )
-
-    if children.isEmpty {
-      throw DivBlockModelingError(
-        "DivContainer is empty",
-        path: context.parentPath,
-        causes: childrenContext.errorsStorage.errors
-      )
-    } else {
-      context.errorsStorage.add(contentsOf: childrenContext.errorsStorage)
-    }
 
     let aspectRatio = aspect.resolveAspectRatio(expressionResolver)
     let containerBlock = try ContainerBlock(
@@ -187,17 +141,9 @@ extension DivContainer: DivBlockModeling {
       crossAlignment: crossAlignment,
       children: children,
       separator: resolveSeparator(context),
-      lineSeparator: resolveLineSeparator(context)
+      lineSeparator: resolveLineSeparator(context),
+      clipContent: resolveClipToBounds(expressionResolver)
     )
-
-    if let aspectRatio = aspectRatio {
-      if containerBlock.calculateWidthFirst {
-        return AspectBlock(content: containerBlock, aspectRatio: aspectRatio)
-      }
-      context.addWarning(
-        message: "Aspect height is not supported for vertical container with wrap layout mode"
-      )
-    }
 
     return containerBlock
   }
@@ -401,42 +347,6 @@ extension DivContainer.LayoutMode {
       return .noWrap
     case .wrap:
       return .wrap
-    }
-  }
-}
-
-extension Div {
-  fileprivate func resolveA11yDecription(_ context: DivBlockModelingContext) -> String? {
-    let expressionResolver = context.expressionResolver
-    let accessibility = value.accessibility
-    guard accessibility.resolveMode(expressionResolver) != .exclude else {
-      return nil
-    }
-    switch self {
-    case .divContainer,
-         .divCustom,
-         .divGallery,
-         .divGifImage,
-         .divGrid,
-         .divImage,
-         .divIndicator,
-         .divInput,
-         .divPager,
-         .divTabs,
-         .divSelect,
-         .divSeparator,
-         .divSlider,
-         .divVideo,
-         .divState:
-      return accessibility.resolveDescription(expressionResolver)
-    case let .divText(divText):
-      let handlerDescription = context
-        .getExtensionHandlers(for: divText)
-        .compactMap { $0.accessibilityElement?.strings.label }
-        .reduce(nil) { $0?.appending(" " + $1) ?? $1 }
-      return handlerDescription ??
-        divText.accessibility.resolveDescription(expressionResolver) ??
-        divText.resolveText(expressionResolver) as String?
     }
   }
 }

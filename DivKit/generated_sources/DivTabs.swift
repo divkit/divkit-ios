@@ -7,18 +7,12 @@ import Serialization
 public final class DivTabs: DivBase {
   public final class Item {
     public let div: Div
-    public let title: Expression<String> // at least 1 char
+    public let title: Expression<String>
     public let titleClickAction: DivAction?
 
     public func resolveTitle(_ resolver: ExpressionResolver) -> String? {
-      resolver.resolveStringBasedValue(expression: title, initializer: { $0 })
+      resolver.resolveString(title, initializer: { $0 })
     }
-
-    static let titleValidator: AnyValueValidator<String> =
-      makeStringValidator(minLength: 1)
-
-    static let titleClickActionValidator: AnyValueValidator<DivAction> =
-      makeNoOpValueValidator()
 
     init(
       div: Div,
@@ -46,7 +40,7 @@ public final class DivTabs: DivBase {
     public let animationType: Expression<AnimationType> // default value: slide
     public let cornerRadius: Expression<Int>? // constraint: number >= 0
     public let cornersRadius: DivCornersRadius?
-    public let fontFamily: Expression<String>? // at least 1 char
+    public let fontFamily: Expression<String>?
     public let fontSize: Expression<Int> // constraint: number >= 0; default value: 12
     public let fontSizeUnit: Expression<DivSizeUnit> // default value: sp
     public let fontWeight: Expression<DivFontWeight> // default value: regular
@@ -59,119 +53,83 @@ public final class DivTabs: DivBase {
     public let paddings: DivEdgeInsets // default value: DivEdgeInsets(bottom: .value(6), left: .value(8), right: .value(8), top: .value(6))
 
     public func resolveActiveBackgroundColor(_ resolver: ExpressionResolver) -> Color {
-      resolver.resolveStringBasedValue(expression: activeBackgroundColor, initializer: Color.color(withHexString:)) ?? Color.colorWithARGBHexCode(0xFFFFDC60)
+      resolver.resolveColor(activeBackgroundColor) ?? Color.colorWithARGBHexCode(0xFFFFDC60)
     }
 
     public func resolveActiveFontWeight(_ resolver: ExpressionResolver) -> DivFontWeight? {
-      resolver.resolveStringBasedValue(expression: activeFontWeight, initializer: DivFontWeight.init(rawValue:))
+      resolver.resolveEnum(activeFontWeight)
     }
 
     public func resolveActiveTextColor(_ resolver: ExpressionResolver) -> Color {
-      resolver.resolveStringBasedValue(expression: activeTextColor, initializer: Color.color(withHexString:)) ?? Color.colorWithARGBHexCode(0xCC000000)
+      resolver.resolveColor(activeTextColor) ?? Color.colorWithARGBHexCode(0xCC000000)
     }
 
     public func resolveAnimationDuration(_ resolver: ExpressionResolver) -> Int {
-      resolver.resolveNumericValue(expression: animationDuration) ?? 300
+      resolver.resolveNumeric(animationDuration) ?? 300
     }
 
     public func resolveAnimationType(_ resolver: ExpressionResolver) -> AnimationType {
-      resolver.resolveStringBasedValue(expression: animationType, initializer: AnimationType.init(rawValue:)) ?? AnimationType.slide
+      resolver.resolveEnum(animationType) ?? AnimationType.slide
     }
 
     public func resolveCornerRadius(_ resolver: ExpressionResolver) -> Int? {
-      resolver.resolveNumericValue(expression: cornerRadius)
+      resolver.resolveNumeric(cornerRadius)
     }
 
     public func resolveFontFamily(_ resolver: ExpressionResolver) -> String? {
-      resolver.resolveStringBasedValue(expression: fontFamily, initializer: { $0 })
+      resolver.resolveString(fontFamily, initializer: { $0 })
     }
 
     public func resolveFontSize(_ resolver: ExpressionResolver) -> Int {
-      resolver.resolveNumericValue(expression: fontSize) ?? 12
+      resolver.resolveNumeric(fontSize) ?? 12
     }
 
     public func resolveFontSizeUnit(_ resolver: ExpressionResolver) -> DivSizeUnit {
-      resolver.resolveStringBasedValue(expression: fontSizeUnit, initializer: DivSizeUnit.init(rawValue:)) ?? DivSizeUnit.sp
+      resolver.resolveEnum(fontSizeUnit) ?? DivSizeUnit.sp
     }
 
     public func resolveFontWeight(_ resolver: ExpressionResolver) -> DivFontWeight {
-      resolver.resolveStringBasedValue(expression: fontWeight, initializer: DivFontWeight.init(rawValue:)) ?? DivFontWeight.regular
+      resolver.resolveEnum(fontWeight) ?? DivFontWeight.regular
     }
 
     public func resolveInactiveBackgroundColor(_ resolver: ExpressionResolver) -> Color? {
-      resolver.resolveStringBasedValue(expression: inactiveBackgroundColor, initializer: Color.color(withHexString:))
+      resolver.resolveColor(inactiveBackgroundColor)
     }
 
     public func resolveInactiveFontWeight(_ resolver: ExpressionResolver) -> DivFontWeight? {
-      resolver.resolveStringBasedValue(expression: inactiveFontWeight, initializer: DivFontWeight.init(rawValue:))
+      resolver.resolveEnum(inactiveFontWeight)
     }
 
     public func resolveInactiveTextColor(_ resolver: ExpressionResolver) -> Color {
-      resolver.resolveStringBasedValue(expression: inactiveTextColor, initializer: Color.color(withHexString:)) ?? Color.colorWithARGBHexCode(0x80000000)
+      resolver.resolveColor(inactiveTextColor) ?? Color.colorWithARGBHexCode(0x80000000)
     }
 
     public func resolveItemSpacing(_ resolver: ExpressionResolver) -> Int {
-      resolver.resolveNumericValue(expression: itemSpacing) ?? 0
+      resolver.resolveNumeric(itemSpacing) ?? 0
     }
 
     public func resolveLetterSpacing(_ resolver: ExpressionResolver) -> Double {
-      resolver.resolveNumericValue(expression: letterSpacing) ?? 0
+      resolver.resolveNumeric(letterSpacing) ?? 0
     }
 
     public func resolveLineHeight(_ resolver: ExpressionResolver) -> Int? {
-      resolver.resolveNumericValue(expression: lineHeight)
+      resolver.resolveNumeric(lineHeight)
     }
-
-    static let activeBackgroundColorValidator: AnyValueValidator<Color> =
-      makeNoOpValueValidator()
-
-    static let activeFontWeightValidator: AnyValueValidator<DivFontWeight> =
-      makeNoOpValueValidator()
-
-    static let activeTextColorValidator: AnyValueValidator<Color> =
-      makeNoOpValueValidator()
 
     static let animationDurationValidator: AnyValueValidator<Int> =
       makeValueValidator(valueValidator: { $0 >= 0 })
 
-    static let animationTypeValidator: AnyValueValidator<DivTabs.TabTitleStyle.AnimationType> =
-      makeNoOpValueValidator()
-
     static let cornerRadiusValidator: AnyValueValidator<Int> =
       makeValueValidator(valueValidator: { $0 >= 0 })
 
-    static let cornersRadiusValidator: AnyValueValidator<DivCornersRadius> =
-      makeNoOpValueValidator()
-
-    static let fontFamilyValidator: AnyValueValidator<String> =
-      makeStringValidator(minLength: 1)
-
     static let fontSizeValidator: AnyValueValidator<Int> =
       makeValueValidator(valueValidator: { $0 >= 0 })
-
-    static let fontSizeUnitValidator: AnyValueValidator<DivSizeUnit> =
-      makeNoOpValueValidator()
-
-    static let fontWeightValidator: AnyValueValidator<DivFontWeight> =
-      makeNoOpValueValidator()
-
-    static let inactiveBackgroundColorValidator: AnyValueValidator<Color> =
-      makeNoOpValueValidator()
-
-    static let inactiveFontWeightValidator: AnyValueValidator<DivFontWeight> =
-      makeNoOpValueValidator()
-
-    static let inactiveTextColorValidator: AnyValueValidator<Color> =
-      makeNoOpValueValidator()
 
     static let itemSpacingValidator: AnyValueValidator<Int> =
       makeValueValidator(valueValidator: { $0 >= 0 })
 
     static let lineHeightValidator: AnyValueValidator<Int> =
       makeValueValidator(valueValidator: { $0 >= 0 })
-
-    static let paddingsValidator: AnyValueValidator<DivEdgeInsets> =
-      makeNoOpValueValidator()
 
     init(
       activeBackgroundColor: Expression<Color>? = nil,
@@ -219,29 +177,29 @@ public final class DivTabs: DivBase {
   public let alignmentHorizontal: Expression<DivAlignmentHorizontal>?
   public let alignmentVertical: Expression<DivAlignmentVertical>?
   public let alpha: Expression<Double> // constraint: number >= 0.0 && number <= 1.0; default value: 1.0
-  public let background: [DivBackground]? // at least 1 elements
+  public let background: [DivBackground]?
   public let border: DivBorder
   public let columnSpan: Expression<Int>? // constraint: number >= 0
-  public let disappearActions: [DivDisappearAction]? // at least 1 elements
+  public let disappearActions: [DivDisappearAction]?
   public let dynamicHeight: Expression<Bool> // default value: false
-  public let extensions: [DivExtension]? // at least 1 elements
+  public let extensions: [DivExtension]?
   public let focus: DivFocus?
   public let hasSeparator: Expression<Bool> // default value: false
   public let height: DivSize // default value: .divWrapContentSize(DivWrapContentSize())
-  public let id: String? // at least 1 char
+  public let id: String?
   public let items: [Item] // at least 1 elements
   public let margins: DivEdgeInsets
   public let paddings: DivEdgeInsets
   public let restrictParentScroll: Expression<Bool> // default value: false
   public let rowSpan: Expression<Int>? // constraint: number >= 0
-  public let selectedActions: [DivAction]? // at least 1 elements
+  public let selectedActions: [DivAction]?
   public let selectedTab: Expression<Int> // constraint: number >= 0; default value: 0
   public let separatorColor: Expression<Color> // default value: #14000000
   public let separatorPaddings: DivEdgeInsets // default value: DivEdgeInsets(bottom: .value(0), left: .value(12), right: .value(12), top: .value(0))
   public let switchTabsByContentSwipeEnabled: Expression<Bool> // default value: true
   public let tabTitleStyle: TabTitleStyle
   public let titlePaddings: DivEdgeInsets // default value: DivEdgeInsets(bottom: .value(8), left: .value(12), right: .value(12), top: .value(0))
-  public let tooltips: [DivTooltip]? // at least 1 elements
+  public let tooltips: [DivTooltip]?
   public let transform: DivTransform
   public let transitionChange: DivChangeTransition?
   public let transitionIn: DivAppearanceTransition?
@@ -249,164 +207,74 @@ public final class DivTabs: DivBase {
   public let transitionTriggers: [DivTransitionTrigger]? // at least 1 elements
   public let visibility: Expression<DivVisibility> // default value: visible
   public let visibilityAction: DivVisibilityAction?
-  public let visibilityActions: [DivVisibilityAction]? // at least 1 elements
+  public let visibilityActions: [DivVisibilityAction]?
   public let width: DivSize // default value: .divMatchParentSize(DivMatchParentSize())
 
   public func resolveAlignmentHorizontal(_ resolver: ExpressionResolver) -> DivAlignmentHorizontal? {
-    resolver.resolveStringBasedValue(expression: alignmentHorizontal, initializer: DivAlignmentHorizontal.init(rawValue:))
+    resolver.resolveEnum(alignmentHorizontal)
   }
 
   public func resolveAlignmentVertical(_ resolver: ExpressionResolver) -> DivAlignmentVertical? {
-    resolver.resolveStringBasedValue(expression: alignmentVertical, initializer: DivAlignmentVertical.init(rawValue:))
+    resolver.resolveEnum(alignmentVertical)
   }
 
   public func resolveAlpha(_ resolver: ExpressionResolver) -> Double {
-    resolver.resolveNumericValue(expression: alpha) ?? 1.0
+    resolver.resolveNumeric(alpha) ?? 1.0
   }
 
   public func resolveColumnSpan(_ resolver: ExpressionResolver) -> Int? {
-    resolver.resolveNumericValue(expression: columnSpan)
+    resolver.resolveNumeric(columnSpan)
   }
 
   public func resolveDynamicHeight(_ resolver: ExpressionResolver) -> Bool {
-    resolver.resolveNumericValue(expression: dynamicHeight) ?? false
+    resolver.resolveNumeric(dynamicHeight) ?? false
   }
 
   public func resolveHasSeparator(_ resolver: ExpressionResolver) -> Bool {
-    resolver.resolveNumericValue(expression: hasSeparator) ?? false
+    resolver.resolveNumeric(hasSeparator) ?? false
   }
 
   public func resolveRestrictParentScroll(_ resolver: ExpressionResolver) -> Bool {
-    resolver.resolveNumericValue(expression: restrictParentScroll) ?? false
+    resolver.resolveNumeric(restrictParentScroll) ?? false
   }
 
   public func resolveRowSpan(_ resolver: ExpressionResolver) -> Int? {
-    resolver.resolveNumericValue(expression: rowSpan)
+    resolver.resolveNumeric(rowSpan)
   }
 
   public func resolveSelectedTab(_ resolver: ExpressionResolver) -> Int {
-    resolver.resolveNumericValue(expression: selectedTab) ?? 0
+    resolver.resolveNumeric(selectedTab) ?? 0
   }
 
   public func resolveSeparatorColor(_ resolver: ExpressionResolver) -> Color {
-    resolver.resolveStringBasedValue(expression: separatorColor, initializer: Color.color(withHexString:)) ?? Color.colorWithARGBHexCode(0x14000000)
+    resolver.resolveColor(separatorColor) ?? Color.colorWithARGBHexCode(0x14000000)
   }
 
   public func resolveSwitchTabsByContentSwipeEnabled(_ resolver: ExpressionResolver) -> Bool {
-    resolver.resolveNumericValue(expression: switchTabsByContentSwipeEnabled) ?? true
+    resolver.resolveNumeric(switchTabsByContentSwipeEnabled) ?? true
   }
 
   public func resolveVisibility(_ resolver: ExpressionResolver) -> DivVisibility {
-    resolver.resolveStringBasedValue(expression: visibility, initializer: DivVisibility.init(rawValue:)) ?? DivVisibility.visible
+    resolver.resolveEnum(visibility) ?? DivVisibility.visible
   }
-
-  static let accessibilityValidator: AnyValueValidator<DivAccessibility> =
-    makeNoOpValueValidator()
-
-  static let alignmentHorizontalValidator: AnyValueValidator<DivAlignmentHorizontal> =
-    makeNoOpValueValidator()
-
-  static let alignmentVerticalValidator: AnyValueValidator<DivAlignmentVertical> =
-    makeNoOpValueValidator()
 
   static let alphaValidator: AnyValueValidator<Double> =
     makeValueValidator(valueValidator: { $0 >= 0.0 && $0 <= 1.0 })
 
-  static let backgroundValidator: AnyArrayValueValidator<DivBackground> =
-    makeArrayValidator(minItems: 1)
-
-  static let borderValidator: AnyValueValidator<DivBorder> =
-    makeNoOpValueValidator()
-
   static let columnSpanValidator: AnyValueValidator<Int> =
     makeValueValidator(valueValidator: { $0 >= 0 })
-
-  static let disappearActionsValidator: AnyArrayValueValidator<DivDisappearAction> =
-    makeArrayValidator(minItems: 1)
-
-  static let dynamicHeightValidator: AnyValueValidator<Bool> =
-    makeNoOpValueValidator()
-
-  static let extensionsValidator: AnyArrayValueValidator<DivExtension> =
-    makeArrayValidator(minItems: 1)
-
-  static let focusValidator: AnyValueValidator<DivFocus> =
-    makeNoOpValueValidator()
-
-  static let hasSeparatorValidator: AnyValueValidator<Bool> =
-    makeNoOpValueValidator()
-
-  static let heightValidator: AnyValueValidator<DivSize> =
-    makeNoOpValueValidator()
-
-  static let idValidator: AnyValueValidator<String> =
-    makeStringValidator(minLength: 1)
 
   static let itemsValidator: AnyArrayValueValidator<DivTabs.Item> =
     makeArrayValidator(minItems: 1)
 
-  static let marginsValidator: AnyValueValidator<DivEdgeInsets> =
-    makeNoOpValueValidator()
-
-  static let paddingsValidator: AnyValueValidator<DivEdgeInsets> =
-    makeNoOpValueValidator()
-
-  static let restrictParentScrollValidator: AnyValueValidator<Bool> =
-    makeNoOpValueValidator()
-
   static let rowSpanValidator: AnyValueValidator<Int> =
     makeValueValidator(valueValidator: { $0 >= 0 })
-
-  static let selectedActionsValidator: AnyArrayValueValidator<DivAction> =
-    makeArrayValidator(minItems: 1)
 
   static let selectedTabValidator: AnyValueValidator<Int> =
     makeValueValidator(valueValidator: { $0 >= 0 })
 
-  static let separatorColorValidator: AnyValueValidator<Color> =
-    makeNoOpValueValidator()
-
-  static let separatorPaddingsValidator: AnyValueValidator<DivEdgeInsets> =
-    makeNoOpValueValidator()
-
-  static let switchTabsByContentSwipeEnabledValidator: AnyValueValidator<Bool> =
-    makeNoOpValueValidator()
-
-  static let tabTitleStyleValidator: AnyValueValidator<DivTabs.TabTitleStyle> =
-    makeNoOpValueValidator()
-
-  static let titlePaddingsValidator: AnyValueValidator<DivEdgeInsets> =
-    makeNoOpValueValidator()
-
-  static let tooltipsValidator: AnyArrayValueValidator<DivTooltip> =
-    makeArrayValidator(minItems: 1)
-
-  static let transformValidator: AnyValueValidator<DivTransform> =
-    makeNoOpValueValidator()
-
-  static let transitionChangeValidator: AnyValueValidator<DivChangeTransition> =
-    makeNoOpValueValidator()
-
-  static let transitionInValidator: AnyValueValidator<DivAppearanceTransition> =
-    makeNoOpValueValidator()
-
-  static let transitionOutValidator: AnyValueValidator<DivAppearanceTransition> =
-    makeNoOpValueValidator()
-
   static let transitionTriggersValidator: AnyArrayValueValidator<DivTransitionTrigger> =
     makeArrayValidator(minItems: 1)
-
-  static let visibilityValidator: AnyValueValidator<DivVisibility> =
-    makeNoOpValueValidator()
-
-  static let visibilityActionValidator: AnyValueValidator<DivVisibilityAction> =
-    makeNoOpValueValidator()
-
-  static let visibilityActionsValidator: AnyArrayValueValidator<DivVisibilityAction> =
-    makeArrayValidator(minItems: 1)
-
-  static let widthValidator: AnyValueValidator<DivSize> =
-    makeNoOpValueValidator()
 
   init(
     accessibility: DivAccessibility?,

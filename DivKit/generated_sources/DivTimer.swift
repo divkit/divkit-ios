@@ -6,37 +6,25 @@ import Serialization
 
 public final class DivTimer {
   public let duration: Expression<Int> // constraint: number >= 0; default value: 0
-  public let endActions: [DivAction]? // at least 1 elements
-  public let id: String // at least 1 char
-  public let tickActions: [DivAction]? // at least 1 elements
+  public let endActions: [DivAction]?
+  public let id: String
+  public let tickActions: [DivAction]?
   public let tickInterval: Expression<Int>? // constraint: number > 0
-  public let valueVariable: String? // at least 1 char
+  public let valueVariable: String?
 
   public func resolveDuration(_ resolver: ExpressionResolver) -> Int {
-    resolver.resolveNumericValue(expression: duration) ?? 0
+    resolver.resolveNumeric(duration) ?? 0
   }
 
   public func resolveTickInterval(_ resolver: ExpressionResolver) -> Int? {
-    resolver.resolveNumericValue(expression: tickInterval)
+    resolver.resolveNumeric(tickInterval)
   }
 
   static let durationValidator: AnyValueValidator<Int> =
     makeValueValidator(valueValidator: { $0 >= 0 })
 
-  static let endActionsValidator: AnyArrayValueValidator<DivAction> =
-    makeArrayValidator(minItems: 1)
-
-  static let idValidator: AnyValueValidator<String> =
-    makeStringValidator(minLength: 1)
-
-  static let tickActionsValidator: AnyArrayValueValidator<DivAction> =
-    makeArrayValidator(minItems: 1)
-
   static let tickIntervalValidator: AnyValueValidator<Int> =
     makeValueValidator(valueValidator: { $0 > 0 })
-
-  static let valueVariableValidator: AnyValueValidator<String> =
-    makeStringValidator(minLength: 1)
 
   init(
     duration: Expression<Int>? = nil,

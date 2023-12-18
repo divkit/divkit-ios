@@ -26,28 +26,16 @@ public final class DivContainer: DivBase {
     public let style: DivDrawable
 
     public func resolveShowAtEnd(_ resolver: ExpressionResolver) -> Bool {
-      resolver.resolveNumericValue(expression: showAtEnd) ?? false
+      resolver.resolveNumeric(showAtEnd) ?? false
     }
 
     public func resolveShowAtStart(_ resolver: ExpressionResolver) -> Bool {
-      resolver.resolveNumericValue(expression: showAtStart) ?? false
+      resolver.resolveNumeric(showAtStart) ?? false
     }
 
     public func resolveShowBetween(_ resolver: ExpressionResolver) -> Bool {
-      resolver.resolveNumericValue(expression: showBetween) ?? true
+      resolver.resolveNumeric(showBetween) ?? true
     }
-
-    static let marginsValidator: AnyValueValidator<DivEdgeInsets> =
-      makeNoOpValueValidator()
-
-    static let showAtEndValidator: AnyValueValidator<Bool> =
-      makeNoOpValueValidator()
-
-    static let showAtStartValidator: AnyValueValidator<Bool> =
-      makeNoOpValueValidator()
-
-    static let showBetweenValidator: AnyValueValidator<Bool> =
-      makeNoOpValueValidator()
 
     init(
       margins: DivEdgeInsets? = nil,
@@ -68,33 +56,35 @@ public final class DivContainer: DivBase {
   public let accessibility: DivAccessibility
   public let action: DivAction?
   public let actionAnimation: DivAnimation // default value: DivAnimation(duration: .value(100), endValue: .value(0.6), name: .value(.fade), startValue: .value(1))
-  public let actions: [DivAction]? // at least 1 elements
+  public let actions: [DivAction]?
   public let alignmentHorizontal: Expression<DivAlignmentHorizontal>?
   public let alignmentVertical: Expression<DivAlignmentVertical>?
   public let alpha: Expression<Double> // constraint: number >= 0.0 && number <= 1.0; default value: 1.0
   public let aspect: DivAspect?
-  public let background: [DivBackground]? // at least 1 elements
+  public let background: [DivBackground]?
   public let border: DivBorder
+  public let clipToBounds: Expression<Bool> // default value: true
   public let columnSpan: Expression<Int>? // constraint: number >= 0
   public let contentAlignmentHorizontal: Expression<DivContentAlignmentHorizontal> // default value: start
   public let contentAlignmentVertical: Expression<DivContentAlignmentVertical> // default value: top
-  public let disappearActions: [DivDisappearAction]? // at least 1 elements
-  public let doubletapActions: [DivAction]? // at least 1 elements
-  public let extensions: [DivExtension]? // at least 1 elements
+  public let disappearActions: [DivDisappearAction]?
+  public let doubletapActions: [DivAction]?
+  public let extensions: [DivExtension]?
   public let focus: DivFocus?
   public let height: DivSize // default value: .divWrapContentSize(DivWrapContentSize())
-  public let id: String? // at least 1 char
-  public let items: [Div] // at least 1 elements
+  public let id: String?
+  public let itemBuilder: DivCollectionItemBuilder?
+  public let items: [Div]?
   public let layoutMode: Expression<LayoutMode> // default value: no_wrap
   public let lineSeparator: Separator?
-  public let longtapActions: [DivAction]? // at least 1 elements
+  public let longtapActions: [DivAction]?
   public let margins: DivEdgeInsets
   public let orientation: Expression<Orientation> // default value: vertical
   public let paddings: DivEdgeInsets
   public let rowSpan: Expression<Int>? // constraint: number >= 0
-  public let selectedActions: [DivAction]? // at least 1 elements
+  public let selectedActions: [DivAction]?
   public let separator: Separator?
-  public let tooltips: [DivTooltip]? // at least 1 elements
+  public let tooltips: [DivTooltip]?
   public let transform: DivTransform
   public let transitionChange: DivChangeTransition?
   public let transitionIn: DivAppearanceTransition?
@@ -102,165 +92,64 @@ public final class DivContainer: DivBase {
   public let transitionTriggers: [DivTransitionTrigger]? // at least 1 elements
   public let visibility: Expression<DivVisibility> // default value: visible
   public let visibilityAction: DivVisibilityAction?
-  public let visibilityActions: [DivVisibilityAction]? // at least 1 elements
+  public let visibilityActions: [DivVisibilityAction]?
   public let width: DivSize // default value: .divMatchParentSize(DivMatchParentSize())
 
   public func resolveAlignmentHorizontal(_ resolver: ExpressionResolver) -> DivAlignmentHorizontal? {
-    resolver.resolveStringBasedValue(expression: alignmentHorizontal, initializer: DivAlignmentHorizontal.init(rawValue:))
+    resolver.resolveEnum(alignmentHorizontal)
   }
 
   public func resolveAlignmentVertical(_ resolver: ExpressionResolver) -> DivAlignmentVertical? {
-    resolver.resolveStringBasedValue(expression: alignmentVertical, initializer: DivAlignmentVertical.init(rawValue:))
+    resolver.resolveEnum(alignmentVertical)
   }
 
   public func resolveAlpha(_ resolver: ExpressionResolver) -> Double {
-    resolver.resolveNumericValue(expression: alpha) ?? 1.0
+    resolver.resolveNumeric(alpha) ?? 1.0
+  }
+
+  public func resolveClipToBounds(_ resolver: ExpressionResolver) -> Bool {
+    resolver.resolveNumeric(clipToBounds) ?? true
   }
 
   public func resolveColumnSpan(_ resolver: ExpressionResolver) -> Int? {
-    resolver.resolveNumericValue(expression: columnSpan)
+    resolver.resolveNumeric(columnSpan)
   }
 
   public func resolveContentAlignmentHorizontal(_ resolver: ExpressionResolver) -> DivContentAlignmentHorizontal {
-    resolver.resolveStringBasedValue(expression: contentAlignmentHorizontal, initializer: DivContentAlignmentHorizontal.init(rawValue:)) ?? DivContentAlignmentHorizontal.start
+    resolver.resolveEnum(contentAlignmentHorizontal) ?? DivContentAlignmentHorizontal.start
   }
 
   public func resolveContentAlignmentVertical(_ resolver: ExpressionResolver) -> DivContentAlignmentVertical {
-    resolver.resolveStringBasedValue(expression: contentAlignmentVertical, initializer: DivContentAlignmentVertical.init(rawValue:)) ?? DivContentAlignmentVertical.top
+    resolver.resolveEnum(contentAlignmentVertical) ?? DivContentAlignmentVertical.top
   }
 
   public func resolveLayoutMode(_ resolver: ExpressionResolver) -> LayoutMode {
-    resolver.resolveStringBasedValue(expression: layoutMode, initializer: LayoutMode.init(rawValue:)) ?? LayoutMode.noWrap
+    resolver.resolveEnum(layoutMode) ?? LayoutMode.noWrap
   }
 
   public func resolveOrientation(_ resolver: ExpressionResolver) -> Orientation {
-    resolver.resolveStringBasedValue(expression: orientation, initializer: Orientation.init(rawValue:)) ?? Orientation.vertical
+    resolver.resolveEnum(orientation) ?? Orientation.vertical
   }
 
   public func resolveRowSpan(_ resolver: ExpressionResolver) -> Int? {
-    resolver.resolveNumericValue(expression: rowSpan)
+    resolver.resolveNumeric(rowSpan)
   }
 
   public func resolveVisibility(_ resolver: ExpressionResolver) -> DivVisibility {
-    resolver.resolveStringBasedValue(expression: visibility, initializer: DivVisibility.init(rawValue:)) ?? DivVisibility.visible
+    resolver.resolveEnum(visibility) ?? DivVisibility.visible
   }
-
-  static let accessibilityValidator: AnyValueValidator<DivAccessibility> =
-    makeNoOpValueValidator()
-
-  static let actionValidator: AnyValueValidator<DivAction> =
-    makeNoOpValueValidator()
-
-  static let actionAnimationValidator: AnyValueValidator<DivAnimation> =
-    makeNoOpValueValidator()
-
-  static let actionsValidator: AnyArrayValueValidator<DivAction> =
-    makeArrayValidator(minItems: 1)
-
-  static let alignmentHorizontalValidator: AnyValueValidator<DivAlignmentHorizontal> =
-    makeNoOpValueValidator()
-
-  static let alignmentVerticalValidator: AnyValueValidator<DivAlignmentVertical> =
-    makeNoOpValueValidator()
 
   static let alphaValidator: AnyValueValidator<Double> =
     makeValueValidator(valueValidator: { $0 >= 0.0 && $0 <= 1.0 })
 
-  static let aspectValidator: AnyValueValidator<DivAspect> =
-    makeNoOpValueValidator()
-
-  static let backgroundValidator: AnyArrayValueValidator<DivBackground> =
-    makeArrayValidator(minItems: 1)
-
-  static let borderValidator: AnyValueValidator<DivBorder> =
-    makeNoOpValueValidator()
-
   static let columnSpanValidator: AnyValueValidator<Int> =
     makeValueValidator(valueValidator: { $0 >= 0 })
-
-  static let contentAlignmentHorizontalValidator: AnyValueValidator<DivContentAlignmentHorizontal> =
-    makeNoOpValueValidator()
-
-  static let contentAlignmentVerticalValidator: AnyValueValidator<DivContentAlignmentVertical> =
-    makeNoOpValueValidator()
-
-  static let disappearActionsValidator: AnyArrayValueValidator<DivDisappearAction> =
-    makeArrayValidator(minItems: 1)
-
-  static let doubletapActionsValidator: AnyArrayValueValidator<DivAction> =
-    makeArrayValidator(minItems: 1)
-
-  static let extensionsValidator: AnyArrayValueValidator<DivExtension> =
-    makeArrayValidator(minItems: 1)
-
-  static let focusValidator: AnyValueValidator<DivFocus> =
-    makeNoOpValueValidator()
-
-  static let heightValidator: AnyValueValidator<DivSize> =
-    makeNoOpValueValidator()
-
-  static let idValidator: AnyValueValidator<String> =
-    makeStringValidator(minLength: 1)
-
-  static let itemsValidator: AnyArrayValueValidator<Div> =
-    makeArrayValidator(minItems: 1)
-
-  static let layoutModeValidator: AnyValueValidator<DivContainer.LayoutMode> =
-    makeNoOpValueValidator()
-
-  static let lineSeparatorValidator: AnyValueValidator<DivContainer.Separator> =
-    makeNoOpValueValidator()
-
-  static let longtapActionsValidator: AnyArrayValueValidator<DivAction> =
-    makeArrayValidator(minItems: 1)
-
-  static let marginsValidator: AnyValueValidator<DivEdgeInsets> =
-    makeNoOpValueValidator()
-
-  static let orientationValidator: AnyValueValidator<DivContainer.Orientation> =
-    makeNoOpValueValidator()
-
-  static let paddingsValidator: AnyValueValidator<DivEdgeInsets> =
-    makeNoOpValueValidator()
 
   static let rowSpanValidator: AnyValueValidator<Int> =
     makeValueValidator(valueValidator: { $0 >= 0 })
 
-  static let selectedActionsValidator: AnyArrayValueValidator<DivAction> =
-    makeArrayValidator(minItems: 1)
-
-  static let separatorValidator: AnyValueValidator<DivContainer.Separator> =
-    makeNoOpValueValidator()
-
-  static let tooltipsValidator: AnyArrayValueValidator<DivTooltip> =
-    makeArrayValidator(minItems: 1)
-
-  static let transformValidator: AnyValueValidator<DivTransform> =
-    makeNoOpValueValidator()
-
-  static let transitionChangeValidator: AnyValueValidator<DivChangeTransition> =
-    makeNoOpValueValidator()
-
-  static let transitionInValidator: AnyValueValidator<DivAppearanceTransition> =
-    makeNoOpValueValidator()
-
-  static let transitionOutValidator: AnyValueValidator<DivAppearanceTransition> =
-    makeNoOpValueValidator()
-
   static let transitionTriggersValidator: AnyArrayValueValidator<DivTransitionTrigger> =
     makeArrayValidator(minItems: 1)
-
-  static let visibilityValidator: AnyValueValidator<DivVisibility> =
-    makeNoOpValueValidator()
-
-  static let visibilityActionValidator: AnyValueValidator<DivVisibilityAction> =
-    makeNoOpValueValidator()
-
-  static let visibilityActionsValidator: AnyArrayValueValidator<DivVisibilityAction> =
-    makeArrayValidator(minItems: 1)
-
-  static let widthValidator: AnyValueValidator<DivSize> =
-    makeNoOpValueValidator()
 
   init(
     accessibility: DivAccessibility?,
@@ -273,6 +162,7 @@ public final class DivContainer: DivBase {
     aspect: DivAspect?,
     background: [DivBackground]?,
     border: DivBorder?,
+    clipToBounds: Expression<Bool>?,
     columnSpan: Expression<Int>?,
     contentAlignmentHorizontal: Expression<DivContentAlignmentHorizontal>?,
     contentAlignmentVertical: Expression<DivContentAlignmentVertical>?,
@@ -282,7 +172,8 @@ public final class DivContainer: DivBase {
     focus: DivFocus?,
     height: DivSize?,
     id: String?,
-    items: [Div],
+    itemBuilder: DivCollectionItemBuilder?,
+    items: [Div]?,
     layoutMode: Expression<LayoutMode>?,
     lineSeparator: Separator?,
     longtapActions: [DivAction]?,
@@ -313,6 +204,7 @@ public final class DivContainer: DivBase {
     self.aspect = aspect
     self.background = background
     self.border = border ?? DivBorder()
+    self.clipToBounds = clipToBounds ?? .value(true)
     self.columnSpan = columnSpan
     self.contentAlignmentHorizontal = contentAlignmentHorizontal ?? .value(.start)
     self.contentAlignmentVertical = contentAlignmentVertical ?? .value(.top)
@@ -322,6 +214,7 @@ public final class DivContainer: DivBase {
     self.focus = focus
     self.height = height ?? .divWrapContentSize(DivWrapContentSize())
     self.id = id
+    self.itemBuilder = itemBuilder
     self.items = items
     self.layoutMode = layoutMode ?? .value(.noWrap)
     self.lineSeparator = lineSeparator
@@ -371,69 +264,75 @@ extension DivContainer: Equatable {
     }
     guard
       lhs.border == rhs.border,
-      lhs.columnSpan == rhs.columnSpan,
-      lhs.contentAlignmentHorizontal == rhs.contentAlignmentHorizontal
+      lhs.clipToBounds == rhs.clipToBounds,
+      lhs.columnSpan == rhs.columnSpan
     else {
       return false
     }
     guard
+      lhs.contentAlignmentHorizontal == rhs.contentAlignmentHorizontal,
       lhs.contentAlignmentVertical == rhs.contentAlignmentVertical,
-      lhs.disappearActions == rhs.disappearActions,
-      lhs.doubletapActions == rhs.doubletapActions
+      lhs.disappearActions == rhs.disappearActions
     else {
       return false
     }
     guard
+      lhs.doubletapActions == rhs.doubletapActions,
       lhs.extensions == rhs.extensions,
-      lhs.focus == rhs.focus,
-      lhs.height == rhs.height
+      lhs.focus == rhs.focus
     else {
       return false
     }
     guard
+      lhs.height == rhs.height,
       lhs.id == rhs.id,
+      lhs.itemBuilder == rhs.itemBuilder
+    else {
+      return false
+    }
+    guard
       lhs.items == rhs.items,
-      lhs.layoutMode == rhs.layoutMode
+      lhs.layoutMode == rhs.layoutMode,
+      lhs.lineSeparator == rhs.lineSeparator
     else {
       return false
     }
     guard
-      lhs.lineSeparator == rhs.lineSeparator,
       lhs.longtapActions == rhs.longtapActions,
-      lhs.margins == rhs.margins
+      lhs.margins == rhs.margins,
+      lhs.orientation == rhs.orientation
     else {
       return false
     }
     guard
-      lhs.orientation == rhs.orientation,
       lhs.paddings == rhs.paddings,
-      lhs.rowSpan == rhs.rowSpan
+      lhs.rowSpan == rhs.rowSpan,
+      lhs.selectedActions == rhs.selectedActions
     else {
       return false
     }
     guard
-      lhs.selectedActions == rhs.selectedActions,
       lhs.separator == rhs.separator,
-      lhs.tooltips == rhs.tooltips
+      lhs.tooltips == rhs.tooltips,
+      lhs.transform == rhs.transform
     else {
       return false
     }
     guard
-      lhs.transform == rhs.transform,
       lhs.transitionChange == rhs.transitionChange,
-      lhs.transitionIn == rhs.transitionIn
+      lhs.transitionIn == rhs.transitionIn,
+      lhs.transitionOut == rhs.transitionOut
     else {
       return false
     }
     guard
-      lhs.transitionOut == rhs.transitionOut,
       lhs.transitionTriggers == rhs.transitionTriggers,
-      lhs.visibility == rhs.visibility
+      lhs.visibility == rhs.visibility,
+      lhs.visibilityAction == rhs.visibilityAction
     else {
       return false
     }
     guard
-      lhs.visibilityAction == rhs.visibilityAction,
       lhs.visibilityActions == rhs.visibilityActions,
       lhs.width == rhs.width
     else {
@@ -458,6 +357,7 @@ extension DivContainer: Serializable {
     result["aspect"] = aspect?.toDictionary()
     result["background"] = background?.map { $0.toDictionary() }
     result["border"] = border.toDictionary()
+    result["clip_to_bounds"] = clipToBounds.toValidSerializationValue()
     result["column_span"] = columnSpan?.toValidSerializationValue()
     result["content_alignment_horizontal"] = contentAlignmentHorizontal.toValidSerializationValue()
     result["content_alignment_vertical"] = contentAlignmentVertical.toValidSerializationValue()
@@ -467,7 +367,8 @@ extension DivContainer: Serializable {
     result["focus"] = focus?.toDictionary()
     result["height"] = height.toDictionary()
     result["id"] = id
-    result["items"] = items.map { $0.toDictionary() }
+    result["item_builder"] = itemBuilder?.toDictionary()
+    result["items"] = items?.map { $0.toDictionary() }
     result["layout_mode"] = layoutMode.toValidSerializationValue()
     result["line_separator"] = lineSeparator?.toDictionary()
     result["longtap_actions"] = longtapActions?.map { $0.toDictionary() }

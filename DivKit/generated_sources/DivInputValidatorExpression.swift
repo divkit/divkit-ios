@@ -8,29 +8,20 @@ public final class DivInputValidatorExpression {
   public static let type: String = "expression"
   public let allowEmpty: Expression<Bool> // default value: false
   public let condition: Expression<Bool>
-  public let labelId: Expression<String> // at least 1 char
-  public let variable: String // at least 1 char
+  public let labelId: Expression<String>
+  public let variable: String
 
   public func resolveAllowEmpty(_ resolver: ExpressionResolver) -> Bool {
-    resolver.resolveNumericValue(expression: allowEmpty) ?? false
+    resolver.resolveNumeric(allowEmpty) ?? false
   }
 
   public func resolveCondition(_ resolver: ExpressionResolver) -> Bool? {
-    resolver.resolveNumericValue(expression: condition)
+    resolver.resolveNumeric(condition)
   }
 
   public func resolveLabelId(_ resolver: ExpressionResolver) -> String? {
-    resolver.resolveStringBasedValue(expression: labelId, initializer: { $0 })
+    resolver.resolveString(labelId, initializer: { $0 })
   }
-
-  static let allowEmptyValidator: AnyValueValidator<Bool> =
-    makeNoOpValueValidator()
-
-  static let labelIdValidator: AnyValueValidator<String> =
-    makeStringValidator(minLength: 1)
-
-  static let variableValidator: AnyValueValidator<String> =
-    makeStringValidator(minLength: 1)
 
   init(
     allowEmpty: Expression<Bool>? = nil,

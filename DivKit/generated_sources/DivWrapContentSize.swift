@@ -10,15 +10,12 @@ public final class DivWrapContentSize {
     public let value: Expression<Int> // constraint: number >= 0
 
     public func resolveUnit(_ resolver: ExpressionResolver) -> DivSizeUnit {
-      resolver.resolveStringBasedValue(expression: unit, initializer: DivSizeUnit.init(rawValue:)) ?? DivSizeUnit.dp
+      resolver.resolveEnum(unit) ?? DivSizeUnit.dp
     }
 
     public func resolveValue(_ resolver: ExpressionResolver) -> Int? {
-      resolver.resolveNumericValue(expression: value)
+      resolver.resolveNumeric(value)
     }
-
-    static let unitValidator: AnyValueValidator<DivSizeUnit> =
-      makeNoOpValueValidator()
 
     static let valueValidator: AnyValueValidator<Int> =
       makeValueValidator(valueValidator: { $0 >= 0 })
@@ -38,17 +35,8 @@ public final class DivWrapContentSize {
   public let minSize: ConstraintSize?
 
   public func resolveConstrained(_ resolver: ExpressionResolver) -> Bool? {
-    resolver.resolveNumericValue(expression: constrained)
+    resolver.resolveNumeric(constrained)
   }
-
-  static let constrainedValidator: AnyValueValidator<Bool> =
-    makeNoOpValueValidator()
-
-  static let maxSizeValidator: AnyValueValidator<DivWrapContentSize.ConstraintSize> =
-    makeNoOpValueValidator()
-
-  static let minSizeValidator: AnyValueValidator<DivWrapContentSize.ConstraintSize> =
-    makeNoOpValueValidator()
 
   init(
     constrained: Expression<Bool>? = nil,

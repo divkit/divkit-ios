@@ -18,47 +18,38 @@ public final class DivAnimation {
   public let duration: Expression<Int> // constraint: number >= 0; default value: 300
   public let endValue: Expression<Double>?
   public let interpolator: Expression<DivAnimationInterpolator> // default value: spring
-  public let items: [DivAnimation]? // at least 1 elements
+  public let items: [DivAnimation]?
   public let name: Expression<Name>
   public let repeatCount: DivCount // default value: .divInfinityCount(DivInfinityCount())
   public let startDelay: Expression<Int> // constraint: number >= 0; default value: 0
   public let startValue: Expression<Double>?
 
   public func resolveDuration(_ resolver: ExpressionResolver) -> Int {
-    resolver.resolveNumericValue(expression: duration) ?? 300
+    resolver.resolveNumeric(duration) ?? 300
   }
 
   public func resolveEndValue(_ resolver: ExpressionResolver) -> Double? {
-    resolver.resolveNumericValue(expression: endValue)
+    resolver.resolveNumeric(endValue)
   }
 
   public func resolveInterpolator(_ resolver: ExpressionResolver) -> DivAnimationInterpolator {
-    resolver.resolveStringBasedValue(expression: interpolator, initializer: DivAnimationInterpolator.init(rawValue:)) ?? DivAnimationInterpolator.spring
+    resolver.resolveEnum(interpolator) ?? DivAnimationInterpolator.spring
   }
 
   public func resolveName(_ resolver: ExpressionResolver) -> Name? {
-    resolver.resolveStringBasedValue(expression: name, initializer: Name.init(rawValue:))
+    resolver.resolveEnum(name)
   }
 
   public func resolveStartDelay(_ resolver: ExpressionResolver) -> Int {
-    resolver.resolveNumericValue(expression: startDelay) ?? 0
+    resolver.resolveNumeric(startDelay) ?? 0
   }
 
   public func resolveStartValue(_ resolver: ExpressionResolver) -> Double? {
-    resolver.resolveNumericValue(expression: startValue)
+    resolver.resolveNumeric(startValue)
   }
 
   static let durationValidator: AnyValueValidator<Int> =
     makeValueValidator(valueValidator: { $0 >= 0 })
-
-  static let interpolatorValidator: AnyValueValidator<DivAnimationInterpolator> =
-    makeNoOpValueValidator()
-
-  static let itemsValidator: AnyArrayValueValidator<DivAnimation> =
-    makeArrayValidator(minItems: 1)
-
-  static let repeatCountValidator: AnyValueValidator<DivCount> =
-    makeNoOpValueValidator()
 
   static let startDelayValidator: AnyValueValidator<Int> =
     makeValueValidator(valueValidator: { $0 >= 0 })

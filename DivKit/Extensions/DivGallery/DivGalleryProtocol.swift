@@ -5,10 +5,14 @@ import CommonCorePublic
 import LayoutKit
 
 protocol DivGalleryProtocol: DivBase {
-  var items: [Div] { get }
+  var items: [Div]? { get }
 }
 
 extension DivGalleryProtocol {
+  var nonNilItems: [Div] {
+    items ?? []
+  }
+
   func makeGalleryModel(
     context: DivBlockModelingContext,
     direction: GalleryViewModel.Direction,
@@ -17,27 +21,26 @@ extension DivGalleryProtocol {
     defaultAlignment: Alignment,
     scrollMode: GalleryViewModel.ScrollMode,
     columnCount: Int? = nil,
-    infiniteScroll: Bool = false
+    infiniteScroll: Bool = false,
+    scrollbar: GalleryViewModel.Scrollbar = .none
   ) throws -> GalleryViewModel {
     let expressionResolver = context.expressionResolver
-    let childrenContext = modified(context) {
-      $0.errorsStorage = DivErrorsStorage(errors: [])
-    }
-    var children: [GalleryViewModel.Item] = items.makeBlocks(
+    let childrenContext = context.modifying(errorsStorage: DivErrorsStorage(errors: []))
+    var children: [GalleryViewModel.Item] = nonNilItems.makeBlocks(
       context: childrenContext,
       sizeModifier: DivGallerySizeModifier(
         context: context,
         gallery: self,
         direction: direction
       ),
-      mappedBy: {
+      mappedBy: { div, block, _ in
         GalleryViewModel.Item(
           crossAlignment: (
             direction.isHorizontal
-              ? $0.value.resolveAlignmentVertical(expressionResolver)?.alignment
-              : $0.value.resolveAlignmentHorizontal(expressionResolver)?.alignment
+              ? div.value.resolveAlignmentVertical(expressionResolver)?.alignment
+              : div.value.resolveAlignmentHorizontal(expressionResolver)?.alignment
           ) ?? defaultAlignment,
-          content: $1
+          content: block
         )
       }
     )
@@ -48,15 +51,7 @@ extension DivGalleryProtocol {
       children = [last] + children + [first]
     }
 
-    if children.isEmpty {
-      throw DivBlockModelingError(
-        "\(typeName) has no items",
-        path: context.parentPath,
-        causes: childrenContext.errorsStorage.errors
-      )
-    } else {
-      context.errorsStorage.add(contentsOf: childrenContext.errorsStorage)
-    }
+    context.errorsStorage.add(contentsOf: childrenContext.errorsStorage)
 
     let metrics = try makeMetrics(
       spacing: spacing,
@@ -74,7 +69,8 @@ extension DivGalleryProtocol {
       path: context.parentPath,
       direction: direction,
       columnCount: columnCount ?? 1,
-      infiniteScroll: infiniteScroll
+      infiniteScroll: infiniteScroll,
+      scrollbar: scrollbar
     )
   }
 
@@ -85,9 +81,9 @@ extension DivGalleryProtocol {
     direction: GalleryViewModel.Direction,
     with expressionResolver: ExpressionResolver
   ) throws -> GalleryViewMetrics {
-    let spacings = try [CGFloat](
+    let spacings = [CGFloat](
       repeating: spacing,
-      times: UInt(value: childrenCount - 1)
+      times: UInt(max(0, childrenCount - 1))
     )
 
     let axialInsets: SideInsets

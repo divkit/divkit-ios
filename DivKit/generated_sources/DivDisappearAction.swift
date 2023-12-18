@@ -7,7 +7,8 @@ import Serialization
 public final class DivDisappearAction: DivSightAction {
   public let disappearDuration: Expression<Int> // constraint: number >= 0; default value: 800
   public let downloadCallbacks: DivDownloadCallbacks?
-  public let logId: String // at least 1 char
+  public let isEnabled: Expression<Bool> // default value: true
+  public let logId: String
   public let logLimit: Expression<Int> // constraint: number >= 0; default value: 1
   public let payload: [String: Any]?
   public let referer: Expression<URL>?
@@ -16,48 +17,34 @@ public final class DivDisappearAction: DivSightAction {
   public let visibilityPercentage: Expression<Int> // constraint: number >= 0 && number < 100; default value: 0
 
   public func resolveDisappearDuration(_ resolver: ExpressionResolver) -> Int {
-    resolver.resolveNumericValue(expression: disappearDuration) ?? 800
+    resolver.resolveNumeric(disappearDuration) ?? 800
+  }
+
+  public func resolveIsEnabled(_ resolver: ExpressionResolver) -> Bool {
+    resolver.resolveNumeric(isEnabled) ?? true
   }
 
   public func resolveLogLimit(_ resolver: ExpressionResolver) -> Int {
-    resolver.resolveNumericValue(expression: logLimit) ?? 1
+    resolver.resolveNumeric(logLimit) ?? 1
   }
 
   public func resolveReferer(_ resolver: ExpressionResolver) -> URL? {
-    resolver.resolveStringBasedValue(expression: referer, initializer: URL.init(string:))
+    resolver.resolveUrl(referer)
   }
 
   public func resolveUrl(_ resolver: ExpressionResolver) -> URL? {
-    resolver.resolveStringBasedValue(expression: url, initializer: URL.init(string:))
+    resolver.resolveUrl(url)
   }
 
   public func resolveVisibilityPercentage(_ resolver: ExpressionResolver) -> Int {
-    resolver.resolveNumericValue(expression: visibilityPercentage) ?? 0
+    resolver.resolveNumeric(visibilityPercentage) ?? 0
   }
 
   static let disappearDurationValidator: AnyValueValidator<Int> =
     makeValueValidator(valueValidator: { $0 >= 0 })
 
-  static let downloadCallbacksValidator: AnyValueValidator<DivDownloadCallbacks> =
-    makeNoOpValueValidator()
-
-  static let logIdValidator: AnyValueValidator<String> =
-    makeStringValidator(minLength: 1)
-
   static let logLimitValidator: AnyValueValidator<Int> =
     makeValueValidator(valueValidator: { $0 >= 0 })
-
-  static let payloadValidator: AnyValueValidator<[String: Any]> =
-    makeNoOpValueValidator()
-
-  static let refererValidator: AnyValueValidator<URL> =
-    makeNoOpValueValidator()
-
-  static let typedValidator: AnyValueValidator<DivActionTyped> =
-    makeNoOpValueValidator()
-
-  static let urlValidator: AnyValueValidator<URL> =
-    makeNoOpValueValidator()
 
   static let visibilityPercentageValidator: AnyValueValidator<Int> =
     makeValueValidator(valueValidator: { $0 >= 0 && $0 < 100 })
@@ -65,6 +52,7 @@ public final class DivDisappearAction: DivSightAction {
   init(
     disappearDuration: Expression<Int>? = nil,
     downloadCallbacks: DivDownloadCallbacks? = nil,
+    isEnabled: Expression<Bool>? = nil,
     logId: String,
     logLimit: Expression<Int>? = nil,
     payload: [String: Any]? = nil,
@@ -75,6 +63,7 @@ public final class DivDisappearAction: DivSightAction {
   ) {
     self.disappearDuration = disappearDuration ?? .value(800)
     self.downloadCallbacks = downloadCallbacks
+    self.isEnabled = isEnabled ?? .value(true)
     self.logId = logId
     self.logLimit = logLimit ?? .value(1)
     self.payload = payload
@@ -92,18 +81,19 @@ extension DivDisappearAction: Equatable {
     guard
       lhs.disappearDuration == rhs.disappearDuration,
       lhs.downloadCallbacks == rhs.downloadCallbacks,
-      lhs.logId == rhs.logId
+      lhs.isEnabled == rhs.isEnabled
     else {
       return false
     }
     guard
+      lhs.logId == rhs.logId,
       lhs.logLimit == rhs.logLimit,
-      lhs.referer == rhs.referer,
-      lhs.typed == rhs.typed
+      lhs.referer == rhs.referer
     else {
       return false
     }
     guard
+      lhs.typed == rhs.typed,
       lhs.url == rhs.url,
       lhs.visibilityPercentage == rhs.visibilityPercentage
     else {
@@ -119,6 +109,7 @@ extension DivDisappearAction: Serializable {
     var result: [String: ValidSerializationValue] = [:]
     result["disappear_duration"] = disappearDuration.toValidSerializationValue()
     result["download_callbacks"] = downloadCallbacks?.toDictionary()
+    result["is_enabled"] = isEnabled.toValidSerializationValue()
     result["log_id"] = logId
     result["log_limit"] = logLimit.toValidSerializationValue()
     result["payload"] = payload

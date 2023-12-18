@@ -18,33 +18,18 @@ public final class DivData {
     }
   }
 
-  public let logId: String // at least 1 char
-  public let states: [State] // at least 1 elements; all received elements must be valid
-  public let timers: [DivTimer]? // at least 1 elements
+  public let logId: String
+  public let states: [State] // at least 1 elements
+  public let timers: [DivTimer]?
   public let transitionAnimationSelector: Expression<DivTransitionSelector> // default value: none
-  public let variableTriggers: [DivTrigger]? // at least 1 elements
-  public let variables: [DivVariable]? // at least 1 elements
+  public let variableTriggers: [DivTrigger]?
+  public let variables: [DivVariable]?
 
   public func resolveTransitionAnimationSelector(_ resolver: ExpressionResolver) -> DivTransitionSelector {
-    resolver.resolveStringBasedValue(expression: transitionAnimationSelector, initializer: DivTransitionSelector.init(rawValue:)) ?? DivTransitionSelector.none
+    resolver.resolveEnum(transitionAnimationSelector) ?? DivTransitionSelector.none
   }
 
-  static let logIdValidator: AnyValueValidator<String> =
-    makeStringValidator(minLength: 1)
-
   static let statesValidator: AnyArrayValueValidator<DivData.State> =
-    makeStrictArrayValidator(minItems: 1)
-
-  static let timersValidator: AnyArrayValueValidator<DivTimer> =
-    makeArrayValidator(minItems: 1)
-
-  static let transitionAnimationSelectorValidator: AnyValueValidator<DivTransitionSelector> =
-    makeNoOpValueValidator()
-
-  static let variableTriggersValidator: AnyArrayValueValidator<DivTrigger> =
-    makeArrayValidator(minItems: 1)
-
-  static let variablesValidator: AnyArrayValueValidator<DivVariable> =
     makeArrayValidator(minItems: 1)
 
   init(

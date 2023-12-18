@@ -6,46 +6,31 @@ import Serialization
 
 public final class DivFocus {
   public final class NextFocusIds {
-    public let down: Expression<String>? // at least 1 char
-    public let forward: Expression<String>? // at least 1 char
-    public let left: Expression<String>? // at least 1 char
-    public let right: Expression<String>? // at least 1 char
-    public let up: Expression<String>? // at least 1 char
+    public let down: Expression<String>?
+    public let forward: Expression<String>?
+    public let left: Expression<String>?
+    public let right: Expression<String>?
+    public let up: Expression<String>?
 
     public func resolveDown(_ resolver: ExpressionResolver) -> String? {
-      resolver.resolveStringBasedValue(expression: down, initializer: { $0 })
+      resolver.resolveString(down, initializer: { $0 })
     }
 
     public func resolveForward(_ resolver: ExpressionResolver) -> String? {
-      resolver.resolveStringBasedValue(expression: forward, initializer: { $0 })
+      resolver.resolveString(forward, initializer: { $0 })
     }
 
     public func resolveLeft(_ resolver: ExpressionResolver) -> String? {
-      resolver.resolveStringBasedValue(expression: left, initializer: { $0 })
+      resolver.resolveString(left, initializer: { $0 })
     }
 
     public func resolveRight(_ resolver: ExpressionResolver) -> String? {
-      resolver.resolveStringBasedValue(expression: right, initializer: { $0 })
+      resolver.resolveString(right, initializer: { $0 })
     }
 
     public func resolveUp(_ resolver: ExpressionResolver) -> String? {
-      resolver.resolveStringBasedValue(expression: up, initializer: { $0 })
+      resolver.resolveString(up, initializer: { $0 })
     }
-
-    static let downValidator: AnyValueValidator<String> =
-      makeStringValidator(minLength: 1)
-
-    static let forwardValidator: AnyValueValidator<String> =
-      makeStringValidator(minLength: 1)
-
-    static let leftValidator: AnyValueValidator<String> =
-      makeStringValidator(minLength: 1)
-
-    static let rightValidator: AnyValueValidator<String> =
-      makeStringValidator(minLength: 1)
-
-    static let upValidator: AnyValueValidator<String> =
-      makeStringValidator(minLength: 1)
 
     init(
       down: Expression<String>? = nil,
@@ -62,26 +47,11 @@ public final class DivFocus {
     }
   }
 
-  public let background: [DivBackground]? // at least 1 elements
+  public let background: [DivBackground]?
   public let border: DivBorder
   public let nextFocusIds: NextFocusIds?
-  public let onBlur: [DivAction]? // at least 1 elements
-  public let onFocus: [DivAction]? // at least 1 elements
-
-  static let backgroundValidator: AnyArrayValueValidator<DivBackground> =
-    makeArrayValidator(minItems: 1)
-
-  static let borderValidator: AnyValueValidator<DivBorder> =
-    makeNoOpValueValidator()
-
-  static let nextFocusIdsValidator: AnyValueValidator<DivFocus.NextFocusIds> =
-    makeNoOpValueValidator()
-
-  static let onBlurValidator: AnyArrayValueValidator<DivAction> =
-    makeArrayValidator(minItems: 1)
-
-  static let onFocusValidator: AnyArrayValueValidator<DivAction> =
-    makeArrayValidator(minItems: 1)
+  public let onBlur: [DivAction]?
+  public let onFocus: [DivAction]?
 
   init(
     background: [DivBackground]? = nil,

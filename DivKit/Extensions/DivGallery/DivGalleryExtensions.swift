@@ -17,9 +17,7 @@ extension DivGallery: DivBlockModeling, DivGalleryProtocol {
   private func makeBaseBlock(context: DivBlockModelingContext) throws -> Block {
     let galleryPath = context.parentPath + (id ?? DivGallery.type)
     let expressionResolver = context.expressionResolver
-    let galleryContext = modified(context) {
-      $0.parentPath = galleryPath
-    }
+    let galleryContext = context.modifying(parentPath: galleryPath)
     let defaultAlignment = resolveCrossContentAlignment(expressionResolver)
       .blockAlignment
     let itemSpacing = resolveItemSpacing(expressionResolver)
@@ -32,7 +30,8 @@ extension DivGallery: DivBlockModeling, DivGalleryProtocol {
         crossSpacing: CGFloat(resolveCrossSpacing(expressionResolver) ?? itemSpacing),
         defaultAlignment: defaultAlignment,
         scrollMode: resolveScrollMode(expressionResolver).blockScrollMode,
-        columnCount: resolveColumnCount(expressionResolver)
+        columnCount: resolveColumnCount(expressionResolver),
+        scrollbar: resolveScrollbar(expressionResolver).blockScrollbar
       )
       return try GalleryBlock(
         model: model,
@@ -102,6 +101,17 @@ extension DivGallery.CrossContentAlignment {
     case .start: return .leading
     case .center: return .center
     case .end: return .trailing
+    }
+  }
+}
+
+extension DivGallery.Scrollbar {
+  fileprivate var blockScrollbar: GalleryViewModel.Scrollbar {
+    switch self {
+    case .none:
+      return .none
+    case .auto:
+      return .auto
     }
   }
 }

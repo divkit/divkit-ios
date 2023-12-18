@@ -12,30 +12,30 @@ public final class DivVideo: DivBase {
   public let alpha: Expression<Double> // constraint: number >= 0.0 && number <= 1.0; default value: 1.0
   public let aspect: DivAspect?
   public let autostart: Expression<Bool> // default value: false
-  public let background: [DivBackground]? // at least 1 elements
+  public let background: [DivBackground]?
   public let border: DivBorder
-  public let bufferingActions: [DivAction]? // at least 1 elements
+  public let bufferingActions: [DivAction]?
   public let columnSpan: Expression<Int>? // constraint: number >= 0
-  public let disappearActions: [DivDisappearAction]? // at least 1 elements
-  public let elapsedTimeVariable: String? // at least 1 char
-  public let endActions: [DivAction]? // at least 1 elements
-  public let extensions: [DivExtension]? // at least 1 elements
-  public let fatalActions: [DivAction]? // at least 1 elements
+  public let disappearActions: [DivDisappearAction]?
+  public let elapsedTimeVariable: String?
+  public let endActions: [DivAction]?
+  public let extensions: [DivExtension]?
+  public let fatalActions: [DivAction]?
   public let focus: DivFocus?
   public let height: DivSize // default value: .divWrapContentSize(DivWrapContentSize())
-  public let id: String? // at least 1 char
+  public let id: String?
   public let margins: DivEdgeInsets
   public let muted: Expression<Bool> // default value: false
   public let paddings: DivEdgeInsets
-  public let pauseActions: [DivAction]? // at least 1 elements
+  public let pauseActions: [DivAction]?
   public let playerSettingsPayload: [String: Any]?
-  public let preview: Expression<String>? // at least 1 char
+  public let preview: Expression<String>?
   public let repeatable: Expression<Bool> // default value: false
-  public let resumeActions: [DivAction]? // at least 1 elements
+  public let resumeActions: [DivAction]?
   public let rowSpan: Expression<Int>? // constraint: number >= 0
   public let scale: Expression<DivVideoScale> // default value: fit
-  public let selectedActions: [DivAction]? // at least 1 elements
-  public let tooltips: [DivTooltip]? // at least 1 elements
+  public let selectedActions: [DivAction]?
+  public let tooltips: [DivTooltip]?
   public let transform: DivTransform
   public let transitionChange: DivChangeTransition?
   public let transitionIn: DivAppearanceTransition?
@@ -44,172 +44,67 @@ public final class DivVideo: DivBase {
   public let videoSources: [DivVideoSource] // at least 1 elements
   public let visibility: Expression<DivVisibility> // default value: visible
   public let visibilityAction: DivVisibilityAction?
-  public let visibilityActions: [DivVisibilityAction]? // at least 1 elements
+  public let visibilityActions: [DivVisibilityAction]?
   public let width: DivSize // default value: .divMatchParentSize(DivMatchParentSize())
 
   public func resolveAlignmentHorizontal(_ resolver: ExpressionResolver) -> DivAlignmentHorizontal? {
-    resolver.resolveStringBasedValue(expression: alignmentHorizontal, initializer: DivAlignmentHorizontal.init(rawValue:))
+    resolver.resolveEnum(alignmentHorizontal)
   }
 
   public func resolveAlignmentVertical(_ resolver: ExpressionResolver) -> DivAlignmentVertical? {
-    resolver.resolveStringBasedValue(expression: alignmentVertical, initializer: DivAlignmentVertical.init(rawValue:))
+    resolver.resolveEnum(alignmentVertical)
   }
 
   public func resolveAlpha(_ resolver: ExpressionResolver) -> Double {
-    resolver.resolveNumericValue(expression: alpha) ?? 1.0
+    resolver.resolveNumeric(alpha) ?? 1.0
   }
 
   public func resolveAutostart(_ resolver: ExpressionResolver) -> Bool {
-    resolver.resolveNumericValue(expression: autostart) ?? false
+    resolver.resolveNumeric(autostart) ?? false
   }
 
   public func resolveColumnSpan(_ resolver: ExpressionResolver) -> Int? {
-    resolver.resolveNumericValue(expression: columnSpan)
+    resolver.resolveNumeric(columnSpan)
   }
 
   public func resolveMuted(_ resolver: ExpressionResolver) -> Bool {
-    resolver.resolveNumericValue(expression: muted) ?? false
+    resolver.resolveNumeric(muted) ?? false
   }
 
   public func resolvePreview(_ resolver: ExpressionResolver) -> String? {
-    resolver.resolveStringBasedValue(expression: preview, initializer: { $0 })
+    resolver.resolveString(preview, initializer: { $0 })
   }
 
   public func resolveRepeatable(_ resolver: ExpressionResolver) -> Bool {
-    resolver.resolveNumericValue(expression: repeatable) ?? false
+    resolver.resolveNumeric(repeatable) ?? false
   }
 
   public func resolveRowSpan(_ resolver: ExpressionResolver) -> Int? {
-    resolver.resolveNumericValue(expression: rowSpan)
+    resolver.resolveNumeric(rowSpan)
   }
 
   public func resolveScale(_ resolver: ExpressionResolver) -> DivVideoScale {
-    resolver.resolveStringBasedValue(expression: scale, initializer: DivVideoScale.init(rawValue:)) ?? DivVideoScale.fit
+    resolver.resolveEnum(scale) ?? DivVideoScale.fit
   }
 
   public func resolveVisibility(_ resolver: ExpressionResolver) -> DivVisibility {
-    resolver.resolveStringBasedValue(expression: visibility, initializer: DivVisibility.init(rawValue:)) ?? DivVisibility.visible
+    resolver.resolveEnum(visibility) ?? DivVisibility.visible
   }
-
-  static let accessibilityValidator: AnyValueValidator<DivAccessibility> =
-    makeNoOpValueValidator()
-
-  static let alignmentHorizontalValidator: AnyValueValidator<DivAlignmentHorizontal> =
-    makeNoOpValueValidator()
-
-  static let alignmentVerticalValidator: AnyValueValidator<DivAlignmentVertical> =
-    makeNoOpValueValidator()
 
   static let alphaValidator: AnyValueValidator<Double> =
     makeValueValidator(valueValidator: { $0 >= 0.0 && $0 <= 1.0 })
 
-  static let aspectValidator: AnyValueValidator<DivAspect> =
-    makeNoOpValueValidator()
-
-  static let autostartValidator: AnyValueValidator<Bool> =
-    makeNoOpValueValidator()
-
-  static let backgroundValidator: AnyArrayValueValidator<DivBackground> =
-    makeArrayValidator(minItems: 1)
-
-  static let borderValidator: AnyValueValidator<DivBorder> =
-    makeNoOpValueValidator()
-
-  static let bufferingActionsValidator: AnyArrayValueValidator<DivAction> =
-    makeArrayValidator(minItems: 1)
-
   static let columnSpanValidator: AnyValueValidator<Int> =
     makeValueValidator(valueValidator: { $0 >= 0 })
 
-  static let disappearActionsValidator: AnyArrayValueValidator<DivDisappearAction> =
-    makeArrayValidator(minItems: 1)
-
-  static let elapsedTimeVariableValidator: AnyValueValidator<String> =
-    makeStringValidator(minLength: 1)
-
-  static let endActionsValidator: AnyArrayValueValidator<DivAction> =
-    makeArrayValidator(minItems: 1)
-
-  static let extensionsValidator: AnyArrayValueValidator<DivExtension> =
-    makeArrayValidator(minItems: 1)
-
-  static let fatalActionsValidator: AnyArrayValueValidator<DivAction> =
-    makeArrayValidator(minItems: 1)
-
-  static let focusValidator: AnyValueValidator<DivFocus> =
-    makeNoOpValueValidator()
-
-  static let heightValidator: AnyValueValidator<DivSize> =
-    makeNoOpValueValidator()
-
-  static let idValidator: AnyValueValidator<String> =
-    makeStringValidator(minLength: 1)
-
-  static let marginsValidator: AnyValueValidator<DivEdgeInsets> =
-    makeNoOpValueValidator()
-
-  static let mutedValidator: AnyValueValidator<Bool> =
-    makeNoOpValueValidator()
-
-  static let paddingsValidator: AnyValueValidator<DivEdgeInsets> =
-    makeNoOpValueValidator()
-
-  static let pauseActionsValidator: AnyArrayValueValidator<DivAction> =
-    makeArrayValidator(minItems: 1)
-
-  static let playerSettingsPayloadValidator: AnyValueValidator<[String: Any]> =
-    makeNoOpValueValidator()
-
-  static let previewValidator: AnyValueValidator<String> =
-    makeStringValidator(minLength: 1)
-
-  static let repeatableValidator: AnyValueValidator<Bool> =
-    makeNoOpValueValidator()
-
-  static let resumeActionsValidator: AnyArrayValueValidator<DivAction> =
-    makeArrayValidator(minItems: 1)
-
   static let rowSpanValidator: AnyValueValidator<Int> =
     makeValueValidator(valueValidator: { $0 >= 0 })
-
-  static let scaleValidator: AnyValueValidator<DivVideoScale> =
-    makeNoOpValueValidator()
-
-  static let selectedActionsValidator: AnyArrayValueValidator<DivAction> =
-    makeArrayValidator(minItems: 1)
-
-  static let tooltipsValidator: AnyArrayValueValidator<DivTooltip> =
-    makeArrayValidator(minItems: 1)
-
-  static let transformValidator: AnyValueValidator<DivTransform> =
-    makeNoOpValueValidator()
-
-  static let transitionChangeValidator: AnyValueValidator<DivChangeTransition> =
-    makeNoOpValueValidator()
-
-  static let transitionInValidator: AnyValueValidator<DivAppearanceTransition> =
-    makeNoOpValueValidator()
-
-  static let transitionOutValidator: AnyValueValidator<DivAppearanceTransition> =
-    makeNoOpValueValidator()
 
   static let transitionTriggersValidator: AnyArrayValueValidator<DivTransitionTrigger> =
     makeArrayValidator(minItems: 1)
 
   static let videoSourcesValidator: AnyArrayValueValidator<DivVideoSource> =
     makeArrayValidator(minItems: 1)
-
-  static let visibilityValidator: AnyValueValidator<DivVisibility> =
-    makeNoOpValueValidator()
-
-  static let visibilityActionValidator: AnyValueValidator<DivVisibilityAction> =
-    makeNoOpValueValidator()
-
-  static let visibilityActionsValidator: AnyArrayValueValidator<DivVisibilityAction> =
-    makeArrayValidator(minItems: 1)
-
-  static let widthValidator: AnyValueValidator<DivSize> =
-    makeNoOpValueValidator()
 
   init(
     accessibility: DivAccessibility? = nil,

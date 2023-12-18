@@ -10,14 +10,8 @@ public final class DivTransform {
   public let rotation: Expression<Double>?
 
   public func resolveRotation(_ resolver: ExpressionResolver) -> Double? {
-    resolver.resolveNumericValue(expression: rotation)
+    resolver.resolveNumeric(rotation)
   }
-
-  static let pivotXValidator: AnyValueValidator<DivPivot> =
-    makeNoOpValueValidator()
-
-  static let pivotYValidator: AnyValueValidator<DivPivot> =
-    makeNoOpValueValidator()
 
   init(
     pivotX: DivPivot? = nil,

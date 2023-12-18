@@ -6,17 +6,14 @@ import Serialization
 
 public final class DivActionArrayRemoveValueTemplate: TemplateValue {
   public static let type: String = "array_remove_value"
-  public let parent: String? // at least 1 char
+  public let parent: String?
   public let index: Field<Expression<Int>>?
-  public let variableName: Field<Expression<String>>? // at least 1 char
-
-  static let parentValidator: AnyValueValidator<String> =
-    makeStringValidator(minLength: 1)
+  public let variableName: Field<Expression<String>>?
 
   public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
     do {
       self.init(
-        parent: try dictionary.getOptionalField("type", validator: Self.parentValidator),
+        parent: try dictionary.getOptionalField("type"),
         index: try dictionary.getOptionalExpressionField("index"),
         variableName: try dictionary.getOptionalExpressionField("variable_name")
       )
@@ -37,7 +34,7 @@ public final class DivActionArrayRemoveValueTemplate: TemplateValue {
 
   private static func resolveOnlyLinks(context: TemplatesContext, parent: DivActionArrayRemoveValueTemplate?) -> DeserializationResult<DivActionArrayRemoveValue> {
     let indexValue = parent?.index?.resolveValue(context: context) ?? .noValue
-    let variableNameValue = parent?.variableName?.resolveValue(context: context, validator: ResolvedValue.variableNameValidator) ?? .noValue
+    let variableNameValue = parent?.variableName?.resolveValue(context: context) ?? .noValue
     var errors = mergeErrors(
       indexValue.errorsOrWarnings?.map { .nestedObjectError(field: "index", error: $0) },
       variableNameValue.errorsOrWarnings?.map { .nestedObjectError(field: "variable_name", error: $0) }
@@ -72,11 +69,11 @@ public final class DivActionArrayRemoveValueTemplate: TemplateValue {
       case "index":
         indexValue = deserialize(__dictValue).merged(with: indexValue)
       case "variable_name":
-        variableNameValue = deserialize(__dictValue, validator: ResolvedValue.variableNameValidator).merged(with: variableNameValue)
+        variableNameValue = deserialize(__dictValue).merged(with: variableNameValue)
       case parent?.index?.link:
         indexValue = indexValue.merged(with: deserialize(__dictValue))
       case parent?.variableName?.link:
-        variableNameValue = variableNameValue.merged(with: deserialize(__dictValue, validator: ResolvedValue.variableNameValidator))
+        variableNameValue = variableNameValue.merged(with: deserialize(__dictValue))
       default: break
       }
     }

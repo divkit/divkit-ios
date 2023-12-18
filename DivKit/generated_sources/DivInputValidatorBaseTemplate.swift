@@ -6,8 +6,8 @@ import Serialization
 
 public final class DivInputValidatorBaseTemplate: TemplateValue {
   public let allowEmpty: Field<Expression<Bool>>? // default value: false
-  public let labelId: Field<Expression<String>>? // at least 1 char
-  public let variable: Field<String>? // at least 1 char
+  public let labelId: Field<Expression<String>>?
+  public let variable: Field<String>?
 
   public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
     self.init(
@@ -28,9 +28,9 @@ public final class DivInputValidatorBaseTemplate: TemplateValue {
   }
 
   private static func resolveOnlyLinks(context: TemplatesContext, parent: DivInputValidatorBaseTemplate?) -> DeserializationResult<DivInputValidatorBase> {
-    let allowEmptyValue = parent?.allowEmpty?.resolveOptionalValue(context: context, validator: ResolvedValue.allowEmptyValidator) ?? .noValue
-    let labelIdValue = parent?.labelId?.resolveOptionalValue(context: context, validator: ResolvedValue.labelIdValidator) ?? .noValue
-    let variableValue = parent?.variable?.resolveOptionalValue(context: context, validator: ResolvedValue.variableValidator) ?? .noValue
+    let allowEmptyValue = parent?.allowEmpty?.resolveOptionalValue(context: context) ?? .noValue
+    let labelIdValue = parent?.labelId?.resolveOptionalValue(context: context) ?? .noValue
+    let variableValue = parent?.variable?.resolveOptionalValue(context: context) ?? .noValue
     let errors = mergeErrors(
       allowEmptyValue.errorsOrWarnings?.map { .nestedObjectError(field: "allow_empty", error: $0) },
       labelIdValue.errorsOrWarnings?.map { .nestedObjectError(field: "label_id", error: $0) },
@@ -50,21 +50,21 @@ public final class DivInputValidatorBaseTemplate: TemplateValue {
     }
     var allowEmptyValue: DeserializationResult<Expression<Bool>> = parent?.allowEmpty?.value() ?? .noValue
     var labelIdValue: DeserializationResult<Expression<String>> = parent?.labelId?.value() ?? .noValue
-    var variableValue: DeserializationResult<String> = parent?.variable?.value(validatedBy: ResolvedValue.variableValidator) ?? .noValue
+    var variableValue: DeserializationResult<String> = parent?.variable?.value() ?? .noValue
     context.templateData.forEach { key, __dictValue in
       switch key {
       case "allow_empty":
-        allowEmptyValue = deserialize(__dictValue, validator: ResolvedValue.allowEmptyValidator).merged(with: allowEmptyValue)
+        allowEmptyValue = deserialize(__dictValue).merged(with: allowEmptyValue)
       case "label_id":
-        labelIdValue = deserialize(__dictValue, validator: ResolvedValue.labelIdValidator).merged(with: labelIdValue)
+        labelIdValue = deserialize(__dictValue).merged(with: labelIdValue)
       case "variable":
-        variableValue = deserialize(__dictValue, validator: ResolvedValue.variableValidator).merged(with: variableValue)
+        variableValue = deserialize(__dictValue).merged(with: variableValue)
       case parent?.allowEmpty?.link:
-        allowEmptyValue = allowEmptyValue.merged(with: deserialize(__dictValue, validator: ResolvedValue.allowEmptyValidator))
+        allowEmptyValue = allowEmptyValue.merged(with: deserialize(__dictValue))
       case parent?.labelId?.link:
-        labelIdValue = labelIdValue.merged(with: deserialize(__dictValue, validator: ResolvedValue.labelIdValidator))
+        labelIdValue = labelIdValue.merged(with: deserialize(__dictValue))
       case parent?.variable?.link:
-        variableValue = variableValue.merged(with: deserialize(__dictValue, validator: ResolvedValue.variableValidator))
+        variableValue = variableValue.merged(with: deserialize(__dictValue))
       default: break
       }
     }

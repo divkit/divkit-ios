@@ -12,14 +12,8 @@ public final class DivPatch {
   }
 
   public final class Change {
-    public let id: String // at least 1 char
-    public let items: [Div]? // at least 1 elements
-
-    static let idValidator: AnyValueValidator<String> =
-      makeStringValidator(minLength: 1)
-
-    static let itemsValidator: AnyArrayValueValidator<Div> =
-      makeArrayValidator(minItems: 1)
+    public let id: String
+    public let items: [Div]?
 
     init(
       id: String,
@@ -34,14 +28,11 @@ public final class DivPatch {
   public let mode: Expression<Mode> // default value: partial
 
   public func resolveMode(_ resolver: ExpressionResolver) -> Mode {
-    resolver.resolveStringBasedValue(expression: mode, initializer: Mode.init(rawValue:)) ?? Mode.partial
+    resolver.resolveEnum(mode) ?? Mode.partial
   }
 
   static let changesValidator: AnyArrayValueValidator<DivPatch.Change> =
     makeArrayValidator(minItems: 1)
-
-  static let modeValidator: AnyValueValidator<DivPatch.Mode> =
-    makeNoOpValueValidator()
 
   init(
     changes: [Change],

@@ -8,18 +8,15 @@ public final class DivActionArrayInsertValue {
   public static let type: String = "array_insert_value"
   public let index: Expression<Int>?
   public let value: DivTypedValue
-  public let variableName: Expression<String> // at least 1 char
+  public let variableName: Expression<String>
 
   public func resolveIndex(_ resolver: ExpressionResolver) -> Int? {
-    resolver.resolveNumericValue(expression: index)
+    resolver.resolveNumeric(index)
   }
 
   public func resolveVariableName(_ resolver: ExpressionResolver) -> String? {
-    resolver.resolveStringBasedValue(expression: variableName, initializer: { $0 })
+    resolver.resolveString(variableName, initializer: { $0 })
   }
-
-  static let variableNameValidator: AnyValueValidator<String> =
-    makeStringValidator(minLength: 1)
 
   init(
     index: Expression<Int>? = nil,

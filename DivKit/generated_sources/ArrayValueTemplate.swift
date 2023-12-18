@@ -6,17 +6,14 @@ import Serialization
 
 public final class ArrayValueTemplate: TemplateValue {
   public static let type: String = "array"
-  public let parent: String? // at least 1 char
-  public let value: Field<[Any]>?
-
-  static let parentValidator: AnyValueValidator<String> =
-    makeStringValidator(minLength: 1)
+  public let parent: String?
+  public let value: Field<Expression<[Any]>>?
 
   public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
     do {
       self.init(
-        parent: try dictionary.getOptionalField("type", validator: Self.parentValidator),
-        value: try dictionary.getOptionalField("value")
+        parent: try dictionary.getOptionalField("type"),
+        value: try dictionary.getOptionalExpressionField("value")
       )
     } catch let DeserializationError.invalidFieldRepresentation(field: field, representation: representation) {
       throw DeserializationError.invalidFieldRepresentation(field: "array_value_template." + field, representation: representation)
@@ -25,7 +22,7 @@ public final class ArrayValueTemplate: TemplateValue {
 
   init(
     parent: String?,
-    value: Field<[Any]>? = nil
+    value: Field<Expression<[Any]>>? = nil
   ) {
     self.parent = parent
     self.value = value
@@ -54,7 +51,7 @@ public final class ArrayValueTemplate: TemplateValue {
     if useOnlyLinks {
       return resolveOnlyLinks(context: context, parent: parent)
     }
-    var valueValue: DeserializationResult<[Any]> = parent?.value?.value() ?? .noValue
+    var valueValue: DeserializationResult<Expression<[Any]>> = parent?.value?.value() ?? .noValue
     context.templateData.forEach { key, __dictValue in
       switch key {
       case "value":

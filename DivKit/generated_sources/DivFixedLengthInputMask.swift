@@ -8,27 +8,24 @@ public final class DivFixedLengthInputMask: DivInputMaskBase {
   public final class PatternElement {
     public let key: Expression<String> // at least 1 char
     public let placeholder: Expression<String> // at least 1 char; default value: _
-    public let regex: Expression<String>? // at least 1 char
+    public let regex: Expression<String>?
 
     public func resolveKey(_ resolver: ExpressionResolver) -> String? {
-      resolver.resolveStringBasedValue(expression: key, initializer: { $0 })
+      resolver.resolveString(key, initializer: { $0 })
     }
 
     public func resolvePlaceholder(_ resolver: ExpressionResolver) -> String {
-      resolver.resolveStringBasedValue(expression: placeholder, initializer: { $0 }) ?? "_"
+      resolver.resolveString(placeholder, initializer: { $0 }) ?? "_"
     }
 
     public func resolveRegex(_ resolver: ExpressionResolver) -> String? {
-      resolver.resolveStringBasedValue(expression: regex, initializer: { $0 })
+      resolver.resolveString(regex, initializer: { $0 })
     }
 
     static let keyValidator: AnyValueValidator<String> =
       makeStringValidator(minLength: 1)
 
     static let placeholderValidator: AnyValueValidator<String> =
-      makeStringValidator(minLength: 1)
-
-    static let regexValidator: AnyValueValidator<String> =
       makeStringValidator(minLength: 1)
 
     init(
@@ -44,29 +41,20 @@ public final class DivFixedLengthInputMask: DivInputMaskBase {
 
   public static let type: String = "fixed_length"
   public let alwaysVisible: Expression<Bool> // default value: false
-  public let pattern: Expression<String> // at least 1 char
+  public let pattern: Expression<String>
   public let patternElements: [PatternElement] // at least 1 elements
-  public let rawTextVariable: String // at least 1 char
+  public let rawTextVariable: String
 
   public func resolveAlwaysVisible(_ resolver: ExpressionResolver) -> Bool {
-    resolver.resolveNumericValue(expression: alwaysVisible) ?? false
+    resolver.resolveNumeric(alwaysVisible) ?? false
   }
 
   public func resolvePattern(_ resolver: ExpressionResolver) -> String? {
-    resolver.resolveStringBasedValue(expression: pattern, initializer: { $0 })
+    resolver.resolveString(pattern, initializer: { $0 })
   }
-
-  static let alwaysVisibleValidator: AnyValueValidator<Bool> =
-    makeNoOpValueValidator()
-
-  static let patternValidator: AnyValueValidator<String> =
-    makeStringValidator(minLength: 1)
 
   static let patternElementsValidator: AnyArrayValueValidator<DivFixedLengthInputMask.PatternElement> =
     makeArrayValidator(minItems: 1)
-
-  static let rawTextVariableValidator: AnyValueValidator<String> =
-    makeStringValidator(minLength: 1)
 
   init(
     alwaysVisible: Expression<Bool>? = nil,
