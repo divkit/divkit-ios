@@ -4,6 +4,7 @@ import Foundation
 
 final class RunLoopCardUpdateAggregator {
   private var enabled: Bool = true
+  private var scheduled: Bool = false
   private var batch: [DivActionURLHandler.UpdateReason] = []
   private let updateCardAction: DivKitComponents.UpdateCardAction
   private let mainThreadAsyncRunner: MainThreadAsyncRunner
@@ -26,25 +27,22 @@ final class RunLoopCardUpdateAggregator {
   func aggregate(_ reason: DivActionURLHandler.UpdateReason) {
     Thread.assertIsMain()
     guard enabled else { return }
-    let notScheduled = batch.isEmpty
     batch.append(reason)
-    if notScheduled {
+    if !scheduled {
+      scheduled = true
       mainThreadAsyncRunner { [weak self] in
-        self?.flushUpdateActions()
+        guard let self else { return }
+        if let reasons = NonEmptyArray(self.batch.merge()) {
+          self.batch = []
+          self.scheduled = false
+          self.updateCardAction(reasons)
+        }
       }
     }
   }
-
-  func flushUpdateActions() {
-    guard let reasons = NonEmptyArray(self.batch.merge()) else {
-      return
-    }
-    batch = []
-    updateCardAction(reasons)
-  }
 }
 
-extension Array where Element == DivActionURLHandler.UpdateReason {
+extension [DivActionURLHandler.UpdateReason] {
   fileprivate func merge() -> [DivActionURLHandler.UpdateReason] {
     var variables: DivActionURLHandler.UpdateReason.AffectedCards = .specific([])
 

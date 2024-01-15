@@ -7,7 +7,7 @@ import Serialization
 func expressionTransform<T, U>(
   _ value: Any?,
   transform: (U) -> T?,
-  validator: ExpressionValueValidator<T>? = nil
+  validator: AnyValueValidator<T>? = nil
 ) -> Expression<T>? {
   do {
     if let rawValue = value as? String,
@@ -23,7 +23,7 @@ func expressionTransform<T, U>(
     return nil
   }
 
-  guard let value = value else {
+  guard let value else {
     return nil
   }
 
@@ -32,7 +32,7 @@ func expressionTransform<T, U>(
     return nil
   }
 
-  if let transformedValue = transform(value), validator?(transformedValue) != false {
+  if let transformedValue = transform(value), validator?.isValid(transformedValue) != false {
     return .value(transformedValue)
   }
 
@@ -48,32 +48,18 @@ func deserialize<T: ValidSerializationValue>(
 }
 
 @inlinable
-func deserialize(
-  _ value: Any,
-  validator: AnyValueValidator<CFString>? = nil
-) -> DeserializationResult<Expression<CFString>> {
-  deserialize(
-    value,
-    transform: { (rawValue: String) in safeCFCast(rawValue as CFTypeRef) },
-    validator: validator,
-    customTypeName: "Expression<CFString>"
-  )
-}
-
-@inlinable
 func deserialize<T: ValidSerializationValue, U>(
   _ value: Any,
   transform: (T) -> U?,
-  validator: AnyValueValidator<U>? = nil,
-  customTypeName: String? = nil
+  validator: AnyValueValidator<U>? = nil
 ) -> DeserializationResult<Expression<U>> {
   guard let result: Expression<U> = expressionTransform(
     value,
     transform: transform,
-    validator: validator?.isValid
+    validator: validator
   ) else {
     return .failure(NonEmptyArray(.typeMismatch(
-      expected: customTypeName ?? "Expression<\(U.self)>",
+      expected: "Expression<\(U.self)>",
       representation: value
     )))
   }
@@ -90,11 +76,7 @@ func deserialize<T: ValidSerializationValue, U>(
   deserialize(
     value,
     transform: { (rawElement: T) -> DeserializationResult<Expression<U>> in
-      deserialize(
-        rawElement,
-        transform: transform,
-        validator: nil
-      )
+      deserialize(rawElement, transform: transform)
     },
     validator: validator
   )
@@ -108,7 +90,7 @@ func deserialize<T: RawRepresentable>(
   guard let result: Expression<T> = expressionTransform(
     value,
     transform: T.init(rawValue:),
-    validator: validator?.isValid
+    validator: validator
   ) else {
     return .failure(NonEmptyArray(.typeMismatch(
       expected: "Expression<\(T.self)>",

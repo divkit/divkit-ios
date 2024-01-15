@@ -222,14 +222,13 @@ extension Block {
   ) -> Block {
     guard insets != .zero || forceWrapping else { return self }
 
-    let newBoundary: BoundaryTrait? = clipsToBounds.map { $0 ? .clips : .noClip }
     if let block = self as? DecoratingBlock, block.canSafelyExtendPaddings {
       return block.modifying(paddings: block.paddings + insets)
     }
 
     return DecoratingBlock(
       child: self,
-      boundary: newBoundary ?? .clips,
+      boundary: clipsToBounds == false ? .noClip : .clips,
       paddings: insets
     )
   }
@@ -267,7 +266,9 @@ extension Block {
 extension DecoratingBlock {
   fileprivate var canSafelyExtendPaddings: Bool {
     backgroundColor.alpha.isApproximatelyEqualTo(0)
+      && accessibilityElement == nil
       && actions == nil
+      && doubleTapActions == nil
       && longTapActions == nil
       && analyticsURL == nil
       && boundary.allCornersAreApproximatelyEqualToZero()
@@ -276,7 +277,7 @@ extension DecoratingBlock {
 
   #if INTERNAL_BUILD
   fileprivate func makeNewBoundary(fromModifying newBoundary: BoundaryTrait?) -> BoundaryTrait? {
-    guard let newBoundary = newBoundary else {
+    guard let newBoundary else {
       return nil
     }
     switch (boundary, newBoundary) {
@@ -306,7 +307,7 @@ extension DecoratingBlock {
   #endif
 }
 
-extension Optional where Wrapped == BoundaryTrait {
+extension BoundaryTrait? {
   fileprivate var shouldApplyBoundary: Bool {
     switch self {
     case .noClip?, .none:

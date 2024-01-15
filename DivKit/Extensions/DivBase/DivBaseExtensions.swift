@@ -11,7 +11,7 @@ extension DivBase {
     context: DivBlockModelingContext,
     actionsHolder: DivActionsHolder?,
     options: BasePropertiesOptions = [],
-    customA11yElement: AccessibilityElement? = nil,
+    customA11yDescriptionProvider: (() -> String?)? = nil,
     clipToBounds: Bool = true
   ) throws -> Block {
     let expressionResolver = context.expressionResolver
@@ -69,6 +69,15 @@ extension DivBase {
       boundary = nil
     }
 
+    let shadow = border?.resolveShadow(expressionResolver)
+
+    let accessibilityElement = (accessibility ?? DivAccessibility())
+      .resolve(
+        expressionResolver,
+        id: id,
+        customDescriptionProvider: customA11yDescriptionProvider
+      )
+
     block = try applyBackground(
       getBackground(focusState),
       to: block,
@@ -77,7 +86,7 @@ extension DivBase {
     .addingDecorations(
       boundary: boundary,
       border: border?.resolveBorder(expressionResolver),
-      shadow: border?.resolveShadow(expressionResolver),
+      shadow: shadow,
       visibilityActions: hasVisibilityActions ? visibilityActions : nil,
       lastVisibleBounds: hasVisibilityActions ? Property<CGRect>(
         getter: { context.lastVisibleBoundsCache.lastVisibleBounds(for: context.parentPath) },
@@ -89,32 +98,26 @@ extension DivBase {
         }
       ) : nil,
       scheduler: hasVisibilityActions ? context.scheduler : nil,
-      tooltips: tooltips.makeTooltips(context: context)
+      tooltips: tooltips.makeTooltips(context: context),
+      accessibilityElement: accessibilityElement
     )
-    
+
+    let rotation = transform?.resolveRotation(expressionResolver)
+
     if let transform {
       block = block.addingTransform(
-        transform: transform.resolveRotation(expressionResolver)
+        transform: rotation
           .flatMap { CGAffineTransform(rotationAngle: CGFloat($0) * .pi / 180) } ?? .identity,
         anchorPoint: transform.resolveAnchorPoint(expressionResolver)
       )
-    }
-    
-    let accessibilityElement: AccessibilityElement
-    if let customA11yElement {
-      accessibilityElement = customA11yElement
-    } else {
-      accessibilityElement = (accessibility ?? DivAccessibility()).resolve(context, id: id)
     }
 
     block = applyTransitioningAnimations(to: block, context: context, statePath: statePath)
       .addActions(context: context, actionsHolder: actionsHolder)
       .addingEdgeInsets(externalInsets, clipsToBounds: false)
       .addingDecorations(
-        boundary: transform?.resolveRotation(expressionResolver).flatMap { _ in .noClip } ??
-          border?.resolveShadow(expressionResolver).flatMap { _ in .noClip },
-        alpha: CGFloat(resolveAlpha(expressionResolver)),
-        accessibilityElement: accessibilityElement
+        boundary: rotation != nil || shadow != nil ? .noClip : nil,
+        alpha: CGFloat(resolveAlpha(expressionResolver))
       )
 
     return applyExtensionHandlersAfterBaseProperties(
@@ -156,13 +159,14 @@ extension DivBase {
     context: DivBlockModelingContext
   ) -> [VisibilityAction] {
     (visibilityActions ?? visibilityAction.asArray())
-      .map { $0.makeVisibilityAction(context: context) }
+      .compactMap { $0.makeVisibilityAction(context: context) }
   }
 
   private func makeDisappearActions(
     context: DivBlockModelingContext
   ) -> [VisibilityAction] {
-    disappearActions?.map { $0.makeDisappearAction(context: context) } ?? []
+    disappearActions?
+      .compactMap { $0.makeDisappearAction(context: context) } ?? []
   }
 
   private func applyTransitioningAnimations(
@@ -221,7 +225,7 @@ extension DivBase {
     to block: Block,
     context: DivBlockModelingContext
   ) -> Block {
-    guard let backgrounds = backgrounds else {
+    guard let backgrounds else {
       return block
     }
 
@@ -309,7 +313,7 @@ extension LayoutTrait {
 
 extension DivBorder {
   fileprivate func resolveBorder(_ expressionResolver: ExpressionResolver) -> BlockBorder? {
-    guard let stroke = stroke else {
+    guard let stroke else {
       return nil
     }
     return BlockBorder(

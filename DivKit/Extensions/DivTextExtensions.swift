@@ -9,15 +9,24 @@ import NetworkingPublic
 
 extension DivText: DivBlockModeling {
   public func makeBlock(context: DivBlockModelingContext) throws -> Block {
-    try applyBaseProperties(
-      to: { try makeBaseBlock(context: context) },
+    let expressionResolver = context.expressionResolver
+    let lazyText = Lazy(getter: { [unowned self] in
+      resolveText(expressionResolver) ?? ""
+    })
+    return try applyBaseProperties(
+      to: { try makeBaseBlock(context: context, text: lazyText) },
       context: context,
       actionsHolder: self,
-      customA11yElement: resolveAccessibilityElement(context.expressionResolver)
+      customA11yDescriptionProvider: { [unowned self] in
+        accessibility?.resolveDescription(expressionResolver) ?? lazyText.value
+      }
     )
   }
 
-  private func makeBaseBlock(context: DivBlockModelingContext) throws -> Block {
+  private func makeBaseBlock(
+    context: DivBlockModelingContext,
+    text: Lazy<String>
+  ) throws -> Block {
     let expressionResolver = context.expressionResolver
 
     let font = context.fontProvider.font(
@@ -60,7 +69,7 @@ extension DivText: DivBlockModeling {
     }
 
     let attributedString = makeAttributedString(
-      text: resolveText(expressionResolver) ?? ("" as CFString),
+      text: text.value as CFString,
       typo: typo,
       ranges: ranges,
       actions: nil,
@@ -135,7 +144,7 @@ extension DivText: DivBlockModeling {
     images: [Image]?,
     text: NSAttributedString?
   ) -> [TextBlock.InlineImage] {
-    guard let text = text else {
+    guard let text else {
       return []
     }
     return (images ?? [])
@@ -206,7 +215,7 @@ extension DivText: DivBlockModeling {
   }
 
   private func resolveGradient(_ expressionResolver: ExpressionResolver) -> Gradient? {
-    guard let textGradient = textGradient else {
+    guard let textGradient else {
       return nil
     }
     switch textGradient {
@@ -224,25 +233,6 @@ extension DivText: DivBlockModeling {
       ).map { .radial($0) }
     }
   }
-
-  private func resolveAccessibilityElement(
-    _ expressionResolver: ExpressionResolver
-  ) -> AccessibilityElement? {
-    let accessibility = accessibility ?? DivAccessibility()
-    guard accessibility.resolveDescription(expressionResolver) == nil else {
-      return nil
-    }
-    return AccessibilityElement(
-      traits: accessibility.type?.cast() ?? .none,
-      strings: AccessibilityElement.Strings(
-        label: resolveText(expressionResolver) as String?,
-        hint: accessibility.resolveHint(expressionResolver),
-        value: accessibility.resolveStateDescription(expressionResolver),
-        identifier: id
-      ),
-      hideElementWithChildren: accessibility.resolveMode(expressionResolver).isExclude
-    )
-  }
 }
 
 extension CFMutableAttributedString {
@@ -250,7 +240,7 @@ extension CFMutableAttributedString {
     _ actions: [UserInterfaceAction]?,
     at range: CFRange
   ) {
-    if let actions = actions {
+    if let actions {
       ActionsAttribute(actions: actions).apply(to: self, at: range)
     }
   }

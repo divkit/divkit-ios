@@ -321,10 +321,6 @@ public final class DivKitComponents {
     timerStorage.set(cardId: cardId, timers: divData.timers ?? [])
   }
 
-  public func flushUpdateActions() {
-    updateAggregator.flushUpdateActions()
-  }
-
   private func onVariablesChanged(event: DivVariablesStorage.ChangeEvent) {
     switch event.kind {
     case let .global(variables):

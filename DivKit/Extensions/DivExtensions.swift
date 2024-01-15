@@ -25,42 +25,6 @@ extension Div {
 }
 
 extension Div {
-  func resolveA11yDescription(_ context: DivBlockModelingContext) -> String? {
-    let expressionResolver = context.expressionResolver
-    let accessibility = value.accessibility
-    guard accessibility?.resolveMode(expressionResolver) != .exclude else {
-      return nil
-    }
-    switch self {
-    case .divContainer,
-         .divCustom,
-         .divGallery,
-         .divGifImage,
-         .divGrid,
-         .divImage,
-         .divIndicator,
-         .divInput,
-         .divPager,
-         .divTabs,
-         .divSelect,
-         .divSeparator,
-         .divSlider,
-         .divVideo,
-         .divState:
-      return accessibility?.resolveDescription(expressionResolver)
-    case let .divText(divText):
-      let handlerDescription = context
-        .getExtensionHandlers(for: divText)
-        .compactMap { $0.accessibilityElement?.strings.label }
-        .reduce(nil) { $0?.appending(" " + $1) ?? $1 }
-      return handlerDescription ??
-        divText.accessibility?.resolveDescription(expressionResolver) ??
-        divText.resolveText(expressionResolver) as String?
-    }
-  }
-}
-
-extension Div {
   var isHorizontallyMatchParent: Bool {
     switch value.width {
     case .divMatchParentSize:
@@ -80,13 +44,13 @@ extension Div {
   }
 }
 
-extension Sequence where Element == Div {
+extension Sequence<Div> {
   var hasHorizontallyMatchParent: Bool {
     contains { $0.isHorizontallyMatchParent }
   }
 
   var allHorizontallyMatchParent: Bool {
-    allSatisfy { $0.isHorizontallyMatchParent }
+    allSatisfy(\.isHorizontallyMatchParent)
   }
 
   var hasVerticallyMatchParent: Bool {
@@ -94,6 +58,6 @@ extension Sequence where Element == Div {
   }
 
   var allVerticallyMatchParent: Bool {
-    allSatisfy { $0.isVerticallyMatchParent }
+    allSatisfy(\.isVerticallyMatchParent)
   }
 }

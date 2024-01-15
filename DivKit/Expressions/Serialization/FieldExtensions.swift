@@ -25,12 +25,9 @@ extension Field {
       valueForLink: { safeValueForLink(
         { try context.templateData.getField(
           $0,
-          transform: { expressionTransform(
-            $0,
-            transform: E.init(rawValue:),
-            validator: validator?.isValid
-          ) },
-          validator: nil
+          transform: {
+            expressionTransform($0, transform: E.init(rawValue:), validator: validator)
+          }
         ) },
         link: $0
       ) }
@@ -47,12 +44,9 @@ extension Field {
       valueForLink: { safeValueForLink(
         { try context.templateData.getField(
           $0,
-          transform: { expressionTransform(
-            $0,
-            transform: transform,
-            validator: validator?.isValid
-          ) },
-          validator: nil
+          transform: {
+            expressionTransform($0, transform: transform, validator: validator)
+          }
         ) },
         link: $0
       ) }
@@ -75,7 +69,7 @@ extension Field {
       return context.templateData.getArray(
         link,
         transform: { (value: U) in
-          expressionTransform(value, transform: transform, validator: nil)
+          expressionTransform(value, transform: transform)
         },
         validator: validator
       )
@@ -140,27 +134,5 @@ extension Field {
     case let .link(link):
       return valueForLink(link)
     }
-  }
-}
-
-extension Field where T == Expression<CFString> {
-  func resolveValue(
-    context: TemplatesContext,
-    validator: AnyValueValidator<CFString>? = nil
-  ) -> DeserializationResult<T> {
-    resolveExpression(
-      valueForLink: { safeValueForLink(
-        { try context.templateData.getField(
-          $0,
-          transform: { expressionTransform(
-            $0,
-            transform: { (rawValue: String) in safeCFCast(rawValue as CFTypeRef) },
-            validator: validator?.isValid
-          ) },
-          validator: nil
-        ) },
-        link: $0
-      ) }
-    )
   }
 }

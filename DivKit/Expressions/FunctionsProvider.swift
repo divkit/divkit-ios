@@ -27,7 +27,7 @@ final class FunctionsProvider {
       GetStoredValueFunctions.allCases.forEach {
         functions.put(
           $0.rawValue,
-          $0.getFunction { self.persistentValuesStorage.get(name: $0) }
+          $0.getFunction(persistentValuesStorage.get)
         )
       }
       return functions
@@ -47,7 +47,7 @@ private let staticFunctions: [AnyCalcExpression.Symbol: Function] = {
   return functions
 }()
 
-extension Dictionary where Key == AnyCalcExpression.Symbol, Value == Function {
+extension [AnyCalcExpression.Symbol: Function] {
   fileprivate mutating func put(_ name: String, _ function: Function) {
     self[.function(name, arity: function.arity)] = function
   }
