@@ -5,7 +5,7 @@ import PackageDescription
 let vgsl = (
   url: "https://github.com/yandex/vgsl.git",
   packageName: "vgsl",
-  version: Version("2.4.1")
+  version: Version("3.0.0")
 )
 
 let package = Package(
@@ -32,10 +32,7 @@ let package = Package(
         .product(name: "NetworkingPublic", package: vgsl.packageName),
         "Serialization",
       ],
-      path: "DivKit",
-      exclude: [
-        "generator_config.json",
-      ]
+      path: "DivKit"
     ),
     .target(
       name: "DivKitExtensions",
