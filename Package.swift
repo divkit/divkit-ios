@@ -44,6 +44,7 @@ let package = Package(
     .target(
       name: "LayoutKit",
       dependencies: [
+        .product(name: "NetworkingPublic", package: vgsl.packageName),
         .product(name: "CommonCorePublic", package: vgsl.packageName),
         "LayoutKitInterface",
       ],

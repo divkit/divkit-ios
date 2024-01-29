@@ -17,6 +17,7 @@ Pod::Spec.new do |s|
   
   s.dependency 'DivKit_LayoutKitInterface', s.version.to_s
   s.dependency 'VGSLCommonCore', '~> 3.0'
+  s.dependency 'VGSLNetworking', '~> 3.0'
 
   s.source_files = [
     'LayoutKit/LayoutKit/**/*'
