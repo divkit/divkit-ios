@@ -11,15 +11,11 @@ public final class DivActionArrayRemoveValueTemplate: TemplateValue {
   public let variableName: Field<Expression<String>>?
 
   public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
-    do {
-      self.init(
-        parent: try dictionary.getOptionalField("type"),
-        index: try dictionary.getOptionalExpressionField("index"),
-        variableName: try dictionary.getOptionalExpressionField("variable_name")
-      )
-    } catch let DeserializationError.invalidFieldRepresentation(field: field, representation: representation) {
-      throw DeserializationError.invalidFieldRepresentation(field: "div-action-array-remove-value_template." + field, representation: representation)
-    }
+    self.init(
+      parent: dictionary["type"] as? String,
+      index: dictionary.getOptionalExpressionField("index"),
+      variableName: dictionary.getOptionalExpressionField("variable_name")
+    )
   }
 
   init(
@@ -71,9 +67,9 @@ public final class DivActionArrayRemoveValueTemplate: TemplateValue {
       case "variable_name":
         variableNameValue = deserialize(__dictValue).merged(with: variableNameValue)
       case parent?.index?.link:
-        indexValue = indexValue.merged(with: deserialize(__dictValue))
+        indexValue = indexValue.merged(with: { deserialize(__dictValue) })
       case parent?.variableName?.link:
-        variableNameValue = variableNameValue.merged(with: deserialize(__dictValue))
+        variableNameValue = variableNameValue.merged(with: { deserialize(__dictValue) })
       default: break
       }
     }

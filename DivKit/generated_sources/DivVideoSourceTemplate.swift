@@ -12,15 +12,11 @@ public final class DivVideoSourceTemplate: TemplateValue {
     public let width: Field<Expression<Int>>? // constraint: number > 0
 
     public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
-      do {
-        self.init(
-          parent: try dictionary.getOptionalField("type"),
-          height: try dictionary.getOptionalExpressionField("height"),
-          width: try dictionary.getOptionalExpressionField("width")
-        )
-      } catch let DeserializationError.invalidFieldRepresentation(field: field, representation: representation) {
-        throw DeserializationError.invalidFieldRepresentation(field: "resolution_template." + field, representation: representation)
-      }
+      self.init(
+        parent: dictionary["type"] as? String,
+        height: dictionary.getOptionalExpressionField("height"),
+        width: dictionary.getOptionalExpressionField("width")
+      )
     }
 
     init(
@@ -72,9 +68,9 @@ public final class DivVideoSourceTemplate: TemplateValue {
         case "width":
           widthValue = deserialize(__dictValue, validator: ResolvedValue.widthValidator).merged(with: widthValue)
         case parent?.height?.link:
-          heightValue = heightValue.merged(with: deserialize(__dictValue, validator: ResolvedValue.heightValidator))
+          heightValue = heightValue.merged(with: { deserialize(__dictValue, validator: ResolvedValue.heightValidator) })
         case parent?.width?.link:
-          widthValue = widthValue.merged(with: deserialize(__dictValue, validator: ResolvedValue.widthValidator))
+          widthValue = widthValue.merged(with: { deserialize(__dictValue, validator: ResolvedValue.widthValidator) })
         default: break
         }
       }
@@ -128,17 +124,13 @@ public final class DivVideoSourceTemplate: TemplateValue {
   public let url: Field<Expression<URL>>?
 
   public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
-    do {
-      self.init(
-        parent: try dictionary.getOptionalField("type"),
-        bitrate: try dictionary.getOptionalExpressionField("bitrate"),
-        mimeType: try dictionary.getOptionalExpressionField("mime_type"),
-        resolution: try dictionary.getOptionalField("resolution", templateToType: templateToType),
-        url: try dictionary.getOptionalExpressionField("url", transform: URL.init(string:))
-      )
-    } catch let DeserializationError.invalidFieldRepresentation(field: field, representation: representation) {
-      throw DeserializationError.invalidFieldRepresentation(field: "div-video-source_template." + field, representation: representation)
-    }
+    self.init(
+      parent: dictionary["type"] as? String,
+      bitrate: dictionary.getOptionalExpressionField("bitrate"),
+      mimeType: dictionary.getOptionalExpressionField("mime_type"),
+      resolution: dictionary.getOptionalField("resolution", templateToType: templateToType),
+      url: dictionary.getOptionalExpressionField("url", transform: URL.init(string:))
+    )
   }
 
   init(
@@ -206,18 +198,18 @@ public final class DivVideoSourceTemplate: TemplateValue {
       case "url":
         urlValue = deserialize(__dictValue, transform: URL.init(string:)).merged(with: urlValue)
       case parent?.bitrate?.link:
-        bitrateValue = bitrateValue.merged(with: deserialize(__dictValue))
+        bitrateValue = bitrateValue.merged(with: { deserialize(__dictValue) })
       case parent?.mimeType?.link:
-        mimeTypeValue = mimeTypeValue.merged(with: deserialize(__dictValue))
+        mimeTypeValue = mimeTypeValue.merged(with: { deserialize(__dictValue) })
       case parent?.resolution?.link:
-        resolutionValue = resolutionValue.merged(with: deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivVideoSourceTemplate.ResolutionTemplate.self))
+        resolutionValue = resolutionValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivVideoSourceTemplate.ResolutionTemplate.self) })
       case parent?.url?.link:
-        urlValue = urlValue.merged(with: deserialize(__dictValue, transform: URL.init(string:)))
+        urlValue = urlValue.merged(with: { deserialize(__dictValue, transform: URL.init(string:)) })
       default: break
       }
     }
     if let parent = parent {
-      resolutionValue = resolutionValue.merged(with: parent.resolution?.resolveOptionalValue(context: context, useOnlyLinks: true))
+      resolutionValue = resolutionValue.merged(with: { parent.resolution?.resolveOptionalValue(context: context, useOnlyLinks: true) })
     }
     var errors = mergeErrors(
       bitrateValue.errorsOrWarnings?.map { .nestedObjectError(field: "bitrate", error: $0) },

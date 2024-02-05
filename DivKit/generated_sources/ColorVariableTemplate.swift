@@ -11,15 +11,11 @@ public final class ColorVariableTemplate: TemplateValue {
   public let value: Field<Color>?
 
   public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
-    do {
-      self.init(
-        parent: try dictionary.getOptionalField("type"),
-        name: try dictionary.getOptionalField("name"),
-        value: try dictionary.getOptionalField("value", transform: Color.color(withHexString:))
-      )
-    } catch let DeserializationError.invalidFieldRepresentation(field: field, representation: representation) {
-      throw DeserializationError.invalidFieldRepresentation(field: "color_variable_template." + field, representation: representation)
-    }
+    self.init(
+      parent: dictionary["type"] as? String,
+      name: dictionary.getOptionalField("name"),
+      value: dictionary.getOptionalField("value", transform: Color.color(withHexString:))
+    )
   }
 
   init(
@@ -71,9 +67,9 @@ public final class ColorVariableTemplate: TemplateValue {
       case "value":
         valueValue = deserialize(__dictValue, transform: Color.color(withHexString:)).merged(with: valueValue)
       case parent?.name?.link:
-        nameValue = nameValue.merged(with: deserialize(__dictValue))
+        nameValue = nameValue.merged(with: { deserialize(__dictValue) })
       case parent?.value?.link:
-        valueValue = valueValue.merged(with: deserialize(__dictValue, transform: Color.color(withHexString:)))
+        valueValue = valueValue.merged(with: { deserialize(__dictValue, transform: Color.color(withHexString:)) })
       default: break
       }
     }

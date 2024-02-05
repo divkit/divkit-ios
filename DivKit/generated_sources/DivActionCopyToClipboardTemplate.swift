@@ -10,14 +10,10 @@ public final class DivActionCopyToClipboardTemplate: TemplateValue {
   public let content: Field<DivActionCopyToClipboardContentTemplate>?
 
   public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
-    do {
-      self.init(
-        parent: try dictionary.getOptionalField("type"),
-        content: try dictionary.getOptionalField("content", templateToType: templateToType)
-      )
-    } catch let DeserializationError.invalidFieldRepresentation(field: field, representation: representation) {
-      throw DeserializationError.invalidFieldRepresentation(field: "div-action-copy-to-clipboard_template." + field, representation: representation)
-    }
+    self.init(
+      parent: dictionary["type"] as? String,
+      content: dictionary.getOptionalField("content", templateToType: templateToType)
+    )
   }
 
   init(
@@ -57,12 +53,12 @@ public final class DivActionCopyToClipboardTemplate: TemplateValue {
       case "content":
         contentValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivActionCopyToClipboardContentTemplate.self).merged(with: contentValue)
       case parent?.content?.link:
-        contentValue = contentValue.merged(with: deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivActionCopyToClipboardContentTemplate.self))
+        contentValue = contentValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivActionCopyToClipboardContentTemplate.self) })
       default: break
       }
     }
     if let parent = parent {
-      contentValue = contentValue.merged(with: parent.content?.resolveValue(context: context, useOnlyLinks: true))
+      contentValue = contentValue.merged(with: { parent.content?.resolveValue(context: context, useOnlyLinks: true) })
     }
     var errors = mergeErrors(
       contentValue.errorsOrWarnings?.map { .nestedObjectError(field: "content", error: $0) }

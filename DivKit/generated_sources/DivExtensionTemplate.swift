@@ -9,14 +9,10 @@ public final class DivExtensionTemplate: TemplateValue {
   public let params: Field<[String: Any]>?
 
   public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
-    do {
-      self.init(
-        id: try dictionary.getOptionalField("id"),
-        params: try dictionary.getOptionalField("params")
-      )
-    } catch let DeserializationError.invalidFieldRepresentation(field: field, representation: representation) {
-      throw DeserializationError.invalidFieldRepresentation(field: "div-extension_template." + field, representation: representation)
-    }
+    self.init(
+      id: dictionary.getOptionalField("id"),
+      params: dictionary.getOptionalField("params")
+    )
   }
 
   init(
@@ -62,9 +58,9 @@ public final class DivExtensionTemplate: TemplateValue {
       case "params":
         paramsValue = deserialize(__dictValue).merged(with: paramsValue)
       case parent?.id?.link:
-        idValue = idValue.merged(with: deserialize(__dictValue))
+        idValue = idValue.merged(with: { deserialize(__dictValue) })
       case parent?.params?.link:
-        paramsValue = paramsValue.merged(with: deserialize(__dictValue))
+        paramsValue = paramsValue.merged(with: { deserialize(__dictValue) })
       default: break
       }
     }

@@ -10,8 +10,8 @@ public final class DivTextRangeBorderTemplate: TemplateValue {
 
   public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
     self.init(
-      cornerRadius: try dictionary.getOptionalExpressionField("corner_radius"),
-      stroke: try dictionary.getOptionalField("stroke", templateToType: templateToType)
+      cornerRadius: dictionary.getOptionalExpressionField("corner_radius"),
+      stroke: dictionary.getOptionalField("stroke", templateToType: templateToType)
     )
   }
 
@@ -50,14 +50,14 @@ public final class DivTextRangeBorderTemplate: TemplateValue {
       case "stroke":
         strokeValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivStrokeTemplate.self).merged(with: strokeValue)
       case parent?.cornerRadius?.link:
-        cornerRadiusValue = cornerRadiusValue.merged(with: deserialize(__dictValue, validator: ResolvedValue.cornerRadiusValidator))
+        cornerRadiusValue = cornerRadiusValue.merged(with: { deserialize(__dictValue, validator: ResolvedValue.cornerRadiusValidator) })
       case parent?.stroke?.link:
-        strokeValue = strokeValue.merged(with: deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivStrokeTemplate.self))
+        strokeValue = strokeValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivStrokeTemplate.self) })
       default: break
       }
     }
     if let parent = parent {
-      strokeValue = strokeValue.merged(with: parent.stroke?.resolveOptionalValue(context: context, useOnlyLinks: true))
+      strokeValue = strokeValue.merged(with: { parent.stroke?.resolveOptionalValue(context: context, useOnlyLinks: true) })
     }
     let errors = mergeErrors(
       cornerRadiusValue.errorsOrWarnings?.map { .nestedObjectError(field: "corner_radius", error: $0) },

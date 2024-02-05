@@ -16,13 +16,13 @@ public final class DivScaleTransitionTemplate: TemplateValue {
 
   public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
     self.init(
-      parent: try dictionary.getOptionalField("type"),
-      duration: try dictionary.getOptionalExpressionField("duration"),
-      interpolator: try dictionary.getOptionalExpressionField("interpolator"),
-      pivotX: try dictionary.getOptionalExpressionField("pivot_x"),
-      pivotY: try dictionary.getOptionalExpressionField("pivot_y"),
-      scale: try dictionary.getOptionalExpressionField("scale"),
-      startDelay: try dictionary.getOptionalExpressionField("start_delay")
+      parent: dictionary["type"] as? String,
+      duration: dictionary.getOptionalExpressionField("duration"),
+      interpolator: dictionary.getOptionalExpressionField("interpolator"),
+      pivotX: dictionary.getOptionalExpressionField("pivot_x"),
+      pivotY: dictionary.getOptionalExpressionField("pivot_y"),
+      scale: dictionary.getOptionalExpressionField("scale"),
+      startDelay: dictionary.getOptionalExpressionField("start_delay")
     )
   }
 
@@ -95,17 +95,17 @@ public final class DivScaleTransitionTemplate: TemplateValue {
       case "start_delay":
         startDelayValue = deserialize(__dictValue, validator: ResolvedValue.startDelayValidator).merged(with: startDelayValue)
       case parent?.duration?.link:
-        durationValue = durationValue.merged(with: deserialize(__dictValue, validator: ResolvedValue.durationValidator))
+        durationValue = durationValue.merged(with: { deserialize(__dictValue, validator: ResolvedValue.durationValidator) })
       case parent?.interpolator?.link:
-        interpolatorValue = interpolatorValue.merged(with: deserialize(__dictValue))
+        interpolatorValue = interpolatorValue.merged(with: { deserialize(__dictValue) })
       case parent?.pivotX?.link:
-        pivotXValue = pivotXValue.merged(with: deserialize(__dictValue, validator: ResolvedValue.pivotXValidator))
+        pivotXValue = pivotXValue.merged(with: { deserialize(__dictValue, validator: ResolvedValue.pivotXValidator) })
       case parent?.pivotY?.link:
-        pivotYValue = pivotYValue.merged(with: deserialize(__dictValue, validator: ResolvedValue.pivotYValidator))
+        pivotYValue = pivotYValue.merged(with: { deserialize(__dictValue, validator: ResolvedValue.pivotYValidator) })
       case parent?.scale?.link:
-        scaleValue = scaleValue.merged(with: deserialize(__dictValue, validator: ResolvedValue.scaleValidator))
+        scaleValue = scaleValue.merged(with: { deserialize(__dictValue, validator: ResolvedValue.scaleValidator) })
       case parent?.startDelay?.link:
-        startDelayValue = startDelayValue.merged(with: deserialize(__dictValue, validator: ResolvedValue.startDelayValidator))
+        startDelayValue = startDelayValue.merged(with: { deserialize(__dictValue, validator: ResolvedValue.startDelayValidator) })
       default: break
       }
     }

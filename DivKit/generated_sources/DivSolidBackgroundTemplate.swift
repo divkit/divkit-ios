@@ -10,14 +10,10 @@ public final class DivSolidBackgroundTemplate: TemplateValue {
   public let color: Field<Expression<Color>>?
 
   public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
-    do {
-      self.init(
-        parent: try dictionary.getOptionalField("type"),
-        color: try dictionary.getOptionalExpressionField("color", transform: Color.color(withHexString:))
-      )
-    } catch let DeserializationError.invalidFieldRepresentation(field: field, representation: representation) {
-      throw DeserializationError.invalidFieldRepresentation(field: "div-solid-background_template." + field, representation: representation)
-    }
+    self.init(
+      parent: dictionary["type"] as? String,
+      color: dictionary.getOptionalExpressionField("color", transform: Color.color(withHexString:))
+    )
   }
 
   init(
@@ -57,7 +53,7 @@ public final class DivSolidBackgroundTemplate: TemplateValue {
       case "color":
         colorValue = deserialize(__dictValue, transform: Color.color(withHexString:)).merged(with: colorValue)
       case parent?.color?.link:
-        colorValue = colorValue.merged(with: deserialize(__dictValue, transform: Color.color(withHexString:)))
+        colorValue = colorValue.merged(with: { deserialize(__dictValue, transform: Color.color(withHexString:)) })
       default: break
       }
     }

@@ -11,15 +11,11 @@ public final class DivNinePatchBackgroundTemplate: TemplateValue {
   public let insets: Field<DivAbsoluteEdgeInsetsTemplate>?
 
   public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
-    do {
-      self.init(
-        parent: try dictionary.getOptionalField("type"),
-        imageUrl: try dictionary.getOptionalExpressionField("image_url", transform: URL.init(string:)),
-        insets: try dictionary.getOptionalField("insets", templateToType: templateToType)
-      )
-    } catch let DeserializationError.invalidFieldRepresentation(field: field, representation: representation) {
-      throw DeserializationError.invalidFieldRepresentation(field: "div-nine-patch-background_template." + field, representation: representation)
-    }
+    self.init(
+      parent: dictionary["type"] as? String,
+      imageUrl: dictionary.getOptionalExpressionField("image_url", transform: URL.init(string:)),
+      insets: dictionary.getOptionalField("insets", templateToType: templateToType)
+    )
   }
 
   init(
@@ -71,14 +67,14 @@ public final class DivNinePatchBackgroundTemplate: TemplateValue {
       case "insets":
         insetsValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivAbsoluteEdgeInsetsTemplate.self).merged(with: insetsValue)
       case parent?.imageUrl?.link:
-        imageUrlValue = imageUrlValue.merged(with: deserialize(__dictValue, transform: URL.init(string:)))
+        imageUrlValue = imageUrlValue.merged(with: { deserialize(__dictValue, transform: URL.init(string:)) })
       case parent?.insets?.link:
-        insetsValue = insetsValue.merged(with: deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivAbsoluteEdgeInsetsTemplate.self))
+        insetsValue = insetsValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivAbsoluteEdgeInsetsTemplate.self) })
       default: break
       }
     }
     if let parent = parent {
-      insetsValue = insetsValue.merged(with: parent.insets?.resolveValue(context: context, useOnlyLinks: true))
+      insetsValue = insetsValue.merged(with: { parent.insets?.resolveValue(context: context, useOnlyLinks: true) })
     }
     var errors = mergeErrors(
       imageUrlValue.errorsOrWarnings?.map { .nestedObjectError(field: "image_url", error: $0) },

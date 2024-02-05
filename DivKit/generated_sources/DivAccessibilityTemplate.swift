@@ -18,12 +18,12 @@ public final class DivAccessibilityTemplate: TemplateValue {
 
   public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
     self.init(
-      description: try dictionary.getOptionalExpressionField("description"),
-      hint: try dictionary.getOptionalExpressionField("hint"),
-      mode: try dictionary.getOptionalExpressionField("mode"),
-      muteAfterAction: try dictionary.getOptionalExpressionField("mute_after_action"),
-      stateDescription: try dictionary.getOptionalExpressionField("state_description"),
-      type: try dictionary.getOptionalField("type")
+      description: dictionary.getOptionalExpressionField("description"),
+      hint: dictionary.getOptionalExpressionField("hint"),
+      mode: dictionary.getOptionalExpressionField("mode"),
+      muteAfterAction: dictionary.getOptionalExpressionField("mute_after_action"),
+      stateDescription: dictionary.getOptionalExpressionField("state_description"),
+      type: dictionary.getOptionalField("type")
     )
   }
 
@@ -94,17 +94,17 @@ public final class DivAccessibilityTemplate: TemplateValue {
       case "type":
         typeValue = deserialize(__dictValue).merged(with: typeValue)
       case parent?.description?.link:
-        descriptionValue = descriptionValue.merged(with: deserialize(__dictValue))
+        descriptionValue = descriptionValue.merged(with: { deserialize(__dictValue) })
       case parent?.hint?.link:
-        hintValue = hintValue.merged(with: deserialize(__dictValue))
+        hintValue = hintValue.merged(with: { deserialize(__dictValue) })
       case parent?.mode?.link:
-        modeValue = modeValue.merged(with: deserialize(__dictValue))
+        modeValue = modeValue.merged(with: { deserialize(__dictValue) })
       case parent?.muteAfterAction?.link:
-        muteAfterActionValue = muteAfterActionValue.merged(with: deserialize(__dictValue))
+        muteAfterActionValue = muteAfterActionValue.merged(with: { deserialize(__dictValue) })
       case parent?.stateDescription?.link:
-        stateDescriptionValue = stateDescriptionValue.merged(with: deserialize(__dictValue))
+        stateDescriptionValue = stateDescriptionValue.merged(with: { deserialize(__dictValue) })
       case parent?.type?.link:
-        typeValue = typeValue.merged(with: deserialize(__dictValue))
+        typeValue = typeValue.merged(with: { deserialize(__dictValue) })
       default: break
       }
     }

@@ -11,15 +11,11 @@ public final class DivCurrencyInputMaskTemplate: TemplateValue {
   public let rawTextVariable: Field<String>?
 
   public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
-    do {
-      self.init(
-        parent: try dictionary.getOptionalField("type"),
-        locale: try dictionary.getOptionalExpressionField("locale"),
-        rawTextVariable: try dictionary.getOptionalField("raw_text_variable")
-      )
-    } catch let DeserializationError.invalidFieldRepresentation(field: field, representation: representation) {
-      throw DeserializationError.invalidFieldRepresentation(field: "div-currency-input-mask_template." + field, representation: representation)
-    }
+    self.init(
+      parent: dictionary["type"] as? String,
+      locale: dictionary.getOptionalExpressionField("locale"),
+      rawTextVariable: dictionary.getOptionalField("raw_text_variable")
+    )
   }
 
   init(
@@ -67,9 +63,9 @@ public final class DivCurrencyInputMaskTemplate: TemplateValue {
       case "raw_text_variable":
         rawTextVariableValue = deserialize(__dictValue).merged(with: rawTextVariableValue)
       case parent?.locale?.link:
-        localeValue = localeValue.merged(with: deserialize(__dictValue))
+        localeValue = localeValue.merged(with: { deserialize(__dictValue) })
       case parent?.rawTextVariable?.link:
-        rawTextVariableValue = rawTextVariableValue.merged(with: deserialize(__dictValue))
+        rawTextVariableValue = rawTextVariableValue.merged(with: { deserialize(__dictValue) })
       default: break
       }
     }

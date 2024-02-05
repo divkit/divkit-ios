@@ -11,15 +11,11 @@ public final class DivFixedSizeTemplate: TemplateValue {
   public let value: Field<Expression<Int>>? // constraint: number >= 0
 
   public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
-    do {
-      self.init(
-        parent: try dictionary.getOptionalField("type"),
-        unit: try dictionary.getOptionalExpressionField("unit"),
-        value: try dictionary.getOptionalExpressionField("value")
-      )
-    } catch let DeserializationError.invalidFieldRepresentation(field: field, representation: representation) {
-      throw DeserializationError.invalidFieldRepresentation(field: "div-fixed-size_template." + field, representation: representation)
-    }
+    self.init(
+      parent: dictionary["type"] as? String,
+      unit: dictionary.getOptionalExpressionField("unit"),
+      value: dictionary.getOptionalExpressionField("value")
+    )
   }
 
   init(
@@ -67,9 +63,9 @@ public final class DivFixedSizeTemplate: TemplateValue {
       case "value":
         valueValue = deserialize(__dictValue, validator: ResolvedValue.valueValidator).merged(with: valueValue)
       case parent?.unit?.link:
-        unitValue = unitValue.merged(with: deserialize(__dictValue))
+        unitValue = unitValue.merged(with: { deserialize(__dictValue) })
       case parent?.value?.link:
-        valueValue = valueValue.merged(with: deserialize(__dictValue, validator: ResolvedValue.valueValidator))
+        valueValue = valueValue.merged(with: { deserialize(__dictValue, validator: ResolvedValue.valueValidator) })
       default: break
       }
     }

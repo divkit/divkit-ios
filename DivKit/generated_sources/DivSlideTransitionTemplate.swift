@@ -17,12 +17,12 @@ public final class DivSlideTransitionTemplate: TemplateValue {
 
   public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
     self.init(
-      parent: try dictionary.getOptionalField("type"),
-      distance: try dictionary.getOptionalField("distance", templateToType: templateToType),
-      duration: try dictionary.getOptionalExpressionField("duration"),
-      edge: try dictionary.getOptionalExpressionField("edge"),
-      interpolator: try dictionary.getOptionalExpressionField("interpolator"),
-      startDelay: try dictionary.getOptionalExpressionField("start_delay")
+      parent: dictionary["type"] as? String,
+      distance: dictionary.getOptionalField("distance", templateToType: templateToType),
+      duration: dictionary.getOptionalExpressionField("duration"),
+      edge: dictionary.getOptionalExpressionField("edge"),
+      interpolator: dictionary.getOptionalExpressionField("interpolator"),
+      startDelay: dictionary.getOptionalExpressionField("start_delay")
     )
   }
 
@@ -87,20 +87,20 @@ public final class DivSlideTransitionTemplate: TemplateValue {
       case "start_delay":
         startDelayValue = deserialize(__dictValue, validator: ResolvedValue.startDelayValidator).merged(with: startDelayValue)
       case parent?.distance?.link:
-        distanceValue = distanceValue.merged(with: deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivDimensionTemplate.self))
+        distanceValue = distanceValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivDimensionTemplate.self) })
       case parent?.duration?.link:
-        durationValue = durationValue.merged(with: deserialize(__dictValue, validator: ResolvedValue.durationValidator))
+        durationValue = durationValue.merged(with: { deserialize(__dictValue, validator: ResolvedValue.durationValidator) })
       case parent?.edge?.link:
-        edgeValue = edgeValue.merged(with: deserialize(__dictValue))
+        edgeValue = edgeValue.merged(with: { deserialize(__dictValue) })
       case parent?.interpolator?.link:
-        interpolatorValue = interpolatorValue.merged(with: deserialize(__dictValue))
+        interpolatorValue = interpolatorValue.merged(with: { deserialize(__dictValue) })
       case parent?.startDelay?.link:
-        startDelayValue = startDelayValue.merged(with: deserialize(__dictValue, validator: ResolvedValue.startDelayValidator))
+        startDelayValue = startDelayValue.merged(with: { deserialize(__dictValue, validator: ResolvedValue.startDelayValidator) })
       default: break
       }
     }
     if let parent = parent {
-      distanceValue = distanceValue.merged(with: parent.distance?.resolveOptionalValue(context: context, useOnlyLinks: true))
+      distanceValue = distanceValue.merged(with: { parent.distance?.resolveOptionalValue(context: context, useOnlyLinks: true) })
     }
     let errors = mergeErrors(
       distanceValue.errorsOrWarnings?.map { .nestedObjectError(field: "distance", error: $0) },

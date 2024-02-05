@@ -11,15 +11,11 @@ public final class DivFixedLengthInputMaskTemplate: TemplateValue {
     public let regex: Field<Expression<String>>?
 
     public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
-      do {
-        self.init(
-          key: try dictionary.getOptionalExpressionField("key"),
-          placeholder: try dictionary.getOptionalExpressionField("placeholder"),
-          regex: try dictionary.getOptionalExpressionField("regex")
-        )
-      } catch let DeserializationError.invalidFieldRepresentation(field: field, representation: representation) {
-        throw DeserializationError.invalidFieldRepresentation(field: "pattern_element_template." + field, representation: representation)
-      }
+      self.init(
+        key: dictionary.getOptionalExpressionField("key"),
+        placeholder: dictionary.getOptionalExpressionField("placeholder"),
+        regex: dictionary.getOptionalExpressionField("regex")
+      )
     }
 
     init(
@@ -73,11 +69,11 @@ public final class DivFixedLengthInputMaskTemplate: TemplateValue {
         case "regex":
           regexValue = deserialize(__dictValue).merged(with: regexValue)
         case parent?.key?.link:
-          keyValue = keyValue.merged(with: deserialize(__dictValue, validator: ResolvedValue.keyValidator))
+          keyValue = keyValue.merged(with: { deserialize(__dictValue, validator: ResolvedValue.keyValidator) })
         case parent?.placeholder?.link:
-          placeholderValue = placeholderValue.merged(with: deserialize(__dictValue, validator: ResolvedValue.placeholderValidator))
+          placeholderValue = placeholderValue.merged(with: { deserialize(__dictValue, validator: ResolvedValue.placeholderValidator) })
         case parent?.regex?.link:
-          regexValue = regexValue.merged(with: deserialize(__dictValue))
+          regexValue = regexValue.merged(with: { deserialize(__dictValue) })
         default: break
         }
       }
@@ -119,17 +115,13 @@ public final class DivFixedLengthInputMaskTemplate: TemplateValue {
   public let rawTextVariable: Field<String>?
 
   public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
-    do {
-      self.init(
-        parent: try dictionary.getOptionalField("type"),
-        alwaysVisible: try dictionary.getOptionalExpressionField("always_visible"),
-        pattern: try dictionary.getOptionalExpressionField("pattern"),
-        patternElements: try dictionary.getOptionalArray("pattern_elements", templateToType: templateToType),
-        rawTextVariable: try dictionary.getOptionalField("raw_text_variable")
-      )
-    } catch let DeserializationError.invalidFieldRepresentation(field: field, representation: representation) {
-      throw DeserializationError.invalidFieldRepresentation(field: "div-fixed-length-input-mask_template." + field, representation: representation)
-    }
+    self.init(
+      parent: dictionary["type"] as? String,
+      alwaysVisible: dictionary.getOptionalExpressionField("always_visible"),
+      pattern: dictionary.getOptionalExpressionField("pattern"),
+      patternElements: dictionary.getOptionalArray("pattern_elements", templateToType: templateToType),
+      rawTextVariable: dictionary.getOptionalField("raw_text_variable")
+    )
   }
 
   init(
@@ -201,18 +193,18 @@ public final class DivFixedLengthInputMaskTemplate: TemplateValue {
       case "raw_text_variable":
         rawTextVariableValue = deserialize(__dictValue).merged(with: rawTextVariableValue)
       case parent?.alwaysVisible?.link:
-        alwaysVisibleValue = alwaysVisibleValue.merged(with: deserialize(__dictValue))
+        alwaysVisibleValue = alwaysVisibleValue.merged(with: { deserialize(__dictValue) })
       case parent?.pattern?.link:
-        patternValue = patternValue.merged(with: deserialize(__dictValue))
+        patternValue = patternValue.merged(with: { deserialize(__dictValue) })
       case parent?.patternElements?.link:
-        patternElementsValue = patternElementsValue.merged(with: deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, validator: ResolvedValue.patternElementsValidator, type: DivFixedLengthInputMaskTemplate.PatternElementTemplate.self))
+        patternElementsValue = patternElementsValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, validator: ResolvedValue.patternElementsValidator, type: DivFixedLengthInputMaskTemplate.PatternElementTemplate.self) })
       case parent?.rawTextVariable?.link:
-        rawTextVariableValue = rawTextVariableValue.merged(with: deserialize(__dictValue))
+        rawTextVariableValue = rawTextVariableValue.merged(with: { deserialize(__dictValue) })
       default: break
       }
     }
     if let parent = parent {
-      patternElementsValue = patternElementsValue.merged(with: parent.patternElements?.resolveValue(context: context, validator: ResolvedValue.patternElementsValidator, useOnlyLinks: true))
+      patternElementsValue = patternElementsValue.merged(with: { parent.patternElements?.resolveValue(context: context, validator: ResolvedValue.patternElementsValidator, useOnlyLinks: true) })
     }
     var errors = mergeErrors(
       alwaysVisibleValue.errorsOrWarnings?.map { .nestedObjectError(field: "always_visible", error: $0) },

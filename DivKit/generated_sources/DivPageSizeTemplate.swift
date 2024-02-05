@@ -10,14 +10,10 @@ public final class DivPageSizeTemplate: TemplateValue {
   public let pageWidth: Field<DivPercentageSizeTemplate>?
 
   public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
-    do {
-      self.init(
-        parent: try dictionary.getOptionalField("type"),
-        pageWidth: try dictionary.getOptionalField("page_width", templateToType: templateToType)
-      )
-    } catch let DeserializationError.invalidFieldRepresentation(field: field, representation: representation) {
-      throw DeserializationError.invalidFieldRepresentation(field: "div-page-size_template." + field, representation: representation)
-    }
+    self.init(
+      parent: dictionary["type"] as? String,
+      pageWidth: dictionary.getOptionalField("page_width", templateToType: templateToType)
+    )
   }
 
   init(
@@ -57,12 +53,12 @@ public final class DivPageSizeTemplate: TemplateValue {
       case "page_width":
         pageWidthValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivPercentageSizeTemplate.self).merged(with: pageWidthValue)
       case parent?.pageWidth?.link:
-        pageWidthValue = pageWidthValue.merged(with: deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivPercentageSizeTemplate.self))
+        pageWidthValue = pageWidthValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivPercentageSizeTemplate.self) })
       default: break
       }
     }
     if let parent = parent {
-      pageWidthValue = pageWidthValue.merged(with: parent.pageWidth?.resolveValue(context: context, useOnlyLinks: true))
+      pageWidthValue = pageWidthValue.merged(with: { parent.pageWidth?.resolveValue(context: context, useOnlyLinks: true) })
     }
     var errors = mergeErrors(
       pageWidthValue.errorsOrWarnings?.map { .nestedObjectError(field: "page_width", error: $0) }

@@ -12,10 +12,10 @@ public final class DivAbsoluteEdgeInsetsTemplate: TemplateValue {
 
   public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
     self.init(
-      bottom: try dictionary.getOptionalExpressionField("bottom"),
-      left: try dictionary.getOptionalExpressionField("left"),
-      right: try dictionary.getOptionalExpressionField("right"),
-      top: try dictionary.getOptionalExpressionField("top")
+      bottom: dictionary.getOptionalExpressionField("bottom"),
+      left: dictionary.getOptionalExpressionField("left"),
+      right: dictionary.getOptionalExpressionField("right"),
+      top: dictionary.getOptionalExpressionField("top")
     )
   }
 
@@ -70,13 +70,13 @@ public final class DivAbsoluteEdgeInsetsTemplate: TemplateValue {
       case "top":
         topValue = deserialize(__dictValue, validator: ResolvedValue.topValidator).merged(with: topValue)
       case parent?.bottom?.link:
-        bottomValue = bottomValue.merged(with: deserialize(__dictValue, validator: ResolvedValue.bottomValidator))
+        bottomValue = bottomValue.merged(with: { deserialize(__dictValue, validator: ResolvedValue.bottomValidator) })
       case parent?.left?.link:
-        leftValue = leftValue.merged(with: deserialize(__dictValue, validator: ResolvedValue.leftValidator))
+        leftValue = leftValue.merged(with: { deserialize(__dictValue, validator: ResolvedValue.leftValidator) })
       case parent?.right?.link:
-        rightValue = rightValue.merged(with: deserialize(__dictValue, validator: ResolvedValue.rightValidator))
+        rightValue = rightValue.merged(with: { deserialize(__dictValue, validator: ResolvedValue.rightValidator) })
       case parent?.top?.link:
-        topValue = topValue.merged(with: deserialize(__dictValue, validator: ResolvedValue.topValidator))
+        topValue = topValue.merged(with: { deserialize(__dictValue, validator: ResolvedValue.topValidator) })
       default: break
       }
     }

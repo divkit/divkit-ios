@@ -12,9 +12,9 @@ public final class DivPivotFixedTemplate: TemplateValue {
 
   public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
     self.init(
-      parent: try dictionary.getOptionalField("type"),
-      unit: try dictionary.getOptionalExpressionField("unit"),
-      value: try dictionary.getOptionalExpressionField("value")
+      parent: dictionary["type"] as? String,
+      unit: dictionary.getOptionalExpressionField("unit"),
+      value: dictionary.getOptionalExpressionField("value")
     )
   }
 
@@ -55,9 +55,9 @@ public final class DivPivotFixedTemplate: TemplateValue {
       case "value":
         valueValue = deserialize(__dictValue).merged(with: valueValue)
       case parent?.unit?.link:
-        unitValue = unitValue.merged(with: deserialize(__dictValue))
+        unitValue = unitValue.merged(with: { deserialize(__dictValue) })
       case parent?.value?.link:
-        valueValue = valueValue.merged(with: deserialize(__dictValue))
+        valueValue = valueValue.merged(with: { deserialize(__dictValue) })
       default: break
       }
     }

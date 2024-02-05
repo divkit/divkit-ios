@@ -10,14 +10,10 @@ public final class DivAppearanceSetTransitionTemplate: TemplateValue {
   public let items: Field<[DivAppearanceTransitionTemplate]>? // at least 1 elements
 
   public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
-    do {
-      self.init(
-        parent: try dictionary.getOptionalField("type"),
-        items: try dictionary.getOptionalArray("items", templateToType: templateToType)
-      )
-    } catch let DeserializationError.invalidFieldRepresentation(field: field, representation: representation) {
-      throw DeserializationError.invalidFieldRepresentation(field: "div-appearance-set-transition_template." + field, representation: representation)
-    }
+    self.init(
+      parent: dictionary["type"] as? String,
+      items: dictionary.getOptionalArray("items", templateToType: templateToType)
+    )
   }
 
   init(
@@ -57,12 +53,12 @@ public final class DivAppearanceSetTransitionTemplate: TemplateValue {
       case "items":
         itemsValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, validator: ResolvedValue.itemsValidator, type: DivAppearanceTransitionTemplate.self).merged(with: itemsValue)
       case parent?.items?.link:
-        itemsValue = itemsValue.merged(with: deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, validator: ResolvedValue.itemsValidator, type: DivAppearanceTransitionTemplate.self))
+        itemsValue = itemsValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, validator: ResolvedValue.itemsValidator, type: DivAppearanceTransitionTemplate.self) })
       default: break
       }
     }
     if let parent = parent {
-      itemsValue = itemsValue.merged(with: parent.items?.resolveValue(context: context, validator: ResolvedValue.itemsValidator, useOnlyLinks: true))
+      itemsValue = itemsValue.merged(with: { parent.items?.resolveValue(context: context, validator: ResolvedValue.itemsValidator, useOnlyLinks: true) })
     }
     var errors = mergeErrors(
       itemsValue.errorsOrWarnings?.map { .nestedObjectError(field: "items", error: $0) }

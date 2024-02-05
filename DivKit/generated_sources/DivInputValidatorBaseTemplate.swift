@@ -11,9 +11,9 @@ public final class DivInputValidatorBaseTemplate: TemplateValue {
 
   public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
     self.init(
-      allowEmpty: try dictionary.getOptionalExpressionField("allow_empty"),
-      labelId: try dictionary.getOptionalExpressionField("label_id"),
-      variable: try dictionary.getOptionalField("variable")
+      allowEmpty: dictionary.getOptionalExpressionField("allow_empty"),
+      labelId: dictionary.getOptionalExpressionField("label_id"),
+      variable: dictionary.getOptionalField("variable")
     )
   }
 
@@ -60,11 +60,11 @@ public final class DivInputValidatorBaseTemplate: TemplateValue {
       case "variable":
         variableValue = deserialize(__dictValue).merged(with: variableValue)
       case parent?.allowEmpty?.link:
-        allowEmptyValue = allowEmptyValue.merged(with: deserialize(__dictValue))
+        allowEmptyValue = allowEmptyValue.merged(with: { deserialize(__dictValue) })
       case parent?.labelId?.link:
-        labelIdValue = labelIdValue.merged(with: deserialize(__dictValue))
+        labelIdValue = labelIdValue.merged(with: { deserialize(__dictValue) })
       case parent?.variable?.link:
-        variableValue = variableValue.merged(with: deserialize(__dictValue))
+        variableValue = variableValue.merged(with: { deserialize(__dictValue) })
       default: break
       }
     }

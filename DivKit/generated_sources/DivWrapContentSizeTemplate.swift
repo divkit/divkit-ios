@@ -10,14 +10,10 @@ public final class DivWrapContentSizeTemplate: TemplateValue {
     public let value: Field<Expression<Int>>? // constraint: number >= 0
 
     public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
-      do {
-        self.init(
-          unit: try dictionary.getOptionalExpressionField("unit"),
-          value: try dictionary.getOptionalExpressionField("value")
-        )
-      } catch let DeserializationError.invalidFieldRepresentation(field: field, representation: representation) {
-        throw DeserializationError.invalidFieldRepresentation(field: "constraint_size_template." + field, representation: representation)
-      }
+      self.init(
+        unit: dictionary.getOptionalExpressionField("unit"),
+        value: dictionary.getOptionalExpressionField("value")
+      )
     }
 
     init(
@@ -63,9 +59,9 @@ public final class DivWrapContentSizeTemplate: TemplateValue {
         case "value":
           valueValue = deserialize(__dictValue, validator: ResolvedValue.valueValidator).merged(with: valueValue)
         case parent?.unit?.link:
-          unitValue = unitValue.merged(with: deserialize(__dictValue))
+          unitValue = unitValue.merged(with: { deserialize(__dictValue) })
         case parent?.value?.link:
-          valueValue = valueValue.merged(with: deserialize(__dictValue, validator: ResolvedValue.valueValidator))
+          valueValue = valueValue.merged(with: { deserialize(__dictValue, validator: ResolvedValue.valueValidator) })
         default: break
         }
       }
@@ -105,10 +101,10 @@ public final class DivWrapContentSizeTemplate: TemplateValue {
 
   public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
     self.init(
-      parent: try dictionary.getOptionalField("type"),
-      constrained: try dictionary.getOptionalExpressionField("constrained"),
-      maxSize: try dictionary.getOptionalField("max_size", templateToType: templateToType),
-      minSize: try dictionary.getOptionalField("min_size", templateToType: templateToType)
+      parent: dictionary["type"] as? String,
+      constrained: dictionary.getOptionalExpressionField("constrained"),
+      maxSize: dictionary.getOptionalField("max_size", templateToType: templateToType),
+      minSize: dictionary.getOptionalField("min_size", templateToType: templateToType)
     )
   }
 
@@ -157,17 +153,17 @@ public final class DivWrapContentSizeTemplate: TemplateValue {
       case "min_size":
         minSizeValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivWrapContentSizeTemplate.ConstraintSizeTemplate.self).merged(with: minSizeValue)
       case parent?.constrained?.link:
-        constrainedValue = constrainedValue.merged(with: deserialize(__dictValue))
+        constrainedValue = constrainedValue.merged(with: { deserialize(__dictValue) })
       case parent?.maxSize?.link:
-        maxSizeValue = maxSizeValue.merged(with: deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivWrapContentSizeTemplate.ConstraintSizeTemplate.self))
+        maxSizeValue = maxSizeValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivWrapContentSizeTemplate.ConstraintSizeTemplate.self) })
       case parent?.minSize?.link:
-        minSizeValue = minSizeValue.merged(with: deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivWrapContentSizeTemplate.ConstraintSizeTemplate.self))
+        minSizeValue = minSizeValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivWrapContentSizeTemplate.ConstraintSizeTemplate.self) })
       default: break
       }
     }
     if let parent = parent {
-      maxSizeValue = maxSizeValue.merged(with: parent.maxSize?.resolveOptionalValue(context: context, useOnlyLinks: true))
-      minSizeValue = minSizeValue.merged(with: parent.minSize?.resolveOptionalValue(context: context, useOnlyLinks: true))
+      maxSizeValue = maxSizeValue.merged(with: { parent.maxSize?.resolveOptionalValue(context: context, useOnlyLinks: true) })
+      minSizeValue = minSizeValue.merged(with: { parent.minSize?.resolveOptionalValue(context: context, useOnlyLinks: true) })
     }
     let errors = mergeErrors(
       constrainedValue.errorsOrWarnings?.map { .nestedObjectError(field: "constrained", error: $0) },

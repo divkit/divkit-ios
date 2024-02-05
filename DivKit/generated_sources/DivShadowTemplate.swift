@@ -11,16 +11,12 @@ public final class DivShadowTemplate: TemplateValue {
   public let offset: Field<DivPointTemplate>?
 
   public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
-    do {
-      self.init(
-        alpha: try dictionary.getOptionalExpressionField("alpha"),
-        blur: try dictionary.getOptionalExpressionField("blur"),
-        color: try dictionary.getOptionalExpressionField("color", transform: Color.color(withHexString:)),
-        offset: try dictionary.getOptionalField("offset", templateToType: templateToType)
-      )
-    } catch let DeserializationError.invalidFieldRepresentation(field: field, representation: representation) {
-      throw DeserializationError.invalidFieldRepresentation(field: "div-shadow_template." + field, representation: representation)
-    }
+    self.init(
+      alpha: dictionary.getOptionalExpressionField("alpha"),
+      blur: dictionary.getOptionalExpressionField("blur"),
+      color: dictionary.getOptionalExpressionField("color", transform: Color.color(withHexString:)),
+      offset: dictionary.getOptionalField("offset", templateToType: templateToType)
+    )
   }
 
   init(
@@ -82,18 +78,18 @@ public final class DivShadowTemplate: TemplateValue {
       case "offset":
         offsetValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivPointTemplate.self).merged(with: offsetValue)
       case parent?.alpha?.link:
-        alphaValue = alphaValue.merged(with: deserialize(__dictValue, validator: ResolvedValue.alphaValidator))
+        alphaValue = alphaValue.merged(with: { deserialize(__dictValue, validator: ResolvedValue.alphaValidator) })
       case parent?.blur?.link:
-        blurValue = blurValue.merged(with: deserialize(__dictValue, validator: ResolvedValue.blurValidator))
+        blurValue = blurValue.merged(with: { deserialize(__dictValue, validator: ResolvedValue.blurValidator) })
       case parent?.color?.link:
-        colorValue = colorValue.merged(with: deserialize(__dictValue, transform: Color.color(withHexString:)))
+        colorValue = colorValue.merged(with: { deserialize(__dictValue, transform: Color.color(withHexString:)) })
       case parent?.offset?.link:
-        offsetValue = offsetValue.merged(with: deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivPointTemplate.self))
+        offsetValue = offsetValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivPointTemplate.self) })
       default: break
       }
     }
     if let parent = parent {
-      offsetValue = offsetValue.merged(with: parent.offset?.resolveValue(context: context, useOnlyLinks: true))
+      offsetValue = offsetValue.merged(with: { parent.offset?.resolveValue(context: context, useOnlyLinks: true) })
     }
     var errors = mergeErrors(
       alphaValue.errorsOrWarnings?.map { .nestedObjectError(field: "alpha", error: $0) },

@@ -13,17 +13,13 @@ public final class DivRadialGradientTemplate: TemplateValue {
   public let radius: Field<DivRadialGradientRadiusTemplate>? // default value: .divRadialGradientRelativeRadius(DivRadialGradientRelativeRadius(value: .value(.farthestCorner)))
 
   public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
-    do {
-      self.init(
-        parent: try dictionary.getOptionalField("type"),
-        centerX: try dictionary.getOptionalField("center_x", templateToType: templateToType),
-        centerY: try dictionary.getOptionalField("center_y", templateToType: templateToType),
-        colors: try dictionary.getOptionalExpressionArray("colors", transform: Color.color(withHexString:)),
-        radius: try dictionary.getOptionalField("radius", templateToType: templateToType)
-      )
-    } catch let DeserializationError.invalidFieldRepresentation(field: field, representation: representation) {
-      throw DeserializationError.invalidFieldRepresentation(field: "div-radial-gradient_template." + field, representation: representation)
-    }
+    self.init(
+      parent: dictionary["type"] as? String,
+      centerX: dictionary.getOptionalField("center_x", templateToType: templateToType),
+      centerY: dictionary.getOptionalField("center_y", templateToType: templateToType),
+      colors: dictionary.getOptionalExpressionArray("colors", transform: Color.color(withHexString:)),
+      radius: dictionary.getOptionalField("radius", templateToType: templateToType)
+    )
   }
 
   init(
@@ -87,20 +83,20 @@ public final class DivRadialGradientTemplate: TemplateValue {
       case "radius":
         radiusValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivRadialGradientRadiusTemplate.self).merged(with: radiusValue)
       case parent?.centerX?.link:
-        centerXValue = centerXValue.merged(with: deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivRadialGradientCenterTemplate.self))
+        centerXValue = centerXValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivRadialGradientCenterTemplate.self) })
       case parent?.centerY?.link:
-        centerYValue = centerYValue.merged(with: deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivRadialGradientCenterTemplate.self))
+        centerYValue = centerYValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivRadialGradientCenterTemplate.self) })
       case parent?.colors?.link:
-        colorsValue = colorsValue.merged(with: deserialize(__dictValue, transform: Color.color(withHexString:), validator: ResolvedValue.colorsValidator))
+        colorsValue = colorsValue.merged(with: { deserialize(__dictValue, transform: Color.color(withHexString:), validator: ResolvedValue.colorsValidator) })
       case parent?.radius?.link:
-        radiusValue = radiusValue.merged(with: deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivRadialGradientRadiusTemplate.self))
+        radiusValue = radiusValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivRadialGradientRadiusTemplate.self) })
       default: break
       }
     }
     if let parent = parent {
-      centerXValue = centerXValue.merged(with: parent.centerX?.resolveOptionalValue(context: context, useOnlyLinks: true))
-      centerYValue = centerYValue.merged(with: parent.centerY?.resolveOptionalValue(context: context, useOnlyLinks: true))
-      radiusValue = radiusValue.merged(with: parent.radius?.resolveOptionalValue(context: context, useOnlyLinks: true))
+      centerXValue = centerXValue.merged(with: { parent.centerX?.resolveOptionalValue(context: context, useOnlyLinks: true) })
+      centerYValue = centerYValue.merged(with: { parent.centerY?.resolveOptionalValue(context: context, useOnlyLinks: true) })
+      radiusValue = radiusValue.merged(with: { parent.radius?.resolveOptionalValue(context: context, useOnlyLinks: true) })
     }
     var errors = mergeErrors(
       centerXValue.errorsOrWarnings?.map { .nestedObjectError(field: "center_x", error: $0) },

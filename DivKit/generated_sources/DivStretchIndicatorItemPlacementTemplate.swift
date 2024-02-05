@@ -12,9 +12,9 @@ public final class DivStretchIndicatorItemPlacementTemplate: TemplateValue {
 
   public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
     self.init(
-      parent: try dictionary.getOptionalField("type"),
-      itemSpacing: try dictionary.getOptionalField("item_spacing", templateToType: templateToType),
-      maxVisibleItems: try dictionary.getOptionalExpressionField("max_visible_items")
+      parent: dictionary["type"] as? String,
+      itemSpacing: dictionary.getOptionalField("item_spacing", templateToType: templateToType),
+      maxVisibleItems: dictionary.getOptionalExpressionField("max_visible_items")
     )
   }
 
@@ -55,14 +55,14 @@ public final class DivStretchIndicatorItemPlacementTemplate: TemplateValue {
       case "max_visible_items":
         maxVisibleItemsValue = deserialize(__dictValue, validator: ResolvedValue.maxVisibleItemsValidator).merged(with: maxVisibleItemsValue)
       case parent?.itemSpacing?.link:
-        itemSpacingValue = itemSpacingValue.merged(with: deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivFixedSizeTemplate.self))
+        itemSpacingValue = itemSpacingValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivFixedSizeTemplate.self) })
       case parent?.maxVisibleItems?.link:
-        maxVisibleItemsValue = maxVisibleItemsValue.merged(with: deserialize(__dictValue, validator: ResolvedValue.maxVisibleItemsValidator))
+        maxVisibleItemsValue = maxVisibleItemsValue.merged(with: { deserialize(__dictValue, validator: ResolvedValue.maxVisibleItemsValidator) })
       default: break
       }
     }
     if let parent = parent {
-      itemSpacingValue = itemSpacingValue.merged(with: parent.itemSpacing?.resolveOptionalValue(context: context, useOnlyLinks: true))
+      itemSpacingValue = itemSpacingValue.merged(with: { parent.itemSpacing?.resolveOptionalValue(context: context, useOnlyLinks: true) })
     }
     let errors = mergeErrors(
       itemSpacingValue.errorsOrWarnings?.map { .nestedObjectError(field: "item_spacing", error: $0) },

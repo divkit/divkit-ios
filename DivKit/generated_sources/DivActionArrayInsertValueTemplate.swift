@@ -12,16 +12,12 @@ public final class DivActionArrayInsertValueTemplate: TemplateValue {
   public let variableName: Field<Expression<String>>?
 
   public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
-    do {
-      self.init(
-        parent: try dictionary.getOptionalField("type"),
-        index: try dictionary.getOptionalExpressionField("index"),
-        value: try dictionary.getOptionalField("value", templateToType: templateToType),
-        variableName: try dictionary.getOptionalExpressionField("variable_name")
-      )
-    } catch let DeserializationError.invalidFieldRepresentation(field: field, representation: representation) {
-      throw DeserializationError.invalidFieldRepresentation(field: "div-action-array-insert-value_template." + field, representation: representation)
-    }
+    self.init(
+      parent: dictionary["type"] as? String,
+      index: dictionary.getOptionalExpressionField("index"),
+      value: dictionary.getOptionalField("value", templateToType: templateToType),
+      variableName: dictionary.getOptionalExpressionField("variable_name")
+    )
   }
 
   init(
@@ -81,16 +77,16 @@ public final class DivActionArrayInsertValueTemplate: TemplateValue {
       case "variable_name":
         variableNameValue = deserialize(__dictValue).merged(with: variableNameValue)
       case parent?.index?.link:
-        indexValue = indexValue.merged(with: deserialize(__dictValue))
+        indexValue = indexValue.merged(with: { deserialize(__dictValue) })
       case parent?.value?.link:
-        valueValue = valueValue.merged(with: deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivTypedValueTemplate.self))
+        valueValue = valueValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivTypedValueTemplate.self) })
       case parent?.variableName?.link:
-        variableNameValue = variableNameValue.merged(with: deserialize(__dictValue))
+        variableNameValue = variableNameValue.merged(with: { deserialize(__dictValue) })
       default: break
       }
     }
     if let parent = parent {
-      valueValue = valueValue.merged(with: parent.value?.resolveValue(context: context, useOnlyLinks: true))
+      valueValue = valueValue.merged(with: { parent.value?.resolveValue(context: context, useOnlyLinks: true) })
     }
     var errors = mergeErrors(
       indexValue.errorsOrWarnings?.map { .nestedObjectError(field: "index", error: $0) },

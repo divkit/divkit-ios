@@ -16,20 +16,16 @@ public final class DivImageBackgroundTemplate: TemplateValue {
   public let scale: Field<Expression<DivImageScale>>? // default value: fill
 
   public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
-    do {
-      self.init(
-        parent: try dictionary.getOptionalField("type"),
-        alpha: try dictionary.getOptionalExpressionField("alpha"),
-        contentAlignmentHorizontal: try dictionary.getOptionalExpressionField("content_alignment_horizontal"),
-        contentAlignmentVertical: try dictionary.getOptionalExpressionField("content_alignment_vertical"),
-        filters: try dictionary.getOptionalArray("filters", templateToType: templateToType),
-        imageUrl: try dictionary.getOptionalExpressionField("image_url", transform: URL.init(string:)),
-        preloadRequired: try dictionary.getOptionalExpressionField("preload_required"),
-        scale: try dictionary.getOptionalExpressionField("scale")
-      )
-    } catch let DeserializationError.invalidFieldRepresentation(field: field, representation: representation) {
-      throw DeserializationError.invalidFieldRepresentation(field: "div-image-background_template." + field, representation: representation)
-    }
+    self.init(
+      parent: dictionary["type"] as? String,
+      alpha: dictionary.getOptionalExpressionField("alpha"),
+      contentAlignmentHorizontal: dictionary.getOptionalExpressionField("content_alignment_horizontal"),
+      contentAlignmentVertical: dictionary.getOptionalExpressionField("content_alignment_vertical"),
+      filters: dictionary.getOptionalArray("filters", templateToType: templateToType),
+      imageUrl: dictionary.getOptionalExpressionField("image_url", transform: URL.init(string:)),
+      preloadRequired: dictionary.getOptionalExpressionField("preload_required"),
+      scale: dictionary.getOptionalExpressionField("scale")
+    )
   }
 
   init(
@@ -117,24 +113,24 @@ public final class DivImageBackgroundTemplate: TemplateValue {
       case "scale":
         scaleValue = deserialize(__dictValue).merged(with: scaleValue)
       case parent?.alpha?.link:
-        alphaValue = alphaValue.merged(with: deserialize(__dictValue, validator: ResolvedValue.alphaValidator))
+        alphaValue = alphaValue.merged(with: { deserialize(__dictValue, validator: ResolvedValue.alphaValidator) })
       case parent?.contentAlignmentHorizontal?.link:
-        contentAlignmentHorizontalValue = contentAlignmentHorizontalValue.merged(with: deserialize(__dictValue))
+        contentAlignmentHorizontalValue = contentAlignmentHorizontalValue.merged(with: { deserialize(__dictValue) })
       case parent?.contentAlignmentVertical?.link:
-        contentAlignmentVerticalValue = contentAlignmentVerticalValue.merged(with: deserialize(__dictValue))
+        contentAlignmentVerticalValue = contentAlignmentVerticalValue.merged(with: { deserialize(__dictValue) })
       case parent?.filters?.link:
-        filtersValue = filtersValue.merged(with: deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivFilterTemplate.self))
+        filtersValue = filtersValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivFilterTemplate.self) })
       case parent?.imageUrl?.link:
-        imageUrlValue = imageUrlValue.merged(with: deserialize(__dictValue, transform: URL.init(string:)))
+        imageUrlValue = imageUrlValue.merged(with: { deserialize(__dictValue, transform: URL.init(string:)) })
       case parent?.preloadRequired?.link:
-        preloadRequiredValue = preloadRequiredValue.merged(with: deserialize(__dictValue))
+        preloadRequiredValue = preloadRequiredValue.merged(with: { deserialize(__dictValue) })
       case parent?.scale?.link:
-        scaleValue = scaleValue.merged(with: deserialize(__dictValue))
+        scaleValue = scaleValue.merged(with: { deserialize(__dictValue) })
       default: break
       }
     }
     if let parent = parent {
-      filtersValue = filtersValue.merged(with: parent.filters?.resolveOptionalValue(context: context, useOnlyLinks: true))
+      filtersValue = filtersValue.merged(with: { parent.filters?.resolveOptionalValue(context: context, useOnlyLinks: true) })
     }
     var errors = mergeErrors(
       alphaValue.errorsOrWarnings?.map { .nestedObjectError(field: "alpha", error: $0) },

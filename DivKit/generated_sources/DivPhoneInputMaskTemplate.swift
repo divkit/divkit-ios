@@ -10,14 +10,10 @@ public final class DivPhoneInputMaskTemplate: TemplateValue {
   public let rawTextVariable: Field<String>?
 
   public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
-    do {
-      self.init(
-        parent: try dictionary.getOptionalField("type"),
-        rawTextVariable: try dictionary.getOptionalField("raw_text_variable")
-      )
-    } catch let DeserializationError.invalidFieldRepresentation(field: field, representation: representation) {
-      throw DeserializationError.invalidFieldRepresentation(field: "div-phone-input-mask_template." + field, representation: representation)
-    }
+    self.init(
+      parent: dictionary["type"] as? String,
+      rawTextVariable: dictionary.getOptionalField("raw_text_variable")
+    )
   }
 
   init(
@@ -57,7 +53,7 @@ public final class DivPhoneInputMaskTemplate: TemplateValue {
       case "raw_text_variable":
         rawTextVariableValue = deserialize(__dictValue).merged(with: rawTextVariableValue)
       case parent?.rawTextVariable?.link:
-        rawTextVariableValue = rawTextVariableValue.merged(with: deserialize(__dictValue))
+        rawTextVariableValue = rawTextVariableValue.merged(with: { deserialize(__dictValue) })
       default: break
       }
     }

@@ -11,8 +11,8 @@ public final class DivDefaultIndicatorItemPlacementTemplate: TemplateValue {
 
   public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
     self.init(
-      parent: try dictionary.getOptionalField("type"),
-      spaceBetweenCenters: try dictionary.getOptionalField("space_between_centers", templateToType: templateToType)
+      parent: dictionary["type"] as? String,
+      spaceBetweenCenters: dictionary.getOptionalField("space_between_centers", templateToType: templateToType)
     )
   }
 
@@ -45,12 +45,12 @@ public final class DivDefaultIndicatorItemPlacementTemplate: TemplateValue {
       case "space_between_centers":
         spaceBetweenCentersValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivFixedSizeTemplate.self).merged(with: spaceBetweenCentersValue)
       case parent?.spaceBetweenCenters?.link:
-        spaceBetweenCentersValue = spaceBetweenCentersValue.merged(with: deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivFixedSizeTemplate.self))
+        spaceBetweenCentersValue = spaceBetweenCentersValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivFixedSizeTemplate.self) })
       default: break
       }
     }
     if let parent = parent {
-      spaceBetweenCentersValue = spaceBetweenCentersValue.merged(with: parent.spaceBetweenCenters?.resolveOptionalValue(context: context, useOnlyLinks: true))
+      spaceBetweenCentersValue = spaceBetweenCentersValue.merged(with: { parent.spaceBetweenCenters?.resolveOptionalValue(context: context, useOnlyLinks: true) })
     }
     let errors = mergeErrors(
       spaceBetweenCentersValue.errorsOrWarnings?.map { .nestedObjectError(field: "space_between_centers", error: $0) }

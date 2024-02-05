@@ -10,15 +10,11 @@ public final class DivStrokeTemplate: TemplateValue {
   public let width: Field<Expression<Int>>? // constraint: number >= 0; default value: 1
 
   public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
-    do {
-      self.init(
-        color: try dictionary.getOptionalExpressionField("color", transform: Color.color(withHexString:)),
-        unit: try dictionary.getOptionalExpressionField("unit"),
-        width: try dictionary.getOptionalExpressionField("width")
-      )
-    } catch let DeserializationError.invalidFieldRepresentation(field: field, representation: representation) {
-      throw DeserializationError.invalidFieldRepresentation(field: "div-stroke_template." + field, representation: representation)
-    }
+    self.init(
+      color: dictionary.getOptionalExpressionField("color", transform: Color.color(withHexString:)),
+      unit: dictionary.getOptionalExpressionField("unit"),
+      width: dictionary.getOptionalExpressionField("width")
+    )
   }
 
   init(
@@ -72,11 +68,11 @@ public final class DivStrokeTemplate: TemplateValue {
       case "width":
         widthValue = deserialize(__dictValue, validator: ResolvedValue.widthValidator).merged(with: widthValue)
       case parent?.color?.link:
-        colorValue = colorValue.merged(with: deserialize(__dictValue, transform: Color.color(withHexString:)))
+        colorValue = colorValue.merged(with: { deserialize(__dictValue, transform: Color.color(withHexString:)) })
       case parent?.unit?.link:
-        unitValue = unitValue.merged(with: deserialize(__dictValue))
+        unitValue = unitValue.merged(with: { deserialize(__dictValue) })
       case parent?.width?.link:
-        widthValue = widthValue.merged(with: deserialize(__dictValue, validator: ResolvedValue.widthValidator))
+        widthValue = widthValue.merged(with: { deserialize(__dictValue, validator: ResolvedValue.widthValidator) })
       default: break
       }
     }

@@ -10,14 +10,10 @@ public final class DivNeighbourPageSizeTemplate: TemplateValue {
   public let neighbourPageWidth: Field<DivFixedSizeTemplate>?
 
   public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
-    do {
-      self.init(
-        parent: try dictionary.getOptionalField("type"),
-        neighbourPageWidth: try dictionary.getOptionalField("neighbour_page_width", templateToType: templateToType)
-      )
-    } catch let DeserializationError.invalidFieldRepresentation(field: field, representation: representation) {
-      throw DeserializationError.invalidFieldRepresentation(field: "div-neighbour-page-size_template." + field, representation: representation)
-    }
+    self.init(
+      parent: dictionary["type"] as? String,
+      neighbourPageWidth: dictionary.getOptionalField("neighbour_page_width", templateToType: templateToType)
+    )
   }
 
   init(
@@ -57,12 +53,12 @@ public final class DivNeighbourPageSizeTemplate: TemplateValue {
       case "neighbour_page_width":
         neighbourPageWidthValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivFixedSizeTemplate.self).merged(with: neighbourPageWidthValue)
       case parent?.neighbourPageWidth?.link:
-        neighbourPageWidthValue = neighbourPageWidthValue.merged(with: deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivFixedSizeTemplate.self))
+        neighbourPageWidthValue = neighbourPageWidthValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivFixedSizeTemplate.self) })
       default: break
       }
     }
     if let parent = parent {
-      neighbourPageWidthValue = neighbourPageWidthValue.merged(with: parent.neighbourPageWidth?.resolveValue(context: context, useOnlyLinks: true))
+      neighbourPageWidthValue = neighbourPageWidthValue.merged(with: { parent.neighbourPageWidth?.resolveValue(context: context, useOnlyLinks: true) })
     }
     var errors = mergeErrors(
       neighbourPageWidthValue.errorsOrWarnings?.map { .nestedObjectError(field: "neighbour_page_width", error: $0) }

@@ -11,15 +11,11 @@ public final class BooleanVariableTemplate: TemplateValue {
   public let value: Field<Bool>?
 
   public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
-    do {
-      self.init(
-        parent: try dictionary.getOptionalField("type"),
-        name: try dictionary.getOptionalField("name"),
-        value: try dictionary.getOptionalField("value")
-      )
-    } catch let DeserializationError.invalidFieldRepresentation(field: field, representation: representation) {
-      throw DeserializationError.invalidFieldRepresentation(field: "boolean_variable_template." + field, representation: representation)
-    }
+    self.init(
+      parent: dictionary["type"] as? String,
+      name: dictionary.getOptionalField("name"),
+      value: dictionary.getOptionalField("value")
+    )
   }
 
   init(
@@ -71,9 +67,9 @@ public final class BooleanVariableTemplate: TemplateValue {
       case "value":
         valueValue = deserialize(__dictValue).merged(with: valueValue)
       case parent?.name?.link:
-        nameValue = nameValue.merged(with: deserialize(__dictValue))
+        nameValue = nameValue.merged(with: { deserialize(__dictValue) })
       case parent?.value?.link:
-        valueValue = valueValue.merged(with: deserialize(__dictValue))
+        valueValue = valueValue.merged(with: { deserialize(__dictValue) })
       default: break
       }
     }

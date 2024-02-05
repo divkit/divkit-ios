@@ -11,15 +11,11 @@ public final class DivActionTemplate: TemplateValue {
     public let text: Field<Expression<String>>?
 
     public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
-      do {
-        self.init(
-          action: try dictionary.getOptionalField("action", templateToType: templateToType),
-          actions: try dictionary.getOptionalArray("actions", templateToType: templateToType),
-          text: try dictionary.getOptionalExpressionField("text")
-        )
-      } catch let DeserializationError.invalidFieldRepresentation(field: field, representation: representation) {
-        throw DeserializationError.invalidFieldRepresentation(field: "menu_item_template." + field, representation: representation)
-      }
+      self.init(
+        action: dictionary.getOptionalField("action", templateToType: templateToType),
+        actions: dictionary.getOptionalArray("actions", templateToType: templateToType),
+        text: dictionary.getOptionalExpressionField("text")
+      )
     }
 
     init(
@@ -73,17 +69,17 @@ public final class DivActionTemplate: TemplateValue {
         case "text":
           textValue = deserialize(__dictValue).merged(with: textValue)
         case parent?.action?.link:
-          actionValue = actionValue.merged(with: deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivActionTemplate.self))
+          actionValue = actionValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivActionTemplate.self) })
         case parent?.actions?.link:
-          actionsValue = actionsValue.merged(with: deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivActionTemplate.self))
+          actionsValue = actionsValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivActionTemplate.self) })
         case parent?.text?.link:
-          textValue = textValue.merged(with: deserialize(__dictValue))
+          textValue = textValue.merged(with: { deserialize(__dictValue) })
         default: break
         }
       }
       if let parent = parent {
-        actionValue = actionValue.merged(with: parent.action?.resolveOptionalValue(context: context, useOnlyLinks: true))
-        actionsValue = actionsValue.merged(with: parent.actions?.resolveOptionalValue(context: context, useOnlyLinks: true))
+        actionValue = actionValue.merged(with: { parent.action?.resolveOptionalValue(context: context, useOnlyLinks: true) })
+        actionsValue = actionsValue.merged(with: { parent.actions?.resolveOptionalValue(context: context, useOnlyLinks: true) })
       }
       var errors = mergeErrors(
         actionValue.errorsOrWarnings?.map { .nestedObjectError(field: "action", error: $0) },
@@ -132,21 +128,17 @@ public final class DivActionTemplate: TemplateValue {
   public let url: Field<Expression<URL>>?
 
   public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
-    do {
-      self.init(
-        downloadCallbacks: try dictionary.getOptionalField("download_callbacks", templateToType: templateToType),
-        isEnabled: try dictionary.getOptionalExpressionField("is_enabled"),
-        logId: try dictionary.getOptionalField("log_id"),
-        logUrl: try dictionary.getOptionalExpressionField("log_url", transform: URL.init(string:)),
-        menuItems: try dictionary.getOptionalArray("menu_items", templateToType: templateToType),
-        payload: try dictionary.getOptionalField("payload"),
-        referer: try dictionary.getOptionalExpressionField("referer", transform: URL.init(string:)),
-        typed: try dictionary.getOptionalField("typed", templateToType: templateToType),
-        url: try dictionary.getOptionalExpressionField("url", transform: URL.init(string:))
-      )
-    } catch let DeserializationError.invalidFieldRepresentation(field: field, representation: representation) {
-      throw DeserializationError.invalidFieldRepresentation(field: "div-action_template." + field, representation: representation)
-    }
+    self.init(
+      downloadCallbacks: dictionary.getOptionalField("download_callbacks", templateToType: templateToType),
+      isEnabled: dictionary.getOptionalExpressionField("is_enabled"),
+      logId: dictionary.getOptionalField("log_id"),
+      logUrl: dictionary.getOptionalExpressionField("log_url", transform: URL.init(string:)),
+      menuItems: dictionary.getOptionalArray("menu_items", templateToType: templateToType),
+      payload: dictionary.getOptionalField("payload"),
+      referer: dictionary.getOptionalExpressionField("referer", transform: URL.init(string:)),
+      typed: dictionary.getOptionalField("typed", templateToType: templateToType),
+      url: dictionary.getOptionalExpressionField("url", transform: URL.init(string:))
+    )
   }
 
   init(
@@ -248,30 +240,30 @@ public final class DivActionTemplate: TemplateValue {
       case "url":
         urlValue = deserialize(__dictValue, transform: URL.init(string:)).merged(with: urlValue)
       case parent?.downloadCallbacks?.link:
-        downloadCallbacksValue = downloadCallbacksValue.merged(with: deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivDownloadCallbacksTemplate.self))
+        downloadCallbacksValue = downloadCallbacksValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivDownloadCallbacksTemplate.self) })
       case parent?.isEnabled?.link:
-        isEnabledValue = isEnabledValue.merged(with: deserialize(__dictValue))
+        isEnabledValue = isEnabledValue.merged(with: { deserialize(__dictValue) })
       case parent?.logId?.link:
-        logIdValue = logIdValue.merged(with: deserialize(__dictValue))
+        logIdValue = logIdValue.merged(with: { deserialize(__dictValue) })
       case parent?.logUrl?.link:
-        logUrlValue = logUrlValue.merged(with: deserialize(__dictValue, transform: URL.init(string:)))
+        logUrlValue = logUrlValue.merged(with: { deserialize(__dictValue, transform: URL.init(string:)) })
       case parent?.menuItems?.link:
-        menuItemsValue = menuItemsValue.merged(with: deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivActionTemplate.MenuItemTemplate.self))
+        menuItemsValue = menuItemsValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivActionTemplate.MenuItemTemplate.self) })
       case parent?.payload?.link:
-        payloadValue = payloadValue.merged(with: deserialize(__dictValue))
+        payloadValue = payloadValue.merged(with: { deserialize(__dictValue) })
       case parent?.referer?.link:
-        refererValue = refererValue.merged(with: deserialize(__dictValue, transform: URL.init(string:)))
+        refererValue = refererValue.merged(with: { deserialize(__dictValue, transform: URL.init(string:)) })
       case parent?.typed?.link:
-        typedValue = typedValue.merged(with: deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivActionTypedTemplate.self))
+        typedValue = typedValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivActionTypedTemplate.self) })
       case parent?.url?.link:
-        urlValue = urlValue.merged(with: deserialize(__dictValue, transform: URL.init(string:)))
+        urlValue = urlValue.merged(with: { deserialize(__dictValue, transform: URL.init(string:)) })
       default: break
       }
     }
     if let parent = parent {
-      downloadCallbacksValue = downloadCallbacksValue.merged(with: parent.downloadCallbacks?.resolveOptionalValue(context: context, useOnlyLinks: true))
-      menuItemsValue = menuItemsValue.merged(with: parent.menuItems?.resolveOptionalValue(context: context, useOnlyLinks: true))
-      typedValue = typedValue.merged(with: parent.typed?.resolveOptionalValue(context: context, useOnlyLinks: true))
+      downloadCallbacksValue = downloadCallbacksValue.merged(with: { parent.downloadCallbacks?.resolveOptionalValue(context: context, useOnlyLinks: true) })
+      menuItemsValue = menuItemsValue.merged(with: { parent.menuItems?.resolveOptionalValue(context: context, useOnlyLinks: true) })
+      typedValue = typedValue.merged(with: { parent.typed?.resolveOptionalValue(context: context, useOnlyLinks: true) })
     }
     var errors = mergeErrors(
       downloadCallbacksValue.errorsOrWarnings?.map { .nestedObjectError(field: "download_callbacks", error: $0) },

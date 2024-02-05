@@ -8,13 +8,9 @@ public final class DivAspectTemplate: TemplateValue {
   public let ratio: Field<Expression<Double>>? // constraint: number > 0
 
   public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
-    do {
-      self.init(
-        ratio: try dictionary.getOptionalExpressionField("ratio")
-      )
-    } catch let DeserializationError.invalidFieldRepresentation(field: field, representation: representation) {
-      throw DeserializationError.invalidFieldRepresentation(field: "div-aspect_template." + field, representation: representation)
-    }
+    self.init(
+      ratio: dictionary.getOptionalExpressionField("ratio")
+    )
   }
 
   init(
@@ -52,7 +48,7 @@ public final class DivAspectTemplate: TemplateValue {
       case "ratio":
         ratioValue = deserialize(__dictValue, validator: ResolvedValue.ratioValidator).merged(with: ratioValue)
       case parent?.ratio?.link:
-        ratioValue = ratioValue.merged(with: deserialize(__dictValue, validator: ResolvedValue.ratioValidator))
+        ratioValue = ratioValue.merged(with: { deserialize(__dictValue, validator: ResolvedValue.ratioValidator) })
       default: break
       }
     }

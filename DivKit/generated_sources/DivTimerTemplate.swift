@@ -13,18 +13,14 @@ public final class DivTimerTemplate: TemplateValue {
   public let valueVariable: Field<String>?
 
   public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
-    do {
-      self.init(
-        duration: try dictionary.getOptionalExpressionField("duration"),
-        endActions: try dictionary.getOptionalArray("end_actions", templateToType: templateToType),
-        id: try dictionary.getOptionalField("id"),
-        tickActions: try dictionary.getOptionalArray("tick_actions", templateToType: templateToType),
-        tickInterval: try dictionary.getOptionalExpressionField("tick_interval"),
-        valueVariable: try dictionary.getOptionalField("value_variable")
-      )
-    } catch let DeserializationError.invalidFieldRepresentation(field: field, representation: representation) {
-      throw DeserializationError.invalidFieldRepresentation(field: "div-timer_template." + field, representation: representation)
-    }
+    self.init(
+      duration: dictionary.getOptionalExpressionField("duration"),
+      endActions: dictionary.getOptionalArray("end_actions", templateToType: templateToType),
+      id: dictionary.getOptionalField("id"),
+      tickActions: dictionary.getOptionalArray("tick_actions", templateToType: templateToType),
+      tickInterval: dictionary.getOptionalExpressionField("tick_interval"),
+      valueVariable: dictionary.getOptionalField("value_variable")
+    )
   }
 
   init(
@@ -102,23 +98,23 @@ public final class DivTimerTemplate: TemplateValue {
       case "value_variable":
         valueVariableValue = deserialize(__dictValue).merged(with: valueVariableValue)
       case parent?.duration?.link:
-        durationValue = durationValue.merged(with: deserialize(__dictValue, validator: ResolvedValue.durationValidator))
+        durationValue = durationValue.merged(with: { deserialize(__dictValue, validator: ResolvedValue.durationValidator) })
       case parent?.endActions?.link:
-        endActionsValue = endActionsValue.merged(with: deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivActionTemplate.self))
+        endActionsValue = endActionsValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivActionTemplate.self) })
       case parent?.id?.link:
-        idValue = idValue.merged(with: deserialize(__dictValue))
+        idValue = idValue.merged(with: { deserialize(__dictValue) })
       case parent?.tickActions?.link:
-        tickActionsValue = tickActionsValue.merged(with: deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivActionTemplate.self))
+        tickActionsValue = tickActionsValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivActionTemplate.self) })
       case parent?.tickInterval?.link:
-        tickIntervalValue = tickIntervalValue.merged(with: deserialize(__dictValue, validator: ResolvedValue.tickIntervalValidator))
+        tickIntervalValue = tickIntervalValue.merged(with: { deserialize(__dictValue, validator: ResolvedValue.tickIntervalValidator) })
       case parent?.valueVariable?.link:
-        valueVariableValue = valueVariableValue.merged(with: deserialize(__dictValue))
+        valueVariableValue = valueVariableValue.merged(with: { deserialize(__dictValue) })
       default: break
       }
     }
     if let parent = parent {
-      endActionsValue = endActionsValue.merged(with: parent.endActions?.resolveOptionalValue(context: context, useOnlyLinks: true))
-      tickActionsValue = tickActionsValue.merged(with: parent.tickActions?.resolveOptionalValue(context: context, useOnlyLinks: true))
+      endActionsValue = endActionsValue.merged(with: { parent.endActions?.resolveOptionalValue(context: context, useOnlyLinks: true) })
+      tickActionsValue = tickActionsValue.merged(with: { parent.tickActions?.resolveOptionalValue(context: context, useOnlyLinks: true) })
     }
     var errors = mergeErrors(
       durationValue.errorsOrWarnings?.map { .nestedObjectError(field: "duration", error: $0) },

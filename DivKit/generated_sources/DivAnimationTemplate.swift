@@ -17,20 +17,16 @@ public final class DivAnimationTemplate: TemplateValue {
   public let startValue: Field<Expression<Double>>?
 
   public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
-    do {
-      self.init(
-        duration: try dictionary.getOptionalExpressionField("duration"),
-        endValue: try dictionary.getOptionalExpressionField("end_value"),
-        interpolator: try dictionary.getOptionalExpressionField("interpolator"),
-        items: try dictionary.getOptionalArray("items", templateToType: templateToType),
-        name: try dictionary.getOptionalExpressionField("name"),
-        repeatCount: try dictionary.getOptionalField("repeat", templateToType: templateToType),
-        startDelay: try dictionary.getOptionalExpressionField("start_delay"),
-        startValue: try dictionary.getOptionalExpressionField("start_value")
-      )
-    } catch let DeserializationError.invalidFieldRepresentation(field: field, representation: representation) {
-      throw DeserializationError.invalidFieldRepresentation(field: "div-animation_template." + field, representation: representation)
-    }
+    self.init(
+      duration: dictionary.getOptionalExpressionField("duration"),
+      endValue: dictionary.getOptionalExpressionField("end_value"),
+      interpolator: dictionary.getOptionalExpressionField("interpolator"),
+      items: dictionary.getOptionalArray("items", templateToType: templateToType),
+      name: dictionary.getOptionalExpressionField("name"),
+      repeatCount: dictionary.getOptionalField("repeat", templateToType: templateToType),
+      startDelay: dictionary.getOptionalExpressionField("start_delay"),
+      startValue: dictionary.getOptionalExpressionField("start_value")
+    )
   }
 
   init(
@@ -124,27 +120,27 @@ public final class DivAnimationTemplate: TemplateValue {
       case "start_value":
         startValueValue = deserialize(__dictValue).merged(with: startValueValue)
       case parent?.duration?.link:
-        durationValue = durationValue.merged(with: deserialize(__dictValue, validator: ResolvedValue.durationValidator))
+        durationValue = durationValue.merged(with: { deserialize(__dictValue, validator: ResolvedValue.durationValidator) })
       case parent?.endValue?.link:
-        endValueValue = endValueValue.merged(with: deserialize(__dictValue))
+        endValueValue = endValueValue.merged(with: { deserialize(__dictValue) })
       case parent?.interpolator?.link:
-        interpolatorValue = interpolatorValue.merged(with: deserialize(__dictValue))
+        interpolatorValue = interpolatorValue.merged(with: { deserialize(__dictValue) })
       case parent?.items?.link:
-        itemsValue = itemsValue.merged(with: deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivAnimationTemplate.self))
+        itemsValue = itemsValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivAnimationTemplate.self) })
       case parent?.name?.link:
-        nameValue = nameValue.merged(with: deserialize(__dictValue))
+        nameValue = nameValue.merged(with: { deserialize(__dictValue) })
       case parent?.repeatCount?.link:
-        repeatCountValue = repeatCountValue.merged(with: deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivCountTemplate.self))
+        repeatCountValue = repeatCountValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivCountTemplate.self) })
       case parent?.startDelay?.link:
-        startDelayValue = startDelayValue.merged(with: deserialize(__dictValue, validator: ResolvedValue.startDelayValidator))
+        startDelayValue = startDelayValue.merged(with: { deserialize(__dictValue, validator: ResolvedValue.startDelayValidator) })
       case parent?.startValue?.link:
-        startValueValue = startValueValue.merged(with: deserialize(__dictValue))
+        startValueValue = startValueValue.merged(with: { deserialize(__dictValue) })
       default: break
       }
     }
     if let parent = parent {
-      itemsValue = itemsValue.merged(with: parent.items?.resolveOptionalValue(context: context, useOnlyLinks: true))
-      repeatCountValue = repeatCountValue.merged(with: parent.repeatCount?.resolveOptionalValue(context: context, useOnlyLinks: true))
+      itemsValue = itemsValue.merged(with: { parent.items?.resolveOptionalValue(context: context, useOnlyLinks: true) })
+      repeatCountValue = repeatCountValue.merged(with: { parent.repeatCount?.resolveOptionalValue(context: context, useOnlyLinks: true) })
     }
     var errors = mergeErrors(
       durationValue.errorsOrWarnings?.map { .nestedObjectError(field: "duration", error: $0) },

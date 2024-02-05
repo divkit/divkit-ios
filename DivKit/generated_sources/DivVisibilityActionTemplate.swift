@@ -17,22 +17,18 @@ public final class DivVisibilityActionTemplate: TemplateValue {
   public let visibilityPercentage: Field<Expression<Int>>? // constraint: number > 0 && number <= 100; default value: 50
 
   public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
-    do {
-      self.init(
-        downloadCallbacks: try dictionary.getOptionalField("download_callbacks", templateToType: templateToType),
-        isEnabled: try dictionary.getOptionalExpressionField("is_enabled"),
-        logId: try dictionary.getOptionalField("log_id"),
-        logLimit: try dictionary.getOptionalExpressionField("log_limit"),
-        payload: try dictionary.getOptionalField("payload"),
-        referer: try dictionary.getOptionalExpressionField("referer", transform: URL.init(string:)),
-        typed: try dictionary.getOptionalField("typed", templateToType: templateToType),
-        url: try dictionary.getOptionalExpressionField("url", transform: URL.init(string:)),
-        visibilityDuration: try dictionary.getOptionalExpressionField("visibility_duration"),
-        visibilityPercentage: try dictionary.getOptionalExpressionField("visibility_percentage")
-      )
-    } catch let DeserializationError.invalidFieldRepresentation(field: field, representation: representation) {
-      throw DeserializationError.invalidFieldRepresentation(field: "div-visibility-action_template." + field, representation: representation)
-    }
+    self.init(
+      downloadCallbacks: dictionary.getOptionalField("download_callbacks", templateToType: templateToType),
+      isEnabled: dictionary.getOptionalExpressionField("is_enabled"),
+      logId: dictionary.getOptionalField("log_id"),
+      logLimit: dictionary.getOptionalExpressionField("log_limit"),
+      payload: dictionary.getOptionalField("payload"),
+      referer: dictionary.getOptionalExpressionField("referer", transform: URL.init(string:)),
+      typed: dictionary.getOptionalField("typed", templateToType: templateToType),
+      url: dictionary.getOptionalExpressionField("url", transform: URL.init(string:)),
+      visibilityDuration: dictionary.getOptionalExpressionField("visibility_duration"),
+      visibilityPercentage: dictionary.getOptionalExpressionField("visibility_percentage")
+    )
   }
 
   init(
@@ -142,31 +138,31 @@ public final class DivVisibilityActionTemplate: TemplateValue {
       case "visibility_percentage":
         visibilityPercentageValue = deserialize(__dictValue, validator: ResolvedValue.visibilityPercentageValidator).merged(with: visibilityPercentageValue)
       case parent?.downloadCallbacks?.link:
-        downloadCallbacksValue = downloadCallbacksValue.merged(with: deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivDownloadCallbacksTemplate.self))
+        downloadCallbacksValue = downloadCallbacksValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivDownloadCallbacksTemplate.self) })
       case parent?.isEnabled?.link:
-        isEnabledValue = isEnabledValue.merged(with: deserialize(__dictValue))
+        isEnabledValue = isEnabledValue.merged(with: { deserialize(__dictValue) })
       case parent?.logId?.link:
-        logIdValue = logIdValue.merged(with: deserialize(__dictValue))
+        logIdValue = logIdValue.merged(with: { deserialize(__dictValue) })
       case parent?.logLimit?.link:
-        logLimitValue = logLimitValue.merged(with: deserialize(__dictValue, validator: ResolvedValue.logLimitValidator))
+        logLimitValue = logLimitValue.merged(with: { deserialize(__dictValue, validator: ResolvedValue.logLimitValidator) })
       case parent?.payload?.link:
-        payloadValue = payloadValue.merged(with: deserialize(__dictValue))
+        payloadValue = payloadValue.merged(with: { deserialize(__dictValue) })
       case parent?.referer?.link:
-        refererValue = refererValue.merged(with: deserialize(__dictValue, transform: URL.init(string:)))
+        refererValue = refererValue.merged(with: { deserialize(__dictValue, transform: URL.init(string:)) })
       case parent?.typed?.link:
-        typedValue = typedValue.merged(with: deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivActionTypedTemplate.self))
+        typedValue = typedValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivActionTypedTemplate.self) })
       case parent?.url?.link:
-        urlValue = urlValue.merged(with: deserialize(__dictValue, transform: URL.init(string:)))
+        urlValue = urlValue.merged(with: { deserialize(__dictValue, transform: URL.init(string:)) })
       case parent?.visibilityDuration?.link:
-        visibilityDurationValue = visibilityDurationValue.merged(with: deserialize(__dictValue, validator: ResolvedValue.visibilityDurationValidator))
+        visibilityDurationValue = visibilityDurationValue.merged(with: { deserialize(__dictValue, validator: ResolvedValue.visibilityDurationValidator) })
       case parent?.visibilityPercentage?.link:
-        visibilityPercentageValue = visibilityPercentageValue.merged(with: deserialize(__dictValue, validator: ResolvedValue.visibilityPercentageValidator))
+        visibilityPercentageValue = visibilityPercentageValue.merged(with: { deserialize(__dictValue, validator: ResolvedValue.visibilityPercentageValidator) })
       default: break
       }
     }
     if let parent = parent {
-      downloadCallbacksValue = downloadCallbacksValue.merged(with: parent.downloadCallbacks?.resolveOptionalValue(context: context, useOnlyLinks: true))
-      typedValue = typedValue.merged(with: parent.typed?.resolveOptionalValue(context: context, useOnlyLinks: true))
+      downloadCallbacksValue = downloadCallbacksValue.merged(with: { parent.downloadCallbacks?.resolveOptionalValue(context: context, useOnlyLinks: true) })
+      typedValue = typedValue.merged(with: { parent.typed?.resolveOptionalValue(context: context, useOnlyLinks: true) })
     }
     var errors = mergeErrors(
       downloadCallbacksValue.errorsOrWarnings?.map { .nestedObjectError(field: "download_callbacks", error: $0) },

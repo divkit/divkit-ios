@@ -14,11 +14,11 @@ public final class DivFadeTransitionTemplate: TemplateValue {
 
   public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
     self.init(
-      parent: try dictionary.getOptionalField("type"),
-      alpha: try dictionary.getOptionalExpressionField("alpha"),
-      duration: try dictionary.getOptionalExpressionField("duration"),
-      interpolator: try dictionary.getOptionalExpressionField("interpolator"),
-      startDelay: try dictionary.getOptionalExpressionField("start_delay")
+      parent: dictionary["type"] as? String,
+      alpha: dictionary.getOptionalExpressionField("alpha"),
+      duration: dictionary.getOptionalExpressionField("duration"),
+      interpolator: dictionary.getOptionalExpressionField("interpolator"),
+      startDelay: dictionary.getOptionalExpressionField("start_delay")
     )
   }
 
@@ -75,13 +75,13 @@ public final class DivFadeTransitionTemplate: TemplateValue {
       case "start_delay":
         startDelayValue = deserialize(__dictValue, validator: ResolvedValue.startDelayValidator).merged(with: startDelayValue)
       case parent?.alpha?.link:
-        alphaValue = alphaValue.merged(with: deserialize(__dictValue, validator: ResolvedValue.alphaValidator))
+        alphaValue = alphaValue.merged(with: { deserialize(__dictValue, validator: ResolvedValue.alphaValidator) })
       case parent?.duration?.link:
-        durationValue = durationValue.merged(with: deserialize(__dictValue, validator: ResolvedValue.durationValidator))
+        durationValue = durationValue.merged(with: { deserialize(__dictValue, validator: ResolvedValue.durationValidator) })
       case parent?.interpolator?.link:
-        interpolatorValue = interpolatorValue.merged(with: deserialize(__dictValue))
+        interpolatorValue = interpolatorValue.merged(with: { deserialize(__dictValue) })
       case parent?.startDelay?.link:
-        startDelayValue = startDelayValue.merged(with: deserialize(__dictValue, validator: ResolvedValue.startDelayValidator))
+        startDelayValue = startDelayValue.merged(with: { deserialize(__dictValue, validator: ResolvedValue.startDelayValidator) })
       default: break
       }
     }

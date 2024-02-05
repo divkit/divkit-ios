@@ -10,14 +10,10 @@ public final class DivPatchTemplate: TemplateValue {
     public let items: Field<[DivTemplate]>?
 
     public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
-      do {
-        self.init(
-          id: try dictionary.getOptionalField("id"),
-          items: try dictionary.getOptionalArray("items", templateToType: templateToType)
-        )
-      } catch let DeserializationError.invalidFieldRepresentation(field: field, representation: representation) {
-        throw DeserializationError.invalidFieldRepresentation(field: "change_template." + field, representation: representation)
-      }
+      self.init(
+        id: dictionary.getOptionalField("id"),
+        items: dictionary.getOptionalArray("items", templateToType: templateToType)
+      )
     }
 
     init(
@@ -63,14 +59,14 @@ public final class DivPatchTemplate: TemplateValue {
         case "items":
           itemsValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivTemplate.self).merged(with: itemsValue)
         case parent?.id?.link:
-          idValue = idValue.merged(with: deserialize(__dictValue))
+          idValue = idValue.merged(with: { deserialize(__dictValue) })
         case parent?.items?.link:
-          itemsValue = itemsValue.merged(with: deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivTemplate.self))
+          itemsValue = itemsValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivTemplate.self) })
         default: break
         }
       }
       if let parent = parent {
-        itemsValue = itemsValue.merged(with: parent.items?.resolveOptionalValue(context: context, useOnlyLinks: true))
+        itemsValue = itemsValue.merged(with: { parent.items?.resolveOptionalValue(context: context, useOnlyLinks: true) })
       }
       var errors = mergeErrors(
         idValue.errorsOrWarnings?.map { .nestedObjectError(field: "id", error: $0) },
@@ -111,14 +107,10 @@ public final class DivPatchTemplate: TemplateValue {
   public let mode: Field<Expression<Mode>>? // default value: partial
 
   public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
-    do {
-      self.init(
-        changes: try dictionary.getOptionalArray("changes", templateToType: templateToType),
-        mode: try dictionary.getOptionalExpressionField("mode")
-      )
-    } catch let DeserializationError.invalidFieldRepresentation(field: field, representation: representation) {
-      throw DeserializationError.invalidFieldRepresentation(field: "div-patch_template." + field, representation: representation)
-    }
+    self.init(
+      changes: dictionary.getOptionalArray("changes", templateToType: templateToType),
+      mode: dictionary.getOptionalExpressionField("mode")
+    )
   }
 
   init(
@@ -164,14 +156,14 @@ public final class DivPatchTemplate: TemplateValue {
       case "mode":
         modeValue = deserialize(__dictValue).merged(with: modeValue)
       case parent?.changes?.link:
-        changesValue = changesValue.merged(with: deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, validator: ResolvedValue.changesValidator, type: DivPatchTemplate.ChangeTemplate.self))
+        changesValue = changesValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, validator: ResolvedValue.changesValidator, type: DivPatchTemplate.ChangeTemplate.self) })
       case parent?.mode?.link:
-        modeValue = modeValue.merged(with: deserialize(__dictValue))
+        modeValue = modeValue.merged(with: { deserialize(__dictValue) })
       default: break
       }
     }
     if let parent = parent {
-      changesValue = changesValue.merged(with: parent.changes?.resolveValue(context: context, validator: ResolvedValue.changesValidator, useOnlyLinks: true))
+      changesValue = changesValue.merged(with: { parent.changes?.resolveValue(context: context, validator: ResolvedValue.changesValidator, useOnlyLinks: true) })
     }
     var errors = mergeErrors(
       changesValue.errorsOrWarnings?.map { .nestedObjectError(field: "changes", error: $0) },

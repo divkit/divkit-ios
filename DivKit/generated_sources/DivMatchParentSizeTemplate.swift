@@ -11,8 +11,8 @@ public final class DivMatchParentSizeTemplate: TemplateValue {
 
   public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
     self.init(
-      parent: try dictionary.getOptionalField("type"),
-      weight: try dictionary.getOptionalExpressionField("weight")
+      parent: dictionary["type"] as? String,
+      weight: dictionary.getOptionalExpressionField("weight")
     )
   }
 
@@ -45,7 +45,7 @@ public final class DivMatchParentSizeTemplate: TemplateValue {
       case "weight":
         weightValue = deserialize(__dictValue, validator: ResolvedValue.weightValidator).merged(with: weightValue)
       case parent?.weight?.link:
-        weightValue = weightValue.merged(with: deserialize(__dictValue, validator: ResolvedValue.weightValidator))
+        weightValue = weightValue.merged(with: { deserialize(__dictValue, validator: ResolvedValue.weightValidator) })
       default: break
       }
     }

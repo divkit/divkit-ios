@@ -16,19 +16,15 @@ public final class DivTooltipTemplate: TemplateValue {
   public let position: Field<Expression<Position>>?
 
   public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
-    do {
-      self.init(
-        animationIn: try dictionary.getOptionalField("animation_in", templateToType: templateToType),
-        animationOut: try dictionary.getOptionalField("animation_out", templateToType: templateToType),
-        div: try dictionary.getOptionalField("div", templateToType: templateToType),
-        duration: try dictionary.getOptionalExpressionField("duration"),
-        id: try dictionary.getOptionalField("id"),
-        offset: try dictionary.getOptionalField("offset", templateToType: templateToType),
-        position: try dictionary.getOptionalExpressionField("position")
-      )
-    } catch let DeserializationError.invalidFieldRepresentation(field: field, representation: representation) {
-      throw DeserializationError.invalidFieldRepresentation(field: "div-tooltip_template." + field, representation: representation)
-    }
+    self.init(
+      animationIn: dictionary.getOptionalField("animation_in", templateToType: templateToType),
+      animationOut: dictionary.getOptionalField("animation_out", templateToType: templateToType),
+      div: dictionary.getOptionalField("div", templateToType: templateToType),
+      duration: dictionary.getOptionalExpressionField("duration"),
+      id: dictionary.getOptionalField("id"),
+      offset: dictionary.getOptionalField("offset", templateToType: templateToType),
+      position: dictionary.getOptionalExpressionField("position")
+    )
   }
 
   init(
@@ -122,27 +118,27 @@ public final class DivTooltipTemplate: TemplateValue {
       case "position":
         positionValue = deserialize(__dictValue).merged(with: positionValue)
       case parent?.animationIn?.link:
-        animationInValue = animationInValue.merged(with: deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivAnimationTemplate.self))
+        animationInValue = animationInValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivAnimationTemplate.self) })
       case parent?.animationOut?.link:
-        animationOutValue = animationOutValue.merged(with: deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivAnimationTemplate.self))
+        animationOutValue = animationOutValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivAnimationTemplate.self) })
       case parent?.div?.link:
-        divValue = divValue.merged(with: deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivTemplate.self))
+        divValue = divValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivTemplate.self) })
       case parent?.duration?.link:
-        durationValue = durationValue.merged(with: deserialize(__dictValue, validator: ResolvedValue.durationValidator))
+        durationValue = durationValue.merged(with: { deserialize(__dictValue, validator: ResolvedValue.durationValidator) })
       case parent?.id?.link:
-        idValue = idValue.merged(with: deserialize(__dictValue))
+        idValue = idValue.merged(with: { deserialize(__dictValue) })
       case parent?.offset?.link:
-        offsetValue = offsetValue.merged(with: deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivPointTemplate.self))
+        offsetValue = offsetValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivPointTemplate.self) })
       case parent?.position?.link:
-        positionValue = positionValue.merged(with: deserialize(__dictValue))
+        positionValue = positionValue.merged(with: { deserialize(__dictValue) })
       default: break
       }
     }
     if let parent = parent {
-      animationInValue = animationInValue.merged(with: parent.animationIn?.resolveOptionalValue(context: context, useOnlyLinks: true))
-      animationOutValue = animationOutValue.merged(with: parent.animationOut?.resolveOptionalValue(context: context, useOnlyLinks: true))
-      divValue = divValue.merged(with: parent.div?.resolveValue(context: context, useOnlyLinks: true))
-      offsetValue = offsetValue.merged(with: parent.offset?.resolveOptionalValue(context: context, useOnlyLinks: true))
+      animationInValue = animationInValue.merged(with: { parent.animationIn?.resolveOptionalValue(context: context, useOnlyLinks: true) })
+      animationOutValue = animationOutValue.merged(with: { parent.animationOut?.resolveOptionalValue(context: context, useOnlyLinks: true) })
+      divValue = divValue.merged(with: { parent.div?.resolveValue(context: context, useOnlyLinks: true) })
+      offsetValue = offsetValue.merged(with: { parent.offset?.resolveOptionalValue(context: context, useOnlyLinks: true) })
     }
     var errors = mergeErrors(
       animationInValue.errorsOrWarnings?.map { .nestedObjectError(field: "animation_in", error: $0) },
