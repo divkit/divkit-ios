@@ -8,14 +8,21 @@ import LayoutKit
 
 extension DivInput: DivBlockModeling {
   public func makeBlock(context: DivBlockModelingContext) throws -> Block {
-    try applyBaseProperties(
-      to: { try makeBaseBlock(context: context) },
+    let textBinding = context.makeBinding(variableName: textVariable, defaultValue: "")
+    return try applyBaseProperties(
+      to: { try makeBaseBlock(context: context, textBinding: textBinding) },
       context: context,
-      actionsHolder: nil
+      actionsHolder: nil,
+      customAccessibilityParams: CustomAccessibilityParams { [unowned self] in
+        accessibility?.resolveDescription(context.expressionResolver) ?? textBinding.value
+      }
     )
   }
 
-  private func makeBaseBlock(context: DivBlockModelingContext) throws -> Block {
+  private func makeBaseBlock(
+    context: DivBlockModelingContext,
+    textBinding: Binding<String>
+  ) throws -> Block {
     let expressionResolver = context.expressionResolver
 
     let font = context.fontProvider.font(
@@ -45,11 +52,16 @@ extension DivInput: DivBlockModeling {
     let onFocusActions = focus?.onFocus?.uiActions(context: context) ?? []
     let onBlurActions = focus?.onBlur?.uiActions(context: context) ?? []
 
+    let inputPath = context.parentPath + (id ?? DivInput.type)
+    let isFocused = context.blockStateStorage.isFocused(
+      element: IdAndCardId(path: inputPath)
+    )
+
     return TextInputBlock(
       widthTrait: resolveContentWidthTrait(context),
       heightTrait: resolveContentHeightTrait(context),
       hint: hintValue.with(typo: typo.with(color: resolveHintColor(expressionResolver))),
-      textValue: context.makeBinding(variableName: textVariable, defaultValue: ""),
+      textValue: textBinding,
       rawTextValue: mask?.makeRawVariable(context),
       textTypo: typo.with(color: resolveTextColor(expressionResolver)),
       multiLineMode: keyboardType == .multiLineText,
@@ -58,7 +70,8 @@ extension DivInput: DivBlockModeling {
       maxVisibleLines: resolveMaxVisibleLines(expressionResolver),
       selectAllOnFocus: resolveSelectAllOnFocus(expressionResolver),
       maskValidator: mask?.makeMaskValidator(expressionResolver),
-      path: context.parentPath,
+      path: inputPath,
+      isFocused: isFocused,
       onFocusActions: onFocusActions,
       onBlurActions: onBlurActions,
       parentScrollView: context.parentScrollView,

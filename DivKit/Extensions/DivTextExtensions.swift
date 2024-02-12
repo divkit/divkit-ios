@@ -5,7 +5,6 @@ import Foundation
 import BasePublic
 import BaseUIPublic
 import LayoutKit
-import NetworkingPublic
 
 extension DivText: DivBlockModeling {
   public func makeBlock(context: DivBlockModelingContext) throws -> Block {
@@ -17,7 +16,9 @@ extension DivText: DivBlockModeling {
       to: { try makeBaseBlock(context: context, text: lazyText) },
       context: context,
       actionsHolder: self,
-      customA11yDescriptionProvider: { [unowned self] in
+      customAccessibilityParams: CustomAccessibilityParams(
+        defaultTraits: .staticText
+      ) { [unowned self] in
         accessibility?.resolveDescription(expressionResolver) ?? lazyText.value
       }
     )
@@ -114,6 +115,7 @@ extension DivText: DivBlockModeling {
       maxIntrinsicNumberOfLines: resolveMaxLines(expressionResolver) ?? .max,
       minNumberOfHiddenLines: resolveMinHiddenLines(expressionResolver) ?? 0,
       images: images,
+      accessibilityElement: nil,
       truncationToken: truncationToken,
       truncationImages: truncationImages,
       canSelect: resolveSelectable(expressionResolver)

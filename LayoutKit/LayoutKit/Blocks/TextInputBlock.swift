@@ -66,6 +66,7 @@ public final class TextInputBlock: BlockWithTraits {
   public let selectAllOnFocus: Bool
   public let maskValidator: MaskValidator?
   public let path: UIElementPath
+  public let isFocused: Bool
   public let onFocusActions: [UserInterfaceAction]
   public let onBlurActions: [UserInterfaceAction]
   public let textAlignmentHorizontal: TextAlignmentHorizontal
@@ -79,7 +80,7 @@ public final class TextInputBlock: BlockWithTraits {
     heightTrait: LayoutTrait = .intrinsic,
     hint: NSAttributedString,
     textValue: Binding<String>,
-    rawTextValue: Binding<String>?,
+    rawTextValue: Binding<String>? = nil,
     textTypo: Typo,
     multiLineMode: Bool = true,
     inputType: InputType = .default,
@@ -88,6 +89,7 @@ public final class TextInputBlock: BlockWithTraits {
     selectAllOnFocus: Bool = false,
     maskValidator: MaskValidator? = nil,
     path: UIElementPath,
+    isFocused: Bool = false,
     onFocusActions: [UserInterfaceAction] = [],
     onBlurActions: [UserInterfaceAction] = [],
     parentScrollView: ScrollView? = nil,
@@ -109,6 +111,7 @@ public final class TextInputBlock: BlockWithTraits {
     self.selectAllOnFocus = selectAllOnFocus
     self.maskValidator = maskValidator
     self.path = path
+    self.isFocused = isFocused
     self.onFocusActions = onFocusActions
     self.onBlurActions = onBlurActions
     self.parentScrollView = parentScrollView
