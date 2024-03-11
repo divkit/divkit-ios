@@ -19,17 +19,20 @@ public struct UserInterfaceAction: Equatable, Codable {
     public let cardId: String
     public let source: DivActionSource
     public let url: URL?
+    public let prototypeVariables: [String: AnyHashable]
 
     public init(
       action: JSONObject,
       cardId: String,
       source: DivActionSource,
-      url: URL?
+      url: URL?,
+      prototypeVariables: [String: AnyHashable] = [:]
     ) {
       self.action = action
       self.cardId = cardId
       self.source = source
       self.url = url
+      self.prototypeVariables = prototypeVariables
     }
   }
 
@@ -157,17 +160,17 @@ extension UserInterfaceAction.Payload: Codable {
   private var kind: Kind {
     switch self {
     case .empty:
-      return .empty
+      .empty
     case .url:
-      return .url
+      .url
     case .menu:
-      return .menu
+      .menu
     case .json:
-      return .json
+      .json
     case .composite:
-      return .composite
+      .composite
     case .divAction:
-      return .divAction
+      .divAction
     }
   }
 
@@ -203,7 +206,8 @@ extension UserInterfaceAction.Payload: Codable {
         action: container.decode(JSONObject.self, forKey: .json),
         cardId: container.decode(String.self, forKey: .cardId),
         source: UserInterfaceAction.DivActionSource(rawValue: source ?? "") ?? .tap,
-        url: container.decodeIfPresent(URL.self, forKey: .url)
+        url: container.decodeIfPresent(URL.self, forKey: .url),
+        prototypeVariables: [:]
       )
       self = .divAction(params: params)
     }
@@ -239,17 +243,17 @@ extension UserInterfaceAction.Payload: CustomDebugStringConvertible {
   public var debugDescription: String {
     switch self {
     case .empty:
-      return "Empty"
+      "Empty"
     case let .url(value):
-      return "URL: \(value)"
+      "URL: \(value)"
     case let .menu(value):
-      return "Menu: \(value)"
+      "Menu: \(value)"
     case let .json(value):
-      return "JSON: \(value))"
+      "JSON: \(value))"
     case let .divAction(params):
-      return "DivAction: \(params.action)"
+      "DivAction: \(params.action)"
     case let .composite(lhs, rhs):
-      return """
+      """
       Composite [
       \(lhs.debugDescription.indented())
       \(rhs.debugDescription.indented())

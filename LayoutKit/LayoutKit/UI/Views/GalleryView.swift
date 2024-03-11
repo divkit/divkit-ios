@@ -234,6 +234,7 @@ public final class GalleryView: BlockView {
 
     if let model, layout?.isEqual(to: model, boundsSize: bounds.size) != true {
       updateLayout(to: model)
+      setState(stateWithScrollRange, notifyingObservers: true)
     }
     if case let .pending(state) = deferredStateSetting {
       collectionView.performWithDetachedDelegate {
@@ -257,12 +258,11 @@ public final class GalleryView: BlockView {
   }
 
   private func setContentOffset(_ offset: CGFloat, animated: Bool) {
-    let contentOffset: CGPoint
-    switch model.direction {
+    let contentOffset = switch model.direction {
     case .vertical:
-      contentOffset = CGPoint(x: 0, y: offset)
+      CGPoint(x: 0, y: offset)
     case .horizontal:
-      contentOffset = CGPoint(x: offset, y: 0)
+      CGPoint(x: offset, y: 0)
     }
     if collectionView.contentOffset != contentOffset {
       collectionView.setContentOffset(contentOffset, animated: animated)
@@ -306,7 +306,8 @@ extension GalleryView: ScrollDelegate {
     let newState = GalleryViewState(
       contentPosition: contentPosition,
       itemsCount: model.items.count,
-      isScrolling: true
+      isScrolling: true,
+      scrollRange: state.scrollRange
     )
     setState(newState, notifyingObservers: true)
     updatesDelegate?.onContentOffsetChanged(offset, in: model)
@@ -324,9 +325,7 @@ extension GalleryView: ScrollDelegate {
   }
 
   public func onDidEndScrollingAnimation(_ scrollView: ScrollView) {
-    if model.infiniteScroll {
-      onDidEndScroll(scrollView)
-    }
+    onDidEndScroll(scrollView)
   }
 
   private func getOffset(_ scrollView: ScrollView) -> CGFloat {
@@ -339,7 +338,8 @@ extension GalleryView: ScrollDelegate {
     let newState = GalleryViewState(
       contentPosition: state.contentPosition,
       itemsCount: model.items.count,
-      isScrolling: false
+      isScrolling: false,
+      scrollRange: state.scrollRange
     )
     setState(newState, notifyingObservers: true)
     visibilityDelegate?.onGalleryVisibilityChanged()
@@ -409,9 +409,9 @@ extension GalleryViewModel.ScrollMode {
   fileprivate var decelerationRate: UIScrollView.DecelerationRate {
     switch self {
     case .default:
-      return .normal
+      .normal
     case .autoPaging, .fixedPaging:
-      return .fast
+      .fast
     }
   }
 }
@@ -424,3 +424,16 @@ extension GenericCollectionViewLayout {
 }
 
 extension GalleryView: VisibleBoundsTrackingContainer {}
+
+extension GalleryView {
+  var stateWithScrollRange: GalleryViewState {
+    GalleryViewState(
+      contentPosition: state.contentPosition,
+      itemsCount: state.itemsCount,
+      isScrolling: state.isScrolling,
+      scrollRange: model.direction.isHorizontal ?
+        layout.contentSize.width - bounds.width :
+        layout.contentSize.height - bounds.height
+    )
+  }
+}

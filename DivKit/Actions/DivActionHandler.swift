@@ -96,14 +96,13 @@ public final class DivActionHandler {
     params: UserInterfaceAction.DivActionParams,
     sender: AnyObject?
   ) {
-    let action: DivActionBase?
-    switch params.source {
+    let action: DivActionBase? = switch params.source {
     case .visibility:
-      action = parseAction(type: DivVisibilityActionTemplate.self, json: params.action)
+      parseAction(type: DivVisibilityActionTemplate.self, json: params.action)
     case .disappear:
-      action = parseAction(type: DivDisappearActionTemplate.self, json: params.action)
+      parseAction(type: DivDisappearActionTemplate.self, json: params.action)
     default:
-      action = parseAction(type: DivActionTemplate.self, json: params.action)
+      parseAction(type: DivActionTemplate.self, json: params.action)
     }
     guard let action else {
       return
@@ -113,6 +112,7 @@ public final class DivActionHandler {
       action,
       cardId: DivCardID(rawValue: params.cardId),
       source: params.source,
+      prototypeVariables: params.prototypeVariables,
       sender: sender
     )
   }
@@ -121,9 +121,13 @@ public final class DivActionHandler {
     _ action: DivActionBase,
     cardId: DivCardID,
     source: UserInterfaceAction.DivActionSource,
+    prototypeVariables: [String: AnyHashable] = [:],
     sender: AnyObject?
   ) {
-    let expressionResolver = makeExpressionResolver(cardId: cardId)
+    let expressionResolver = makeExpressionResolver(
+      cardId: cardId,
+      prototypeVariables: prototypeVariables
+    )
     let context = DivActionHandlingContext(
       cardId: cardId,
       expressionResolver: expressionResolver,
@@ -192,15 +196,19 @@ public final class DivActionHandler {
         guard let self else {
           return
         }
-        let callbackActions: [DivAction]
-        switch result {
+        let callbackActions: [DivAction] = switch result {
         case .success:
-          callbackActions = action.downloadCallbacks?.onSuccessActions ?? []
+          action.downloadCallbacks?.onSuccessActions ?? []
         case .failure:
-          callbackActions = action.downloadCallbacks?.onFailActions ?? []
+          action.downloadCallbacks?.onFailActions ?? []
         }
         callbackActions.forEach {
-          self.handle($0, cardId: context.cardId, source: source, sender: sender)
+          self.handle(
+            $0,
+            cardId: context.cardId,
+            source: source,
+            sender: sender
+          )
         }
       }
     )
@@ -226,11 +234,24 @@ public final class DivActionHandler {
     }
   }
 
-  private func makeExpressionResolver(cardId: DivCardID) -> ExpressionResolver {
-    ExpressionResolver(
-      variables: variablesStorage.makeVariables(for: cardId),
-      persistentValuesStorage: persistentValuesStorage,
-      errorTracker: reporter.asExpressionErrorTracker(cardId: cardId)
+  private func makeExpressionResolver(
+    cardId: DivCardID,
+    prototypeVariables: [String: AnyHashable]
+  ) -> ExpressionResolver {
+    let variableValueProvider = makeVariableValueProvider(
+      cardId: cardId,
+      variablesStorage: variablesStorage,
+      prototypesStorage: prototypeVariables
+    )
+    let functionsProvider = FunctionsProvider(
+      variableValueProvider: variableValueProvider,
+      persistentValuesStorage: persistentValuesStorage
+    )
+    return ExpressionResolver(
+      variableValueProvider: variableValueProvider,
+      functionsProvider: functionsProvider,
+      errorTracker: reporter.asExpressionErrorTracker(cardId: cardId),
+      variableTracker: { _ in }
     )
   }
 

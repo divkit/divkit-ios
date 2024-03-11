@@ -12,27 +12,27 @@ public struct GalleryViewState: ElementState, Equatable {
     public var offset: CGFloat? {
       switch self {
       case let .offset(value, _):
-        return value
+        value
       case .paging:
-        return nil
+        nil
       }
     }
 
     public var pageIndex: CGFloat? {
       switch self {
       case .offset:
-        return nil
+        nil
       case let .paging(index: index):
-        return index
+        index
       }
     }
 
     public var isPaging: Bool {
       switch self {
       case .paging:
-        return true
+        true
       case .offset:
-        return false
+        false
       }
     }
 
@@ -58,6 +58,7 @@ public struct GalleryViewState: ElementState, Equatable {
   public let contentPosition: Position
   public let itemsCount: Int
   public let isScrolling: Bool
+  public let scrollRange: CGFloat?
 
   public init(
     contentOffset: CGFloat,
@@ -66,6 +67,7 @@ public struct GalleryViewState: ElementState, Equatable {
     self.contentPosition = .offset(contentOffset)
     self.itemsCount = itemsCount
     self.isScrolling = false
+    self.scrollRange = nil
   }
 
   public init(
@@ -75,16 +77,19 @@ public struct GalleryViewState: ElementState, Equatable {
     self.contentPosition = .paging(index: contentPageIndex)
     self.itemsCount = itemsCount
     self.isScrolling = false
+    self.scrollRange = nil
   }
 
   public init(
     contentPosition: Position,
     itemsCount: Int,
-    isScrolling: Bool
+    isScrolling: Bool,
+    scrollRange: CGFloat? = nil
   ) {
     self.contentPosition = contentPosition
     self.itemsCount = itemsCount
     self.isScrolling = isScrolling
+    self.scrollRange = scrollRange
   }
 }
 
@@ -110,7 +115,8 @@ extension GalleryViewState {
     return GalleryViewState(
       contentPosition: newContentPosition,
       itemsCount: itemsCount,
-      isScrolling: isScrolling
+      isScrolling: isScrolling,
+      scrollRange: scrollRange
     )
   }
 }

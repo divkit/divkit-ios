@@ -21,7 +21,7 @@ public struct ExpressionLink<T> {
     validator: AnyValueValidator<T>? = nil,
     errorTracker: ExpressionErrorTracker? = nil,
     resolveNested: Bool = true
-  ) throws {
+  ) {
     guard !rawValue.isEmpty else {
       errorTracker?(ExpressionError("Empty expression", expression: nil))
       return nil
@@ -38,7 +38,7 @@ public struct ExpressionLink<T> {
         guard let (start, end) = currentValue.makeLinkIndices() else {
           let error = ExpressionError("Error tokenizing '\(rawValue)'.", expression: rawValue)
           errorTracker?(error)
-          throw error
+          return nil
         }
         if !currentString.isEmpty {
           items.append(.string(currentString))
@@ -48,7 +48,7 @@ public struct ExpressionLink<T> {
           items.append(.string(""))
         } else {
           let value = String(currentValue[start...end])
-          if resolveNested, let link = try ExpressionLink<String>(
+          if resolveNested, let link = ExpressionLink<String>(
             rawValue: value,
             errorTracker: errorTracker
           ) {
@@ -129,13 +129,13 @@ extension ExpressionLink.Item: Equatable {
   static func ==(lhs: ExpressionLink.Item, rhs: ExpressionLink.Item) -> Bool {
     switch (lhs, rhs) {
     case let (.calcExpression(left), .calcExpression(right)):
-      return left.description == right.description
+      left.description == right.description
     case let (.string(left), .string(right)):
-      return left == right
+      left == right
     case let (.nestedCalcExpression(left), .nestedCalcExpression(right)):
-      return left == right
+      left == right
     case (.calcExpression, _), (.string, _), (.nestedCalcExpression, _):
-      return false
+      false
     }
   }
 }

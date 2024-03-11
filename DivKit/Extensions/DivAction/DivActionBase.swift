@@ -21,16 +21,16 @@ public protocol DivActionBase: Serializable {
 extension DivActionBase {
   func makeDivActionPayload(
     cardId: DivCardID,
-    source: UserInterfaceAction.DivActionSource
+    source: UserInterfaceAction.DivActionSource,
+    prototypeVariables: [String: AnyHashable] = [:]
   ) -> UserInterfaceAction.Payload {
     // url parameter is used for backward compatibility, it should be removed
     // when all custom div-action handlers will be replaced
-    let url: URL?
-    switch self.url {
+    let url: URL? = switch self.url {
     case let .value(value):
-      url = value.adding(cardId: cardId.rawValue)
+      value.adding(cardId: cardId.rawValue)
     case .link, .none:
-      url = nil
+      nil
     }
 
     return .divAction(
@@ -38,7 +38,8 @@ extension DivActionBase {
         action: .object(toDictionary().typedJSON()),
         cardId: cardId.rawValue,
         source: source,
-        url: url
+        url: url,
+        prototypeVariables: prototypeVariables
       )
     )
   }
