@@ -45,7 +45,7 @@ final class CalcExpression: CustomStringConvertible {
   typealias SymbolEvaluator = (_ args: [Value]) throws -> Value
 
   /// Type representing the arity (number of arguments) accepted by a function
-  enum Arity: ExpressibleByIntegerLiteral, CustomStringConvertible, Hashable {
+  enum Arity: ExpressibleByIntegerLiteral, Hashable {
     /// An exact number of arguments
     case exactly(Int)
 
@@ -58,16 +58,6 @@ final class CalcExpression: CustomStringConvertible {
     /// ExpressibleByIntegerLiteral constructor
     init(integerLiteral value: Int) {
       self = .exactly(value)
-    }
-
-    /// The human-readable description of the arity
-    var description: String {
-      switch self {
-      case let .exactly(value):
-        "\(value) argument\(value == 1 ? "" : "s")"
-      case let .atLeast(value):
-        "at least \(value) argument\(value == 1 ? "" : "s")"
-      }
     }
 
     /// No-op Hashable implementation
@@ -136,23 +126,21 @@ final class CalcExpression: CustomStringConvertible {
     var description: String {
       switch self {
       case .variable:
-        "variable \(escapedName)"
+        "Variable \(escapedName)"
       case .infix("?:"):
-        "ternary operator \(escapedName)"
+        "Ternary operator ?:"
       case .infix("[]"):
-        "subscript operator \(escapedName)"
-      case .infix("()"):
-        "function call operator \(escapedName)"
+        "Subscript operator []"
       case .infix:
-        "infix operator \(escapedName)"
+        "Infix operator \(escapedName)"
       case .prefix:
-        "prefix operator \(escapedName)"
+        "Prefix operator \(escapedName)"
       case .postfix:
-        "postfix operator \(escapedName)"
+        "Postfix operator \(escapedName)"
       case .function:
-        "function \(escapedName)()"
+        "Function \(escapedName)()"
       case .array:
-        "array \(escapedName)[]"
+        "Array \(escapedName)"
       }
     }
   }
@@ -163,26 +151,9 @@ final class CalcExpression: CustomStringConvertible {
   /// return `{ _ in throw CalcExpression.Error.undefinedSymbol(symbol) }` from your lookup function
   init(
     _ expression: ParsedCalcExpression,
-    impureSymbols: (Symbol) throws -> SymbolEvaluator?,
-    pureSymbols: (Symbol) throws -> SymbolEvaluator? = { _ in nil }
+    symbols: (Symbol) throws -> SymbolEvaluator
   ) throws {
-    root = try expression.root.optimized(
-      withImpureSymbols: impureSymbols,
-      pureSymbols: {
-        if let fn = try pureSymbols($0) {
-          return fn
-        }
-        if case let .function(name, _) = $0 {
-          for i in 0...10 {
-            let symbol = Symbol.function(name, arity: .exactly(i))
-            if try (impureSymbols(symbol) ?? pureSymbols(symbol)) != nil {
-              return { _ in throw Error.arityMismatch(symbol) }
-            }
-          }
-        }
-        return CalcExpression.errorEvaluator(for: $0)
-      }
-    )
+    root = try expression.root.optimized(symbols: symbols)
   }
 
   /// Parse an expression.
@@ -248,13 +219,6 @@ extension CalcExpression {
 // MARK: Private API
 
 extension CalcExpression {
-  fileprivate static func stringify(_ number: Double) -> String {
-    if let int = Int64(exactly: number) {
-      return "\(int)"
-    }
-    return "\(number)"
-  }
-
   // https://github.com/apple/swift-evolution/blob/master/proposals/0077-operator-precedence.md
   fileprivate static let operatorPrecedence: [String: (
     precedence: Int,
@@ -288,82 +252,14 @@ extension CalcExpression {
 
   fileprivate static func isOperator(_ char: UnicodeScalar) -> Bool {
     // Strangely, this is faster than switching on value
-    if "/=­+!*%<>&|^~?:".unicodeScalars.contains(char) {
-      return true
-    }
-    switch char.value {
-    case 0x00_A1...0x00_A7,
-         0x00_A9, 0x00_AB, 0x00_AC, 0x00_AE,
-         0x00_B0...0x00_B1,
-         0x00_B6, 0x00_BB, 0x00_BF, 0x00_D7, 0x00_F7,
-         0x20_16...0x20_17,
-         0x20_20...0x20_27,
-         0x20_30...0x20_3E,
-         0x20_41...0x20_53,
-         0x20_55...0x20_5E,
-         0x21_90...0x23_FF,
-         0x25_00...0x27_75,
-         0x27_94...0x2B_FF,
-         0x2E_00...0x2E_7F,
-         0x30_01...0x30_03,
-         0x30_08...0x30_30:
-      return true
-    default:
-      return false
-    }
+    "/=­+!*%<>&|^~?:".unicodeScalars.contains(char)
   }
 
   fileprivate static func isIdentifierHead(_ c: UnicodeScalar) -> Bool {
     switch c.value {
-    case 0x5F, 0x23, 0x24, 0x40, // _ # $ @
+    case 0x5F, // _
          0x41...0x5A, // A-Z
-         0x61...0x7A, // a-z
-         0x00_A8, 0x00_AA, 0x00_AD, 0x00_AF,
-         0x00_B2...0x00_B5,
-         0x00_B7...0x00_BA,
-         0x00_BC...0x00_BE,
-         0x00_C0...0x00_D6,
-         0x00_D8...0x00_F6,
-         0x00_F8...0x00_FF,
-         0x01_00...0x02_FF,
-         0x03_70...0x16_7F,
-         0x16_81...0x18_0D,
-         0x18_0F...0x1D_BF,
-         0x1E_00...0x1F_FF,
-         0x20_0B...0x20_0D,
-         0x20_2A...0x20_2E,
-         0x20_3F...0x20_40,
-         0x20_54,
-         0x20_60...0x20_6F,
-         0x20_70...0x20_CF,
-         0x21_00...0x21_8F,
-         0x24_60...0x24_FF,
-         0x27_76...0x27_93,
-         0x2C_00...0x2D_FF,
-         0x2E_80...0x2F_FF,
-         0x30_04...0x30_07,
-         0x30_21...0x30_2F,
-         0x30_31...0x30_3F,
-         0x30_40...0xD7_FF,
-         0xF9_00...0xFD_3D,
-         0xFD_40...0xFD_CF,
-         0xFD_F0...0xFE_1F,
-         0xFE_30...0xFE_44,
-         0xFE_47...0xFF_FD,
-         0x1_00_00...0x1_FF_FD,
-         0x2_00_00...0x2_FF_FD,
-         0x3_00_00...0x3_FF_FD,
-         0x4_00_00...0x4_FF_FD,
-         0x5_00_00...0x5_FF_FD,
-         0x6_00_00...0x6_FF_FD,
-         0x7_00_00...0x7_FF_FD,
-         0x8_00_00...0x8_FF_FD,
-         0x9_00_00...0x9_FF_FD,
-         0xA_00_00...0xA_FF_FD,
-         0xB_00_00...0xB_FF_FD,
-         0xC_00_00...0xC_FF_FD,
-         0xD_00_00...0xD_FF_FD,
-         0xE_00_00...0xE_FF_FD:
+         0x61...0x7A: // a-z
       true
     default:
       false
@@ -372,11 +268,8 @@ extension CalcExpression {
 
   fileprivate static func isIdentifier(_ c: UnicodeScalar) -> Bool {
     switch c.value {
-    case 0x30...0x39, // 0-9
-         0x03_00...0x03_6F,
-         0x1D_C0...0x1D_FF,
-         0x20_D0...0x20_FF,
-         0xFE_20...0xFE_2F:
+    case 0x2E, // .
+         0x30...0x39: // 0-9
       true
     default:
       isIdentifierHead(c)
@@ -460,14 +353,14 @@ private enum Subexpression: CustomStringConvertible {
     }
     switch self {
     case let .literal(literal):
-      return CalcExpression.stringify(literal.value)
+      return AnyCalcExpression.stringify(literal.value)
     case let .symbol(symbol, args, _):
       guard isOperand else {
         return symbol.escapedName
       }
       func needsSeparation(_ lhs: String, _ rhs: String) -> Bool {
         let lhs = lhs.unicodeScalars.last!, rhs = rhs.unicodeScalars.first!
-        return lhs == "." || (CalcExpression.isOperator(lhs) || lhs == "-")
+        return (CalcExpression.isOperator(lhs) || lhs == "-")
           == (CalcExpression.isOperator(rhs) || rhs == "-")
       }
       switch symbol {
@@ -541,31 +434,15 @@ private enum Subexpression: CustomStringConvertible {
   }
 
   func optimized(
-    withImpureSymbols impureSymbols: (CalcExpression.Symbol) throws -> CalcExpression
-      .SymbolEvaluator?,
-    pureSymbols: (CalcExpression.Symbol) throws -> CalcExpression.SymbolEvaluator
+    symbols: (CalcExpression.Symbol) throws -> CalcExpression.SymbolEvaluator
   ) throws -> Subexpression {
     guard case .symbol(let symbol, var args, _) = self else {
       return self
     }
     args = try args.map {
-      try $0.optimized(withImpureSymbols: impureSymbols, pureSymbols: pureSymbols)
+      try $0.optimized(symbols: symbols)
     }
-    if let fn = try impureSymbols(symbol) {
-      return .symbol(symbol, args, fn)
-    }
-    let fn = try pureSymbols(symbol)
-    var argValues = [CalcExpression.Value]()
-    for arg in args {
-      guard case let .literal(value) = arg else {
-        return .symbol(symbol, args, fn)
-      }
-      argValues.append(value)
-    }
-    guard let result = try? fn(argValues) else {
-      return .symbol(symbol, args, fn)
-    }
-    return .literal(result)
+    return try .symbol(symbol, args, symbols(symbol))
   }
 }
 
@@ -821,7 +698,7 @@ extension UnicodeScalarView {
   }
 
   fileprivate mutating func parseOperator() -> Subexpression? {
-    if var op = scanCharacters({ $0 == "." }) ?? scanCharacters({ $0 == "-" }) {
+    if var op = scanCharacters({ $0 == "-" }) {
       if let tail = scanCharacters(CalcExpression.isOperator) {
         op += tail
       }
@@ -835,41 +712,17 @@ extension UnicodeScalarView {
   }
 
   fileprivate mutating func parseIdentifier() -> Subexpression? {
-    func scanIdentifier() -> String? {
-      var start = self
-      var identifier = ""
-      if scanCharacter(".") {
-        identifier = "."
-      } else if let head = scanCharacter(CalcExpression.isIdentifierHead) {
-        identifier = head
-        start = self
-        if scanCharacter(".") {
-          identifier.append(".")
-        }
-      } else {
-        return nil
-      }
-      while let tail = scanCharacters(CalcExpression.isIdentifier) {
-        identifier += tail
-        start = self
-        if scanCharacter(".") {
-          identifier.append(".")
-        }
-      }
-      if identifier.hasSuffix(".") {
-        self = start
-        if identifier == "." {
-          return nil
-        }
-        identifier = String(identifier.unicodeScalars.dropLast())
-      } else if scanCharacter("'") {
-        identifier.append("'")
-      }
-      return identifier
-    }
-
-    guard let identifier = scanIdentifier() else {
+    var identifier = ""
+    if let head = scanCharacter(CalcExpression.isIdentifierHead) {
+      identifier = head
+    } else {
       return nil
+    }
+    while let tail = scanCharacters(CalcExpression.isIdentifier) {
+      identifier += tail
+    }
+    if scanCharacter("'") {
+      identifier.append("'")
     }
     return .symbol(.variable(identifier), [], nil)
   }
