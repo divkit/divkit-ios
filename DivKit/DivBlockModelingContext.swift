@@ -203,8 +203,8 @@ public struct DivBlockModelingContext {
     divState.extensions?.compactMap { stateInterceptors[$0.id] }.first
   }
 
-  public func addError(message: String, causes: [DivError] = []) {
-    errorsStorage.add(DivBlockModelingError(message, path: parentPath, causes: causes))
+  public func addError(message: String) {
+    errorsStorage.add(DivBlockModelingError(message, path: parentPath))
   }
 
   public func addWarning(message: String) {
