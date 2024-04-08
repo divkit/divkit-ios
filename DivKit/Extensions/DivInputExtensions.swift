@@ -53,9 +53,7 @@ extension DivInput: DivBlockModeling {
     let onBlurActions = focus?.onBlur?.uiActions(context: context) ?? []
 
     let inputPath = context.parentPath + (id ?? DivInput.type)
-    let isFocused = context.blockStateStorage.isFocused(
-      element: IdAndCardId(path: inputPath)
-    )
+    let isFocused = context.blockStateStorage.isFocused(path: inputPath)
 
     return TextInputBlock(
       widthTrait: resolveContentWidthTrait(context),
@@ -78,7 +76,8 @@ extension DivInput: DivBlockModeling {
       validators: makeValidators(context),
       layoutDirection: context.layoutDirection,
       textAlignmentHorizontal: resolveTextAlignmentHorizontal(expressionResolver).textAlignment,
-      textAlignmentVertical: resolveTextAlignmentVertical(expressionResolver).textAlignment
+      textAlignmentVertical: resolveTextAlignmentVertical(expressionResolver).textAlignment,
+      isEnabled: resolveIsEnabled(expressionResolver)
     )
   }
 }
