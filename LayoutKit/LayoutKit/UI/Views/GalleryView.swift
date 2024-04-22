@@ -129,7 +129,13 @@ public final class GalleryView: BlockView {
            .pending where frame.size == .zero:
         deferredStateSetting = .pending(self.state)
       case .idle, .pending, .firstLayoutPerformed:
-        updateContentOffset(to: self.state.contentPosition, animated: oldModel?.path == model.path)
+        if oldModel?.path == model.path {
+          updateContentOffset(to: self.state.contentPosition, animated: true)
+        } else {
+          collectionView.performWithDetachedDelegate {
+            updateContentOffset(to: self.state.contentPosition, animated: false)
+          }
+        }
       }
     }
   }
@@ -207,8 +213,6 @@ public final class GalleryView: BlockView {
     (collectionView as UIScrollView).delegate = compoundScrollDelegate
     compoundScrollDelegate.add(self)
     addSubview(collectionView)
-    mask = UIView(frame: frame)
-    mask!.backgroundColor = .black
   }
 
   @available(*, unavailable)
@@ -230,7 +234,6 @@ public final class GalleryView: BlockView {
       return
     }
     collectionView.frame = bounds
-    mask!.frame = bounds.insetBy(dx: 0, dy: shadowInsetValue)
 
     if let model, layout?.isEqual(to: model, boundsSize: bounds.size) != true {
       updateLayout(to: model)
@@ -269,8 +272,6 @@ public final class GalleryView: BlockView {
     }
   }
 }
-
-private let shadowInsetValue = -(BlockShadow.maxOffset + 2 * BlockShadow.maxBlurRadius)
 
 extension GalleryView: ScrollDelegate {
   public func onWillBeginDragging(_ scrollView: ScrollView) {
