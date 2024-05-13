@@ -56,15 +56,15 @@ public final class DivView: VisibleBoundsTrackingView {
     _ source: DivViewSource,
     debugParams: DebugParams = DebugParams(),
     shouldResetPreviousCardData: Bool = false
-  ) {
+  ) async {
     if shouldResetPreviousCardData, let blockProvider {
       divKitComponents.reset(cardId: blockProvider.cardId)
     }
-    preloader.setSource(source, debugParams: debugParams)
     blockProvider = preloader.blockProvider(for: source.id.cardId)
     blockSubscription = blockProvider?.$block.currentAndNewValues.addObserver { [weak self] in
       self?.update(block: $0)
     }
+    await preloader.setSource(source, debugParams: debugParams)
   }
 
   /// Sets the source of the ``DivView`` and updates the layout.
@@ -122,9 +122,8 @@ public final class DivView: VisibleBoundsTrackingView {
   /// - Returns: A `Disposable` which can be used to unregister the observer when it's no longer
   /// needed.
   public func addObserver(_ onCardSizeChanged: @escaping (DivViewSize) -> Void) -> Disposable {
-    preloader.changeEvents.filter { [weak self] in
-      $0.cardId == self?.blockProvider?.cardId
-    }.addObserver {
+    preloader.changeEvents.addObserver { [weak self] in
+      guard $0.cardId == self?.blockProvider?.cardId else { return }
       onCardSizeChanged($0.estimatedSize)
     }
   }
@@ -205,7 +204,7 @@ extension DivView: ElementStateObserver {
 extension DivView: UIActionEventPerforming {
   public func perform(uiActionEvent event: UIActionEvent, from sender: AnyObject) {
     switch event.payload {
-    case .composite, .empty, .json, .url:
+    case .empty, .url:
       break
     case let .menu(menu):
       nearestViewController?.showMenu(menu, actionPerformer: self)
@@ -244,7 +243,7 @@ extension UIViewController {
     actionPerformer: UIActionEventPerforming
   ) {
     let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
-    menu.items.forEach { item in
+    for item in menu.items {
       let action = UIAlertAction(title: item.text, style: .default) { _ in
         let events = item.actions.map {
           UIActionEvent(uiAction: $0, originalSender: self)

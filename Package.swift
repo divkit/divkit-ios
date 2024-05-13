@@ -1,17 +1,17 @@
-// swift-tools-version:5.7
+// swift-tools-version:5.9
 
 import PackageDescription
 
 let vgsl = (
   url: "https://github.com/yandex/vgsl.git",
   packageName: "vgsl",
-  version: Version("4.1.1")
+  version: Version("5.0.1")
 )
 
 let package = Package(
   name: "DivKit",
   platforms: [
-    .iOS(.v11),
+    .iOS(.v13),
   ],
   products: [
     .library(name: "DivKit", targets: ["DivKit"]),
@@ -21,7 +21,7 @@ let package = Package(
     .package(
       url: vgsl.url,
       from: vgsl.version
-    )
+    ),
   ],
   targets: [
     .target(
@@ -53,14 +53,14 @@ let package = Package(
     .target(
       name: "LayoutKitInterface",
       dependencies: [
-        .product(name: "BasePublic", package: vgsl.packageName)
+        .product(name: "BasePublic", package: vgsl.packageName),
       ],
       path: "LayoutKit/Interface"
     ),
     .target(
       name: "Serialization",
       dependencies: [
-        .product(name: "CommonCorePublic", package: vgsl.packageName)
+        .product(name: "CommonCorePublic", package: vgsl.packageName),
       ],
       path: "Serialization"
     ),

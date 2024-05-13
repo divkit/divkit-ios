@@ -62,7 +62,7 @@ public final class DivActionHandler {
     updateCard: @escaping DivActionURLHandler.UpdateCardAction,
     showTooltip: DivActionURLHandler.ShowTooltipAction? = nil,
     tooltipActionPerformer: TooltipActionPerformer? = nil,
-    logger: DivActionLogger = EmptyDivActionLogger(),
+    logger: DivActionLogger? = nil,
     trackVisibility: @escaping TrackVisibility = { _, _ in },
     trackDisappear: @escaping TrackVisibility = { _, _ in },
     performTimerAction: @escaping DivActionURLHandler.PerformTimerAction = { _, _, _ in },
@@ -83,7 +83,7 @@ public final class DivActionHandler {
         persistentValuesStorage: persistentValuesStorage
       ),
       urlHandler: urlHandler,
-      logger: logger,
+      logger: logger ?? EmptyDivActionLogger(),
       trackVisibility: trackVisibility,
       trackDisappear: trackDisappear,
       variablesStorage: variablesStorage,
@@ -156,46 +156,52 @@ public final class DivActionHandler {
       isHandled = false
     }
 
+    let logId = action.resolveLogId(expressionResolver) ?? ""
+    let logUrl = action.resolveLogUrl(expressionResolver)
+    let referer = action.resolveReferer(expressionResolver)
+
+    let divActionInfo = DivActionInfo(
+      cardId: cardId,
+      logId: logId,
+      url: action.resolveUrl(expressionResolver),
+      logUrl: logUrl,
+      referer: referer,
+      source: source,
+      payload: action.payload
+    )
+
     if !isHandled {
-      handleUrl(action, context: context, source: source, sender: sender)
+      handleUrl(action, info: divActionInfo, sender: sender)
     }
 
-    if let logUrl = action.resolveLogUrl(expressionResolver) {
-      let referer = action.resolveReferer(expressionResolver)
+    if let logUrl {
       logger.log(url: logUrl, referer: referer, payload: action.payload)
     }
 
     reporter.reportAction(
       cardId: cardId,
-      info: DivActionInfo(
-        cardId: cardId,
-        logId: action.logId,
-        source: source,
-        payload: action.payload
-      )
+      info: divActionInfo
     )
 
     if source == .visibility {
-      trackVisibility(action.logId, cardId)
+      trackVisibility(logId, cardId)
     } else if source == .disappear {
-      trackDisappear(action.logId, cardId)
+      trackDisappear(logId, cardId)
     }
   }
 
   private func handleUrl(
     _ action: DivActionBase,
-    context: DivActionHandlingContext,
-    source: UserInterfaceAction.DivActionSource,
+    info: DivActionInfo,
     sender: AnyObject?
   ) {
-    let expressionResolver = context.expressionResolver
-    guard let url = action.resolveUrl(expressionResolver) else {
+    guard let url = info.url else {
       return
     }
 
     let isDivActionURLHandled = divActionURLHandler.handleURL(
       url,
-      cardId: context.cardId,
+      cardId: info.cardId,
       completion: { [weak self] result in
         guard let self else {
           return
@@ -206,11 +212,11 @@ public final class DivActionHandler {
         case .failure:
           action.downloadCallbacks?.onFailActions ?? []
         }
-        callbackActions.forEach {
+        for action in callbackActions {
           self.handle(
-            $0,
-            cardId: context.cardId,
-            source: source,
+            action,
+            cardId: info.cardId,
+            source: info.source,
             sender: sender
           )
         }
@@ -218,20 +224,15 @@ public final class DivActionHandler {
     )
 
     if !isDivActionURLHandled {
-      switch source {
+      switch info.source {
       case .visibility, .disappear:
         // For visibility actions url is treated as logUrl.
-        let referer = action.resolveReferer(expressionResolver)
+        let referer = info.referer
         logger.log(url: url, referer: referer, payload: action.payload)
       default:
         urlHandler.handle(
           url,
-          info: DivActionInfo(
-            cardId: context.cardId,
-            logId: action.logId,
-            source: source,
-            payload: action.payload
-          ),
+          info: info,
           sender: sender
         )
       }

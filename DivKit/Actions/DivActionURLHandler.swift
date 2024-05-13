@@ -15,15 +15,11 @@ public final class DivActionURLHandler {
 
   @frozen
   public enum UpdateReason {
-    public enum AffectedCards: Equatable {
-      case all
-      case specific(Set<DivCardID>)
-    }
-
     case patch(DivCardID, DivPatch)
     case timer(DivCardID)
     case state(DivCardID)
-    case variable(AffectedCards)
+    case variable([DivCardID: Set<DivVariableName>])
+    case external
   }
 
   private let stateUpdater: DivStateUpdater
@@ -168,9 +164,17 @@ public final class DivActionURLHandler {
     }
     switch mode {
     case let .forward(step, overflow):
-      return getOffset(offset: state.currentOffset + step, scrollRange: scrollRange, overflow: overflow)
+      return getOffset(
+        offset: state.currentOffset + step,
+        scrollRange: scrollRange,
+        overflow: overflow
+      )
     case let .backward(step, overflow):
-      return getOffset(offset: state.currentOffset - step, scrollRange: scrollRange, overflow: overflow)
+      return getOffset(
+        offset: state.currentOffset - step,
+        scrollRange: scrollRange,
+        overflow: overflow
+      )
     case let .position(step):
       return getOffset(offset: step, scrollRange: scrollRange, overflow: .clamp)
     case .start:
@@ -187,9 +191,9 @@ public final class DivActionURLHandler {
   ) -> CGFloat {
     switch overflow {
     case .ring:
-      return (offset + scrollRange).truncatingRemainder(dividingBy: scrollRange)
+      (offset + scrollRange).truncatingRemainder(dividingBy: scrollRange)
     case .clamp:
-      return offset.clamp(0...scrollRange)
+      offset.clamp(0...scrollRange)
     }
   }
 

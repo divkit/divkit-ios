@@ -23,18 +23,20 @@ public struct DivTooltipViewFactory {
       variableTriggers: nil,
       variables: nil
     )
-    view.setSource(
-      DivViewSource(
-        kind: .divData(divData),
-        cardId: cardId,
-        additionalId: tooltipId
+    Task {
+      await view.setSource(
+        DivViewSource(
+          kind: .divData(divData),
+          cardId: cardId,
+          additionalId: tooltipId
+        )
       )
-    )
+    }
     return view
   }
 
   #else
-  func makeView(div: Div, tooltipId: String) -> ViewType {
+  func makeView(div _: Div, tooltipId _: String) -> ViewType {
     self as AnyObject
   }
   #endif

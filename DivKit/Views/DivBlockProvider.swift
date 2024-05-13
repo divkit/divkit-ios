@@ -5,6 +5,7 @@ import CommonCorePublic
 import LayoutKit
 import Serialization
 
+@MainActor
 final class DivBlockProvider {
   private let divKitComponents: DivKitComponents
   private let onCardSizeChanged: (DivCardID, DivViewSize) -> Void
@@ -64,47 +65,55 @@ final class DivBlockProvider {
     self.onCardSizeChanged = onCardSizeChanged
 
     divKitComponents.updateCardSignal
-      .addObserver { [weak self] in self?.update(reasons: $0) }
+      .addObserver { [weak self] reasons in
+        self?.update(reasons: reasons)
+      }
       .dispose(in: disposePool)
   }
 
   func setSource(
     _ source: DivViewSource,
     debugParams: DebugParams
-  ) {
+  ) async {
     id = source.id
     self.debugParams = debugParams
 
     switch source.kind {
     case let .data(data):
-      update(data: data)
+      await update(data: data)
     case let .divData(divData):
       update(divData: divData)
     case let .json(json):
-      update(json: json)
+      await update(json: json)
     }
   }
 
-  private func update(data: Data) {
+  private func update(data: Data) async {
     dataErrors = []
-    do {
+
+    let result = await Task.detached {
       guard let jsonObj = try? JSONSerialization.jsonObject(with: data),
             let jsonDict = jsonObj as? [String: Any] else {
-        throw DeserializationError.nestedObjectError(
-          field: cardId.rawValue,
+        throw await DeserializationError.nestedObjectError(
+          field: self.cardId.rawValue,
           error: .invalidJSONData(data: data)
         )
       }
-      update(json: jsonDict)
-    } catch {
+      return jsonDict
+    }.result
+
+    switch result {
+    case let .success(jsonDict):
+      await update(json: jsonDict)
+    case let .failure(error):
       block = handleError(error: error)
     }
   }
 
-  private func update(json: [String: Any]) {
+  private func update(json: [String: Any]) async {
     dataErrors = []
     do {
-      let result = try parseDivDataWithTemplates(json, cardId: cardId)
+      let result = try await parseDivDataWithTemplates(json, cardId: cardId)
       dataErrors.append(contentsOf: result.errorsOrWarnings?.asArray() ?? [])
       update(divData: result.value)
     } catch {
@@ -131,13 +140,14 @@ final class DivBlockProvider {
       return
     }
 
-    guard needUpdateBlock(reasons: reasons) else { return }
+    guard needUpdateBlock(reasons: reasons) else {
+      return
+    }
 
     reasons.compactMap { $0.patch(for: self.cardId) }.forEach {
       divData = divData.applyPatch($0)
     }
     self.divData = divData
-
     let context = divKitComponents.makeContext(
       cardId: cardId,
       additionalId: id.additionalId,
@@ -153,8 +163,8 @@ final class DivBlockProvider {
         )
       }
       debugParams.processMeasurements((cardId: cardId, measurements: measurements))
-      context.errorsStorage.errors.forEach {
-        divKitComponents.reporter.reportError(cardId: cardId, error: $0)
+      for error in context.errorsStorage.errors {
+        divKitComponents.reporter.reportError(cardId: cardId, error: error)
       }
     } catch {
       divKitComponents.reporter.reportError(
@@ -176,10 +186,10 @@ final class DivBlockProvider {
         cardId = divCardID
       case let .state(divCardID):
         cardId = divCardID
-      case .variable(.all):
+      case .external:
         return true
-      case let .variable(.specific(cardIds)):
-        if cardIds.contains(self.cardId) {
+      case let .variable(cardIds):
+        if cardIds.keys.contains(self.cardId) {
           return true
         }
         continue
@@ -202,16 +212,26 @@ final class DivBlockProvider {
   private func parseDivDataWithTemplates(
     _ jsonDict: [String: Any],
     cardId: DivCardID
-  ) throws -> DeserializationResult<DivData> {
+  ) async throws -> DeserializationResult<DivData> {
     let rawDivData = try RawDivData(dictionary: jsonDict)
     let templates = try measurements.templateParsingTime.updateMeasure {
       DivTemplates(dictionary: rawDivData.templates)
     }
-    return try measurements.divDataParsingTime.updateMeasure {
-      templates
-        .parseValue(type: DivDataTemplate.self, from: rawDivData.card)
-        .asCardResult(cardId: cardId)
+    let result = try await withCheckedThrowingContinuation { continuation in
+      DispatchQueue.global().async {
+        do {
+          let result = try self.measurements.divDataParsingTime.updateMeasure {
+            templates
+              .parseValue(type: DivDataTemplate.self, from: rawDivData.card)
+              .asCardResult(cardId: cardId)
+          }
+          continuation.resume(returning: result)
+        } catch {
+          continuation.resume(throwing: error)
+        }
+      }
     }
+    return result
   }
 
   private func handleError(
@@ -225,8 +245,8 @@ final class DivBlockProvider {
       errors.append(DivUnknownError(error, path: UIElementPath(cardId.rawValue)))
     }
     errors.append(contentsOf: context?.errorsStorage.errors ?? dataErrors)
-    errors.forEach {
-      divKitComponents.reporter.reportError(cardId: cardId, error: $0)
+    for item in errors {
+      divKitComponents.reporter.reportError(cardId: cardId, error: item)
     }
 
     if debugParams.isDebugInfoEnabled {
@@ -272,7 +292,7 @@ extension DivActionURLHandler.UpdateReason {
     switch self {
     case let .patch(cardId, patch):
       cardId == divCardId ? patch : nil
-    case .timer, .variable, .state:
+    case .timer, .variable, .state, .external:
       nil
     }
   }

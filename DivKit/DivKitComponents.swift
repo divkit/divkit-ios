@@ -86,7 +86,6 @@ public final class DivKitComponents {
   /// players.
   ///   - urlHandler: An optional ``DivUrlHandler`` object that allows you to implement custom
   /// action handling for specific URLs.
-  ///   - urlOpener: Deprecated. This parameter is deprecated, use ``DivUrlHandler`` instead.
   ///   - variablesStorage: A ``DivVariablesStorage`` object that handles the storage and retrieval
   /// of variables.
   public init(
@@ -106,8 +105,7 @@ public final class DivKitComponents {
     trackDisappear: @escaping DivActionHandler.TrackVisibility = { _, _ in },
     updateCardAction: UpdateCardAction? = nil,
     playerFactory: PlayerFactory? = nil,
-    urlHandler: DivUrlHandler? = nil,
-    urlOpener: @escaping UrlOpener = { _ in },
+    urlHandler: DivUrlHandler = DivUrlHandlerDelegate { _ in },
     variablesStorage: DivVariablesStorage = DivVariablesStorage()
   ) {
     self.divCustomBlockFactory = divCustomBlockFactory ?? EmptyDivCustomBlockFactory()
@@ -120,7 +118,6 @@ public final class DivKitComponents {
     self.reporter = reporter
     self.showToolip = showTooltip
     self.stateManagement = stateManagement
-    let urlHandler = urlHandler ?? DivUrlHandlerDelegate(urlOpener)
     self.urlHandler = urlHandler
     self.variablesStorage = variablesStorage
 
@@ -174,9 +171,6 @@ public final class DivKitComponents {
       updateCard: updateCard,
       showTooltip: showTooltip,
       tooltipActionPerformer: self.tooltipManager,
-      logger: DefaultDivActionLogger(
-        requestPerformer: requestPerformer
-      ),
       trackVisibility: trackVisibility,
       trackDisappear: trackDisappear,
       performTimerAction: { weakTimerStorage?.perform($0, $1, $2) },
@@ -341,12 +335,12 @@ public final class DivKitComponents {
   private func onVariablesChanged(event: DivVariablesStorage.ChangeEvent) {
     switch event.kind {
     case let .global(variables):
-      let cardIds = variableTracker.getAffectedCards(variables: variables)
-      if !cardIds.isEmpty {
-        updateCard(.variable(.specific(cardIds)))
+      let affectedCards = variableTracker.getAffectedCards(variables: variables)
+      if !affectedCards.isEmpty {
+        updateCard(.variable(affectedCards))
       }
-    case let .local(cardId, _):
-      updateCard(.variable(.specific([cardId])))
+    case let .local(cardId, variables):
+      updateCard(.variable([cardId: variables]))
     }
   }
 }
