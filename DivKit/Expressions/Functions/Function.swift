@@ -2,12 +2,67 @@ import Foundation
 
 import BasePublic
 
+typealias EvaluatorProvider = (CalcExpression.Symbol) -> Function?
+
 protocol Function {
-  func invoke(args: [Any]) throws -> Any
+  func invoke(_ args: [Any]) throws -> Any
+
+  func invoke(
+    args: [Subexpression],
+    evaluators: EvaluatorProvider
+  ) throws -> Any
+}
+
+extension Function {
+  func invoke(
+    args: [Subexpression],
+    evaluators: EvaluatorProvider
+  ) throws -> Any {
+    try invoke(args.map { try $0.evaluate(evaluators) })
+  }
 }
 
 protocol SimpleFunction: Function {
   var signature: FunctionSignature { get throws }
+}
+
+struct NoMatchingSignatureError: Error {}
+
+struct ConstantFunction<R>: SimpleFunction {
+  private let value: R
+
+  init(_ value: R) {
+    self.value = value
+  }
+
+  var signature: FunctionSignature {
+    get throws {
+      try .init(
+        arguments: [],
+        resultType: .from(type: R.self)
+      )
+    }
+  }
+
+  func invoke(_: [Any]) throws -> Any {
+    value
+  }
+}
+
+struct LazyFunction: Function {
+  private let impl: ([Subexpression], EvaluatorProvider) throws -> Any
+
+  init(_ impl: @escaping ([Subexpression], EvaluatorProvider) throws -> Any) {
+    self.impl = impl
+  }
+
+  func invoke(_: [Any]) throws -> Any {
+    throw ExpressionError("Lazy function must be called with lazy args")
+  }
+
+  func invoke(args: [Subexpression], evaluators: EvaluatorProvider) throws -> Any {
+    try impl(args, evaluators)
+  }
 }
 
 struct FunctionNullary<R>: SimpleFunction {
@@ -26,7 +81,7 @@ struct FunctionNullary<R>: SimpleFunction {
     self.impl = impl
   }
 
-  func invoke(args _: [Any]) throws -> Any {
+  func invoke(_: [Any]) throws -> Any {
     try impl()
   }
 }
@@ -49,8 +104,9 @@ struct FunctionUnary<T1, R>: SimpleFunction {
     self.impl = impl
   }
 
-  func invoke(args: [Any]) throws -> Any {
-    try impl(castArg(args[0]))
+  func invoke(_ args: [Any]) throws -> Any {
+    try checkArgs(args, count: 1)
+    return try impl(castArg(args[0]))
   }
 }
 
@@ -73,8 +129,9 @@ struct FunctionBinary<T1, T2, R>: SimpleFunction {
     self.impl = impl
   }
 
-  func invoke(args: [Any]) throws -> Any {
-    try impl(
+  func invoke(_ args: [Any]) throws -> Any {
+    try checkArgs(args, count: 2)
+    return try impl(
       castArg(args[0]),
       castArg(args[1])
     )
@@ -101,8 +158,9 @@ struct FunctionTernary<T1, T2, T3, R>: SimpleFunction {
     self.impl = impl
   }
 
-  func invoke(args: [Any]) throws -> Any {
-    try impl(
+  func invoke(_ args: [Any]) throws -> Any {
+    try checkArgs(args, count: 3)
+    return try impl(
       castArg(args[0]),
       castArg(args[1]),
       castArg(args[2])
@@ -131,8 +189,9 @@ struct FunctionQuaternary<T1, T2, T3, T4, R>: SimpleFunction {
     self.impl = impl
   }
 
-  func invoke(args: [Any]) throws -> Any {
-    try impl(
+  func invoke(_ args: [Any]) throws -> Any {
+    try checkArgs(args, count: 4)
+    return try impl(
       castArg(args[0]),
       castArg(args[1]),
       castArg(args[2]),
@@ -159,8 +218,9 @@ struct FunctionVarUnary<T1, R>: SimpleFunction {
     self.impl = impl
   }
 
-  func invoke(args: [Any]) throws -> Any {
-    try impl(args.map { try castArg($0) })
+  func invoke(_ args: [Any]) throws -> Any {
+    try checkVarArgs(args, count: 1)
+    return try impl(args.map { try castArg($0) })
   }
 }
 
@@ -183,8 +243,9 @@ struct FunctionVarBinary<T1, T2, R>: SimpleFunction {
     self.impl = impl
   }
 
-  func invoke(args: [Any]) throws -> Any {
-    try impl(
+  func invoke(_ args: [Any]) throws -> Any {
+    try checkVarArgs(args, count: 2)
+    return try impl(
       castArg(args[0]),
       args.dropFirst().map { try castArg($0) }
     )
@@ -211,8 +272,9 @@ struct FunctionVarTernary<T1, T2, T3, R>: SimpleFunction {
     self.impl = impl
   }
 
-  func invoke(args: [Any]) throws -> Any {
-    try impl(
+  func invoke(_ args: [Any]) throws -> Any {
+    try checkVarArgs(args, count: 3)
+    return try impl(
       castArg(args[0]),
       castArg(args[1]),
       args.dropFirst(2).map { try castArg($0) }
@@ -222,14 +284,14 @@ struct FunctionVarTernary<T1, T2, T3, R>: SimpleFunction {
 
 struct OverloadedFunction: Function {
   let functions: [SimpleFunction]
-  private let makeError: ([Argument]) -> Error
+  private let makeError: ([Any]) -> Error
 
-  init(functions: [SimpleFunction], makeError: (([Argument]) -> Error)? = nil) {
+  init(functions: [SimpleFunction], makeError: (([Any]) -> Error)? = nil) {
     self.functions = functions
-    self.makeError = makeError ?? { _ in CalcExpression.Error.noMatchingSignature }
+    self.makeError = makeError ?? { _ in NoMatchingSignatureError() }
   }
 
-  func invoke(args: [Any]) throws -> Any {
+  func invoke(_ args: [Any]) throws -> Any {
     let arguments = try args.map {
       try ArgumentSignature(type: .from(type: type(of: $0)))
     }
@@ -242,9 +304,9 @@ struct OverloadedFunction: Function {
       }
     }
     if let function {
-      return try function.invoke(args: args)
+      return try function.invoke(args)
     }
-    throw makeError(zip(args, arguments).map { Argument(type: $1.type, value: $0) })
+    throw makeError(args)
   }
 
   private func getFunction(
@@ -255,24 +317,9 @@ struct OverloadedFunction: Function {
       try $0.signature.isApplicable(args: args, predicate: predicate)
     }
     if sutableFunctions.count > 1 {
-      throw CalcExpression.Error.message("Multiple matching overloads")
+      throw ExpressionError("Multiple matching overloads")
     }
     return sutableFunctions.first
-  }
-}
-
-struct Argument {
-  let type: ArgumentType
-  let value: Any
-
-  var formattedValue: String {
-    let value = ExpressionValueConverter.stringify(value)
-    switch type {
-    case .string:
-      return "'\(value)'"
-    case .integer, .number, .boolean, .datetime, .color, .url, .dict, .array, .any, .error:
-      return value
-    }
   }
 }
 
@@ -292,7 +339,6 @@ enum ArgumentType: String, Decodable, CaseIterable {
   case dict
   case array
   case any
-  case error
 
   var swiftType: Any.Type {
     switch self {
@@ -316,17 +362,6 @@ enum ArgumentType: String, Decodable, CaseIterable {
       [AnyHashable].self
     case .any:
       Any.self
-    case .error:
-      CalcExpression.Error.self
-    }
-  }
-
-  var name: String {
-    switch self {
-    case .datetime:
-      "DateTime"
-    default:
-      rawValue.stringWithFirstCharCapitalized()
     }
   }
 
@@ -346,7 +381,7 @@ enum ArgumentType: String, Decodable, CaseIterable {
 
   static func from(type: Any.Type) throws -> ArgumentType {
     guard let type = allCases.first(where: { $0.swiftType == type }) else {
-      throw CalcExpression.Error.message("Type is not supported")
+      throw ExpressionError("Type is not supported")
     }
     return type
   }
@@ -380,6 +415,18 @@ struct FunctionSignature: Decodable, Equatable {
   }
 }
 
+private func checkArgs(_ args: [Any], count: Int) throws {
+  if args.count != count {
+    throw ExpressionError("Exactly \(count) argument(s) expected.")
+  }
+}
+
+private func checkVarArgs(_ args: [Any], count: Int) throws {
+  if args.count < count {
+    throw ExpressionError("At least \(count) argument(s) expected.")
+  }
+}
+
 private func castArg<T>(_ value: Any) throws -> T {
   if let castedValue = value as? T {
     return castedValue
@@ -389,5 +436,7 @@ private func castArg<T>(_ value: Any) throws -> T {
     return Double(intValue) as! T
   }
 
-  throw CalcExpression.Error.message("Argument couldn't be casted to \(T.self)")
+  throw ExpressionError(
+    "Invalid argument type: expected \(formatTypeForError(T.self)), got \(formatTypeForError(value))."
+  )
 }

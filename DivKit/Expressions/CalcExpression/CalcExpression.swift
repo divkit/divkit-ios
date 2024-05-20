@@ -36,17 +36,9 @@ import Foundation
 import CommonCorePublic
 
 struct CalcExpression {
-  typealias SymbolEvaluator = (_ args: [Any]) throws -> Any
-
-  static func parse(_ expression: String) -> CalcExpression {
+  static func parse(_ expression: String) throws -> CalcExpression {
     var unicodeScalarView = UnicodeScalarView(expression.unicodeScalars)
-    var subexpression: Subexpression
-    do {
-      subexpression = try unicodeScalarView.parseSubexpression(upTo: [])
-    } catch {
-      subexpression = .error(error as! Error)
-    }
-    return CalcExpression(root: subexpression)
+    return try CalcExpression(root: unicodeScalarView.parseSubexpression(upTo: []))
   }
 
   private let root: Subexpression
@@ -60,21 +52,14 @@ struct CalcExpression {
     }
   }
 
-  func evaluate(
-    evaluators: @escaping (Symbol) -> SymbolEvaluator?
-  ) throws -> Any {
-    let value = root.evaluate(evaluators)
-    if let error = value as? Error {
-      throw error
-    }
-    return value
+  func evaluate(evaluators: @escaping (Symbol) -> Function?) throws -> Any {
+    try root.evaluate(evaluators)
   }
 }
 
-private enum Subexpression {
+enum Subexpression {
   case literal(Any)
   case symbol(CalcExpression.Symbol, [Subexpression])
-  case error(CalcExpression.Error)
 
   var isOperand: Bool {
     switch self {
@@ -87,34 +72,26 @@ private enum Subexpression {
       }
     case .symbol, .literal:
       true
-    case .error:
-      false
     }
   }
 
   func evaluate(
-    _ evaluators: (CalcExpression.Symbol) -> CalcExpression.SymbolEvaluator?
-  ) -> Any {
+    _ evaluators: (CalcExpression.Symbol) -> Function?
+  ) throws -> Any {
     switch self {
     case let .literal(value):
       return value
     case let .symbol(symbol, args):
-      guard let evaluator = evaluators(symbol) else {
-        return CalcExpression.Error.message("Undefined symbol: \(symbol.name)")
+      if let evaluator = evaluators(symbol) {
+        return try evaluator.invoke(args: args, evaluators: evaluators)
       }
-      do {
-        return try evaluator(args.map { $0.evaluate(evaluators) })
-      } catch {
-        return error
-      }
-    case let .error(error):
-      return error
+      throw ExpressionError("Undefined symbol: \(symbol.name).")
     }
   }
 
   var symbols: Set<CalcExpression.Symbol> {
     switch self {
-    case .literal, .error:
+    case .literal:
       return []
     case let .symbol(symbol, subexpressions):
       var symbols = Set([symbol])
@@ -299,7 +276,7 @@ extension UnicodeScalarView {
     if !isOperandExpected, let op = parseOperator() {
       return op
     }
-    if let identifier = try parseNumericLiteral() ?? parseIdentifier() ?? parseEscapedIdentifier() {
+    if let identifier = try parseNumericLiteral() ?? parseIdentifier() ?? parseStringLiteral() {
       return identifier
     }
     if isOperandExpected {
@@ -381,12 +358,12 @@ extension UnicodeScalarView {
     switch number {
     case let .integer(value):
       guard let intValue = Int(value) else {
-        throw CalcExpression.Error.message("Value \(value) can't be converted to Integer type.")
+        throw ExpressionError("Value \(value) can't be converted to Integer type.")
       }
       return .literal(intValue)
     case let .number(value):
       guard let doubleValue = Double(value) else {
-        throw CalcExpression.Error.unexpectedToken(value)
+        throw ExpressionError.unexpectedToken(value)
       }
       return .literal(doubleValue)
     }
@@ -426,73 +403,37 @@ extension UnicodeScalarView {
     }
 
     if prevChar == 0x2E {
-      throw CalcExpression.Error.unexpectedToken(".")
+      throw ExpressionError.unexpectedToken(".")
     }
 
     return makeVariable(identifier)
   }
 
-  private mutating func parseEscapedIdentifier() -> Subexpression? {
-    guard let delimiter = first,
-          var string = scanCharacter({ $0 == "'" })
-    else {
+  private mutating func parseStringLiteral() throws -> Subexpression? {
+    if !scanCharacter("'") {
       return nil
     }
+    var string = ""
     var part: String?
     repeat {
-      part = scanCharacters { $0 != delimiter && $0 != "\\" }
+      part = scanCharacters { $0 != "'" && $0 != "\\" }
       string += part ?? ""
       if scanCharacter("\\"), let c = popFirst() {
         switch c {
-        case "0":
-          string += "\0"
-        case "t":
-          string += "\t"
-        case "n":
-          string += "\n"
-        case "r":
-          string += "\r"
-        case "u" where scanCharacter("{"):
-          let hex = scanCharacters {
-            switch $0 {
-            case "0"..."9", "A"..."F", "a"..."f":
-              true
-            default:
-              false
-            }
-          } ?? ""
-          guard scanCharacter("}") else {
-            guard let junk = scanToEndOfToken() else {
-              return .error(.missingDelimiter("}"))
-            }
-            return .error(.unexpectedToken(junk))
-          }
-          guard !hex.isEmpty else {
-            return .error(.unexpectedToken("}"))
-          }
-          guard let codepoint = Int(hex, safeRadix: .hex),
-                let c = UnicodeScalar(codepoint)
-          else {
-            // TODO: better error for invalid codepoint?
-            return .error(.unexpectedToken(hex))
-          }
-          string.append(Character(c))
         case "'", "\\":
           string.append(Character(c))
         case "@" where scanCharacter("{"):
           string += "@{"
         default:
-          return .error(.message("Incorrect string escape"))
+          throw ExpressionError("Incorrect string escape.")
         }
         part = ""
       }
     } while part != nil
-    guard scanCharacter(delimiter) else {
-      let delimiter = String(delimiter)
-      return .error(string == delimiter ? .unexpectedToken(string) : .missingDelimiter(delimiter))
+    if scanCharacter("'") {
+      return .literal(string)
     }
-    string.append(Character(delimiter))
-    return makeVariable(string)
+    throw ExpressionError("Closing ' expected.")
   }
 
   fileprivate mutating func parseSubexpression(
@@ -510,7 +451,7 @@ extension UnicodeScalarView {
         if rhs.isOperand {
           guard case let .symbol(.postfix(op), args) = lhs else {
             // Cannot follow an operand
-            throw CalcExpression.Error.unexpectedToken("\(rhs)")
+            throw ExpressionError.unexpectedToken("\(rhs)")
           }
           // Assume postfix operator was actually an infix operator
           stack[i] = args[0]
@@ -557,12 +498,8 @@ extension UnicodeScalarView {
                 stack[i + 1] = .symbol(.postfix(symbol.name), [])
                 try collapseStack(from: i)
               }
-            } else if case let .error(error) = rhs {
-              throw error
             }
           }
-        } else if case let .error(error) = rhs {
-          throw error
         }
       } else if case let .symbol(symbol, _) = lhs {
         // Treat as prefix operator
@@ -572,11 +509,7 @@ extension UnicodeScalarView {
         } else if case .symbol = rhs {
           // Nested prefix operator?
           try collapseStack(from: i + 1)
-        } else if case let .error(error) = rhs {
-          throw error
         }
-      } else if case let .error(error) = lhs {
-        throw error
       }
     }
 
@@ -586,17 +519,11 @@ extension UnicodeScalarView {
       if first != delimiter {
         let delimiters = [",", String(delimiter)]
         repeat {
-          do {
-            try args.append(parseSubexpression(upTo: delimiters))
-          } catch CalcExpression.Error.unexpectedToken("") {
-            if let token = scanCharacter() {
-              throw CalcExpression.Error.unexpectedToken(token)
-            }
-          }
+          try args.append(parseSubexpression(upTo: delimiters))
         } while scanCharacter(",")
       }
       guard scanCharacter(delimiter) else {
-        throw CalcExpression.Error.missingDelimiter(String(delimiter))
+        throw ExpressionError("Closing ) expected.")
       }
       return args
     }
@@ -614,10 +541,10 @@ extension UnicodeScalarView {
         switch name {
         case ".":
           guard let lastSymbol = stack.last else {
-            throw CalcExpression.Error.unexpectedToken(".")
+            throw ExpressionError.unexpectedToken(".")
           }
           guard let methodName = scanMethodName(), scanCharacter("(") else {
-            throw CalcExpression.Error.message("Method expected after .")
+            throw ExpressionError("Method expected after .")
           }
           var args = try scanArguments()
           args.insert(lastSymbol, at: 0)
@@ -640,7 +567,7 @@ extension UnicodeScalarView {
             let subexpression = try parseSubexpression(upTo: [")"])
             stack.append(subexpression)
             guard scanCharacter(")") else {
-              throw CalcExpression.Error.missingDelimiter(")")
+              throw ExpressionError("Closing ) expected.")
             }
           }
           operandPosition = false
@@ -671,19 +598,17 @@ extension UnicodeScalarView {
     let start = self
     if !parseDelimiter(delimiters), let junk = scanToEndOfToken() {
       self = start
-      throw CalcExpression.Error.unexpectedToken(junk)
+      throw ExpressionError.unexpectedToken(junk)
     }
     try collapseStack(from: 0)
     switch stack.first {
-    case let .error(error)?:
-      throw error
     case let result?:
       if result.isOperand {
         return result
       }
-      throw CalcExpression.Error.message("Operand expected")
+      throw ExpressionError("Operand expected")
     case nil:
-      throw CalcExpression.Error.message("Empty expression")
+      throw ExpressionError("Empty expression")
     }
   }
 }

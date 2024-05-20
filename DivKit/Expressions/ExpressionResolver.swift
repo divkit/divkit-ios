@@ -47,6 +47,13 @@ public final class ExpressionResolver {
     self.errorTracker = { errorTracker?($0) }
   }
 
+  public func resolve(_ expression: String) -> Any? {
+    if let link: ExpressionLink<Any> = makeLink(expression) {
+      return resolveAnyLink(link)
+    }
+    return nil
+  }
+
   public func resolveString(_ expression: String) -> String? {
     resolveString(expression, initializer: { $0 })
   }
@@ -142,6 +149,41 @@ public final class ExpressionResolver {
     return value as? T
   }
 
+  private func resolveAnyLink(_ link: ExpressionLink<Any>) -> Any? {
+    var result: Any?
+
+    func appendResult(_ value: Any?) {
+      guard let value else {
+        return
+      }
+      if let prevResult = result {
+        result = ExpressionValueConverter.stringify(prevResult)
+          + ExpressionValueConverter.stringify(value)
+      } else {
+        result = value
+      }
+    }
+
+    for item in link.items {
+      switch item {
+      case let .calcExpression(expression):
+        do {
+          try appendResult(evaluate(expression))
+        } catch {
+          errorTracker(ExpressionError(error.localizedDescription, expression: link.rawValue))
+          return nil
+        }
+      case let .string(value):
+        appendResult(value)
+      case let .nestedExpression(expression):
+        if let nestedLink: ExpressionLink<Any> = resolveNestedLink(expression) {
+          appendResult(resolveAnyLink(nestedLink))
+        }
+      }
+    }
+    return result
+  }
+
   private func resolveNotStringBasedLink<T>(_ link: ExpressionLink<T>) -> T? {
     guard link.items.count == 1, let item = link.items.first else {
       errorTracker(ExpressionError(
@@ -199,7 +241,7 @@ public final class ExpressionResolver {
     }
 
     errorTracker(ExpressionError(
-      "Failed to initialize \(T.self) from string: \(stringValue)",
+      "Failed to initialize \(formatTypeForError(T.self)) from string: \(stringValue).",
       expression: link.rawValue
     ))
     return nil
@@ -221,8 +263,8 @@ public final class ExpressionResolver {
     if let castedValue: T = ExpressionValueConverter.cast(value) {
       return castedValue
     }
-    throw CalcExpression.Error.message(
-      "Result type \(Swift.type(of: value)) is not compatible with expected type \(T.self)"
+    throw ExpressionError(
+      "Invalid result type: expected \(formatTypeForError(T.self)), got \(formatTypeForError(value))."
     )
   }
 
@@ -235,7 +277,7 @@ public final class ExpressionResolver {
       return value
     }
 
-    errorTracker(ExpressionError("Failed to validate value: \(value)", expression: link.rawValue))
+    errorTracker(ExpressionError("Failed to validate value: \(value).", expression: link.rawValue))
     return nil
   }
 
