@@ -5,7 +5,7 @@ import PackageDescription
 let vgsl = (
   url: "https://github.com/yandex/vgsl.git",
   packageName: "vgsl",
-  version: Version("4.1.1")
+  version: Version("5.0.0")
 )
 
 let package = Package(
