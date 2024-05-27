@@ -104,14 +104,14 @@ private struct FunctionEvaluator: Function {
       if error is NoMatchingSignatureError {
         if correctedArgs.count == 0 {
           throw ExpressionError(
-            "\(message) Non empty argument list is required for \(symbol.type) '\(name)'."
+            "\(message) \(symbol.type.capitalized) requires non empty argument list."
           )
         }
         let argTypes = correctedArgs
           .map { formatTypeForError($0) }
           .joined(separator: ", ")
         throw ExpressionError(
-          "\(message) \(symbol.type.capitalized) '\(name)' has no matching override for given argument types: \(argTypes)."
+          "\(message) \(symbol.type.capitalized) has no matching overload for given argument types: \(argTypes)."
         )
       }
       throw ExpressionError("\(message) \(error.localizedDescription)")
@@ -121,13 +121,13 @@ private struct FunctionEvaluator: Function {
 
 private let staticFunctions: [String: Function] = {
   var functions: [String: Function] = [:]
-  CastFunctions.allCases.forEach { functions[$0.rawValue] = $0.function }
-  ColorFunctions.allCases.forEach { functions[$0.rawValue] = $0.function }
-  DatetimeFunctions.allCases.forEach { functions[$0.rawValue] = $0.function }
-  IntervalFunctions.allCases.forEach { functions[$0.rawValue] = $0.function }
   MathFunctions.allCases.forEach { functions[$0.rawValue] = $0.function }
   functions.addArrayFunctions()
+  functions.addCastFunctions()
+  functions.addColorFunctions()
+  functions.addDateTimeFunctions()
   functions.addDictFunctions()
+  functions.addIntervalFunctions()
   functions.addStringFunctions()
   functions.addToStringFunctions()
   return functions
