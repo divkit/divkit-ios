@@ -15,9 +15,9 @@ Pod::Spec.new do |s|
   s.prefix_header_file = false
   s.platforms = { :ios => '11.0' }
 
-  s.dependency 'VGSLBase', '~> 5.0.0'
-  s.dependency 'VGSLBaseTiny', '~> 5.0.0'
-  s.dependency 'VGSLBaseUI', '~> 5.0.0'
+  s.dependency 'VGSLBase', '~> 5.0'
+  s.dependency 'VGSLBaseTiny', '~> 5.0'
+  s.dependency 'VGSLBaseUI', '~> 5.0'
 
   s.source_files = [
     'LayoutKit/Interface/**/*'

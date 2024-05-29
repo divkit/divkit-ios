@@ -16,8 +16,8 @@ Pod::Spec.new do |s|
   s.platforms = { :ios => '11.0' }
   
   s.dependency 'DivKit_LayoutKitInterface', s.version.to_s
-  s.dependency 'VGSLCommonCore', '~> 5.0.0'
-  s.dependency 'VGSLNetworking', '~> 5.0.0'
+  s.dependency 'VGSLCommonCore', '~> 5.0'
+  s.dependency 'VGSLNetworking', '~> 5.0'
 
   s.source_files = [
     'LayoutKit/LayoutKit/**/*'

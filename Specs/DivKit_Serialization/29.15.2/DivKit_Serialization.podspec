@@ -15,7 +15,7 @@ Pod::Spec.new do |s|
   s.prefix_header_file = false
   s.platforms = { :ios => '11.0' }
 
-  s.dependency 'VGSLCommonCore', '~> 5.0.0'
+  s.dependency 'VGSLCommonCore', '~> 5.0'
 
   s.source_files = [
     'Serialization/**/*'
