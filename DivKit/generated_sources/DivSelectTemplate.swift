@@ -109,6 +109,7 @@ public final class DivSelectTemplate: TemplateValue {
   public let fontSize: Field<Expression<Int>>? // constraint: number >= 0; default value: 12
   public let fontSizeUnit: Field<Expression<DivSizeUnit>>? // default value: sp
   public let fontWeight: Field<Expression<DivFontWeight>>? // default value: regular
+  public let fontWeightValue: Field<Expression<Int>>? // constraint: number > 0
   public let height: Field<DivSizeTemplate>? // default value: .divWrapContentSize(DivWrapContentSize())
   public let hintColor: Field<Expression<Color>>? // default value: #73000000
   public let hintText: Field<Expression<String>>?
@@ -128,6 +129,7 @@ public final class DivSelectTemplate: TemplateValue {
   public let transitionOut: Field<DivAppearanceTransitionTemplate>?
   public let transitionTriggers: Field<[DivTransitionTrigger]>? // at least 1 elements
   public let valueVariable: Field<String>?
+  public let variables: Field<[DivVariableTemplate]>?
   public let visibility: Field<Expression<DivVisibility>>? // default value: visible
   public let visibilityAction: Field<DivVisibilityActionTemplate>?
   public let visibilityActions: Field<[DivVisibilityActionTemplate]>?
@@ -150,6 +152,7 @@ public final class DivSelectTemplate: TemplateValue {
       fontSize: dictionary.getOptionalExpressionField("font_size"),
       fontSizeUnit: dictionary.getOptionalExpressionField("font_size_unit"),
       fontWeight: dictionary.getOptionalExpressionField("font_weight"),
+      fontWeightValue: dictionary.getOptionalExpressionField("font_weight_value"),
       height: dictionary.getOptionalField("height", templateToType: templateToType),
       hintColor: dictionary.getOptionalExpressionField("hint_color", transform: Color.color(withHexString:)),
       hintText: dictionary.getOptionalExpressionField("hint_text"),
@@ -169,6 +172,7 @@ public final class DivSelectTemplate: TemplateValue {
       transitionOut: dictionary.getOptionalField("transition_out", templateToType: templateToType),
       transitionTriggers: dictionary.getOptionalArray("transition_triggers"),
       valueVariable: dictionary.getOptionalField("value_variable"),
+      variables: dictionary.getOptionalArray("variables", templateToType: templateToType),
       visibility: dictionary.getOptionalExpressionField("visibility"),
       visibilityAction: dictionary.getOptionalField("visibility_action", templateToType: templateToType),
       visibilityActions: dictionary.getOptionalArray("visibility_actions", templateToType: templateToType),
@@ -192,6 +196,7 @@ public final class DivSelectTemplate: TemplateValue {
     fontSize: Field<Expression<Int>>? = nil,
     fontSizeUnit: Field<Expression<DivSizeUnit>>? = nil,
     fontWeight: Field<Expression<DivFontWeight>>? = nil,
+    fontWeightValue: Field<Expression<Int>>? = nil,
     height: Field<DivSizeTemplate>? = nil,
     hintColor: Field<Expression<Color>>? = nil,
     hintText: Field<Expression<String>>? = nil,
@@ -211,6 +216,7 @@ public final class DivSelectTemplate: TemplateValue {
     transitionOut: Field<DivAppearanceTransitionTemplate>? = nil,
     transitionTriggers: Field<[DivTransitionTrigger]>? = nil,
     valueVariable: Field<String>? = nil,
+    variables: Field<[DivVariableTemplate]>? = nil,
     visibility: Field<Expression<DivVisibility>>? = nil,
     visibilityAction: Field<DivVisibilityActionTemplate>? = nil,
     visibilityActions: Field<[DivVisibilityActionTemplate]>? = nil,
@@ -231,6 +237,7 @@ public final class DivSelectTemplate: TemplateValue {
     self.fontSize = fontSize
     self.fontSizeUnit = fontSizeUnit
     self.fontWeight = fontWeight
+    self.fontWeightValue = fontWeightValue
     self.height = height
     self.hintColor = hintColor
     self.hintText = hintText
@@ -250,6 +257,7 @@ public final class DivSelectTemplate: TemplateValue {
     self.transitionOut = transitionOut
     self.transitionTriggers = transitionTriggers
     self.valueVariable = valueVariable
+    self.variables = variables
     self.visibility = visibility
     self.visibilityAction = visibilityAction
     self.visibilityActions = visibilityActions
@@ -271,6 +279,7 @@ public final class DivSelectTemplate: TemplateValue {
     let fontSizeValue = parent?.fontSize?.resolveOptionalValue(context: context, validator: ResolvedValue.fontSizeValidator) ?? .noValue
     let fontSizeUnitValue = parent?.fontSizeUnit?.resolveOptionalValue(context: context) ?? .noValue
     let fontWeightValue = parent?.fontWeight?.resolveOptionalValue(context: context) ?? .noValue
+    let fontWeightValueValue = parent?.fontWeightValue?.resolveOptionalValue(context: context, validator: ResolvedValue.fontWeightValueValidator) ?? .noValue
     let heightValue = parent?.height?.resolveOptionalValue(context: context, useOnlyLinks: true) ?? .noValue
     let hintColorValue = parent?.hintColor?.resolveOptionalValue(context: context, transform: Color.color(withHexString:)) ?? .noValue
     let hintTextValue = parent?.hintText?.resolveOptionalValue(context: context) ?? .noValue
@@ -290,6 +299,7 @@ public final class DivSelectTemplate: TemplateValue {
     let transitionOutValue = parent?.transitionOut?.resolveOptionalValue(context: context, useOnlyLinks: true) ?? .noValue
     let transitionTriggersValue = parent?.transitionTriggers?.resolveOptionalValue(context: context, validator: ResolvedValue.transitionTriggersValidator) ?? .noValue
     let valueVariableValue = parent?.valueVariable?.resolveValue(context: context) ?? .noValue
+    let variablesValue = parent?.variables?.resolveOptionalValue(context: context, useOnlyLinks: true) ?? .noValue
     let visibilityValue = parent?.visibility?.resolveOptionalValue(context: context) ?? .noValue
     let visibilityActionValue = parent?.visibilityAction?.resolveOptionalValue(context: context, useOnlyLinks: true) ?? .noValue
     let visibilityActionsValue = parent?.visibilityActions?.resolveOptionalValue(context: context, useOnlyLinks: true) ?? .noValue
@@ -309,6 +319,7 @@ public final class DivSelectTemplate: TemplateValue {
       fontSizeValue.errorsOrWarnings?.map { .nestedObjectError(field: "font_size", error: $0) },
       fontSizeUnitValue.errorsOrWarnings?.map { .nestedObjectError(field: "font_size_unit", error: $0) },
       fontWeightValue.errorsOrWarnings?.map { .nestedObjectError(field: "font_weight", error: $0) },
+      fontWeightValueValue.errorsOrWarnings?.map { .nestedObjectError(field: "font_weight_value", error: $0) },
       heightValue.errorsOrWarnings?.map { .nestedObjectError(field: "height", error: $0) },
       hintColorValue.errorsOrWarnings?.map { .nestedObjectError(field: "hint_color", error: $0) },
       hintTextValue.errorsOrWarnings?.map { .nestedObjectError(field: "hint_text", error: $0) },
@@ -328,6 +339,7 @@ public final class DivSelectTemplate: TemplateValue {
       transitionOutValue.errorsOrWarnings?.map { .nestedObjectError(field: "transition_out", error: $0) },
       transitionTriggersValue.errorsOrWarnings?.map { .nestedObjectError(field: "transition_triggers", error: $0) },
       valueVariableValue.errorsOrWarnings?.map { .nestedObjectError(field: "value_variable", error: $0) },
+      variablesValue.errorsOrWarnings?.map { .nestedObjectError(field: "variables", error: $0) },
       visibilityValue.errorsOrWarnings?.map { .nestedObjectError(field: "visibility", error: $0) },
       visibilityActionValue.errorsOrWarnings?.map { .nestedObjectError(field: "visibility_action", error: $0) },
       visibilityActionsValue.errorsOrWarnings?.map { .nestedObjectError(field: "visibility_actions", error: $0) },
@@ -360,6 +372,7 @@ public final class DivSelectTemplate: TemplateValue {
       fontSize: fontSizeValue.value,
       fontSizeUnit: fontSizeUnitValue.value,
       fontWeight: fontWeightValue.value,
+      fontWeightValue: fontWeightValueValue.value,
       height: heightValue.value,
       hintColor: hintColorValue.value,
       hintText: hintTextValue.value,
@@ -379,6 +392,7 @@ public final class DivSelectTemplate: TemplateValue {
       transitionOut: transitionOutValue.value,
       transitionTriggers: transitionTriggersValue.value,
       valueVariable: valueVariableNonNil,
+      variables: variablesValue.value,
       visibility: visibilityValue.value,
       visibilityAction: visibilityActionValue.value,
       visibilityActions: visibilityActionsValue.value,
@@ -405,6 +419,7 @@ public final class DivSelectTemplate: TemplateValue {
     var fontSizeValue: DeserializationResult<Expression<Int>> = parent?.fontSize?.value() ?? .noValue
     var fontSizeUnitValue: DeserializationResult<Expression<DivSizeUnit>> = parent?.fontSizeUnit?.value() ?? .noValue
     var fontWeightValue: DeserializationResult<Expression<DivFontWeight>> = parent?.fontWeight?.value() ?? .noValue
+    var fontWeightValueValue: DeserializationResult<Expression<Int>> = parent?.fontWeightValue?.value() ?? .noValue
     var heightValue: DeserializationResult<DivSize> = .noValue
     var hintColorValue: DeserializationResult<Expression<Color>> = parent?.hintColor?.value() ?? .noValue
     var hintTextValue: DeserializationResult<Expression<String>> = parent?.hintText?.value() ?? .noValue
@@ -424,6 +439,7 @@ public final class DivSelectTemplate: TemplateValue {
     var transitionOutValue: DeserializationResult<DivAppearanceTransition> = .noValue
     var transitionTriggersValue: DeserializationResult<[DivTransitionTrigger]> = parent?.transitionTriggers?.value(validatedBy: ResolvedValue.transitionTriggersValidator) ?? .noValue
     var valueVariableValue: DeserializationResult<String> = parent?.valueVariable?.value() ?? .noValue
+    var variablesValue: DeserializationResult<[DivVariable]> = .noValue
     var visibilityValue: DeserializationResult<Expression<DivVisibility>> = parent?.visibility?.value() ?? .noValue
     var visibilityActionValue: DeserializationResult<DivVisibilityAction> = .noValue
     var visibilityActionsValue: DeserializationResult<[DivVisibilityAction]> = .noValue
@@ -458,6 +474,8 @@ public final class DivSelectTemplate: TemplateValue {
         fontSizeUnitValue = deserialize(__dictValue).merged(with: fontSizeUnitValue)
       case "font_weight":
         fontWeightValue = deserialize(__dictValue).merged(with: fontWeightValue)
+      case "font_weight_value":
+        fontWeightValueValue = deserialize(__dictValue, validator: ResolvedValue.fontWeightValueValidator).merged(with: fontWeightValueValue)
       case "height":
         heightValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivSizeTemplate.self).merged(with: heightValue)
       case "hint_color":
@@ -496,6 +514,8 @@ public final class DivSelectTemplate: TemplateValue {
         transitionTriggersValue = deserialize(__dictValue, validator: ResolvedValue.transitionTriggersValidator).merged(with: transitionTriggersValue)
       case "value_variable":
         valueVariableValue = deserialize(__dictValue).merged(with: valueVariableValue)
+      case "variables":
+        variablesValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivVariableTemplate.self).merged(with: variablesValue)
       case "visibility":
         visibilityValue = deserialize(__dictValue).merged(with: visibilityValue)
       case "visibility_action":
@@ -532,6 +552,8 @@ public final class DivSelectTemplate: TemplateValue {
         fontSizeUnitValue = fontSizeUnitValue.merged(with: { deserialize(__dictValue) })
       case parent?.fontWeight?.link:
         fontWeightValue = fontWeightValue.merged(with: { deserialize(__dictValue) })
+      case parent?.fontWeightValue?.link:
+        fontWeightValueValue = fontWeightValueValue.merged(with: { deserialize(__dictValue, validator: ResolvedValue.fontWeightValueValidator) })
       case parent?.height?.link:
         heightValue = heightValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivSizeTemplate.self) })
       case parent?.hintColor?.link:
@@ -570,6 +592,8 @@ public final class DivSelectTemplate: TemplateValue {
         transitionTriggersValue = transitionTriggersValue.merged(with: { deserialize(__dictValue, validator: ResolvedValue.transitionTriggersValidator) })
       case parent?.valueVariable?.link:
         valueVariableValue = valueVariableValue.merged(with: { deserialize(__dictValue) })
+      case parent?.variables?.link:
+        variablesValue = variablesValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivVariableTemplate.self) })
       case parent?.visibility?.link:
         visibilityValue = visibilityValue.merged(with: { deserialize(__dictValue) })
       case parent?.visibilityAction?.link:
@@ -598,6 +622,7 @@ public final class DivSelectTemplate: TemplateValue {
       transitionChangeValue = transitionChangeValue.merged(with: { parent.transitionChange?.resolveOptionalValue(context: context, useOnlyLinks: true) })
       transitionInValue = transitionInValue.merged(with: { parent.transitionIn?.resolveOptionalValue(context: context, useOnlyLinks: true) })
       transitionOutValue = transitionOutValue.merged(with: { parent.transitionOut?.resolveOptionalValue(context: context, useOnlyLinks: true) })
+      variablesValue = variablesValue.merged(with: { parent.variables?.resolveOptionalValue(context: context, useOnlyLinks: true) })
       visibilityActionValue = visibilityActionValue.merged(with: { parent.visibilityAction?.resolveOptionalValue(context: context, useOnlyLinks: true) })
       visibilityActionsValue = visibilityActionsValue.merged(with: { parent.visibilityActions?.resolveOptionalValue(context: context, useOnlyLinks: true) })
       widthValue = widthValue.merged(with: { parent.width?.resolveOptionalValue(context: context, useOnlyLinks: true) })
@@ -617,6 +642,7 @@ public final class DivSelectTemplate: TemplateValue {
       fontSizeValue.errorsOrWarnings?.map { .nestedObjectError(field: "font_size", error: $0) },
       fontSizeUnitValue.errorsOrWarnings?.map { .nestedObjectError(field: "font_size_unit", error: $0) },
       fontWeightValue.errorsOrWarnings?.map { .nestedObjectError(field: "font_weight", error: $0) },
+      fontWeightValueValue.errorsOrWarnings?.map { .nestedObjectError(field: "font_weight_value", error: $0) },
       heightValue.errorsOrWarnings?.map { .nestedObjectError(field: "height", error: $0) },
       hintColorValue.errorsOrWarnings?.map { .nestedObjectError(field: "hint_color", error: $0) },
       hintTextValue.errorsOrWarnings?.map { .nestedObjectError(field: "hint_text", error: $0) },
@@ -636,6 +662,7 @@ public final class DivSelectTemplate: TemplateValue {
       transitionOutValue.errorsOrWarnings?.map { .nestedObjectError(field: "transition_out", error: $0) },
       transitionTriggersValue.errorsOrWarnings?.map { .nestedObjectError(field: "transition_triggers", error: $0) },
       valueVariableValue.errorsOrWarnings?.map { .nestedObjectError(field: "value_variable", error: $0) },
+      variablesValue.errorsOrWarnings?.map { .nestedObjectError(field: "variables", error: $0) },
       visibilityValue.errorsOrWarnings?.map { .nestedObjectError(field: "visibility", error: $0) },
       visibilityActionValue.errorsOrWarnings?.map { .nestedObjectError(field: "visibility_action", error: $0) },
       visibilityActionsValue.errorsOrWarnings?.map { .nestedObjectError(field: "visibility_actions", error: $0) },
@@ -668,6 +695,7 @@ public final class DivSelectTemplate: TemplateValue {
       fontSize: fontSizeValue.value,
       fontSizeUnit: fontSizeUnitValue.value,
       fontWeight: fontWeightValue.value,
+      fontWeightValue: fontWeightValueValue.value,
       height: heightValue.value,
       hintColor: hintColorValue.value,
       hintText: hintTextValue.value,
@@ -687,6 +715,7 @@ public final class DivSelectTemplate: TemplateValue {
       transitionOut: transitionOutValue.value,
       transitionTriggers: transitionTriggersValue.value,
       valueVariable: valueVariableNonNil,
+      variables: variablesValue.value,
       visibility: visibilityValue.value,
       visibilityAction: visibilityActionValue.value,
       visibilityActions: visibilityActionsValue.value,
@@ -718,6 +747,7 @@ public final class DivSelectTemplate: TemplateValue {
       fontSize: fontSize ?? mergedParent.fontSize,
       fontSizeUnit: fontSizeUnit ?? mergedParent.fontSizeUnit,
       fontWeight: fontWeight ?? mergedParent.fontWeight,
+      fontWeightValue: fontWeightValue ?? mergedParent.fontWeightValue,
       height: height ?? mergedParent.height,
       hintColor: hintColor ?? mergedParent.hintColor,
       hintText: hintText ?? mergedParent.hintText,
@@ -737,6 +767,7 @@ public final class DivSelectTemplate: TemplateValue {
       transitionOut: transitionOut ?? mergedParent.transitionOut,
       transitionTriggers: transitionTriggers ?? mergedParent.transitionTriggers,
       valueVariable: valueVariable ?? mergedParent.valueVariable,
+      variables: variables ?? mergedParent.variables,
       visibility: visibility ?? mergedParent.visibility,
       visibilityAction: visibilityAction ?? mergedParent.visibilityAction,
       visibilityActions: visibilityActions ?? mergedParent.visibilityActions,
@@ -763,6 +794,7 @@ public final class DivSelectTemplate: TemplateValue {
       fontSize: merged.fontSize,
       fontSizeUnit: merged.fontSizeUnit,
       fontWeight: merged.fontWeight,
+      fontWeightValue: merged.fontWeightValue,
       height: merged.height?.tryResolveParent(templates: templates),
       hintColor: merged.hintColor,
       hintText: merged.hintText,
@@ -782,6 +814,7 @@ public final class DivSelectTemplate: TemplateValue {
       transitionOut: merged.transitionOut?.tryResolveParent(templates: templates),
       transitionTriggers: merged.transitionTriggers,
       valueVariable: merged.valueVariable,
+      variables: merged.variables?.tryResolveParent(templates: templates),
       visibility: merged.visibility,
       visibilityAction: merged.visibilityAction?.tryResolveParent(templates: templates),
       visibilityActions: merged.visibilityActions?.tryResolveParent(templates: templates),

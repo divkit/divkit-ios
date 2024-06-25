@@ -6,10 +6,6 @@ public final class DivVariablesStorage {
   public struct Values {
     public internal(set) var global: DivVariables = [:]
     public internal(set) var local: [DivCardID: DivVariables] = [:]
-
-    func makeVariables(for cardId: DivCardID) -> DivVariables {
-      global + (local[cardId] ?? [:])
-    }
   }
 
   public struct ChangeEvent {
@@ -20,6 +16,8 @@ public final class DivVariablesStorage {
     }
 
     public let kind: Kind
+
+    /// Deprecated. Use `DivVariablesStorage` directly to access the variable values.
     public let newValues: Values
 
     init(kind: Kind, newValues: Values) {
@@ -38,7 +36,7 @@ public final class DivVariablesStorage {
   }
 
   private let globalStorage: DivVariableStorage
-  private var cardVariables: [DivCardID: DivVariables] = [:]
+  private var cardStorages: [DivCardID: DivVariableStorage] = [:]
   private let lock = AllocatedUnfairLock()
 
   private let changeEventsPipe = SignalPipe<ChangeEvent>()
@@ -47,7 +45,7 @@ public final class DivVariablesStorage {
   private var allValues: Values {
     Values(
       global: globalStorage.allValues,
-      local: cardVariables
+      local: cardStorages.mapValues { $0.values }
     )
   }
 
@@ -77,48 +75,51 @@ public final class DivVariablesStorage {
     cardId: DivCardID,
     name: DivVariableName
   ) -> T? {
-    let variable = lock.withLock {
-      cardVariables[cardId]?[name]
+    let cardStorage = lock.withLock {
+      cardStorages[cardId]
     }
-    if let variable {
-      return variable.typedValue()
+    if let cardStorage {
+      return cardStorage.getValue(name)
     }
     return globalStorage.getValue(name)
   }
 
+  public func hasValue(cardId: DivCardID, name: DivVariableName) -> Bool {
+    let cardStorage = lock.withLock {
+      cardStorages[cardId]
+    }
+    return cardStorage?.hasValue(name) ?? globalStorage.hasValue(name)
+  }
+
+  /// Replaces all card variables with new ones.
+  /// Does not affect global variables.
   public func set(
     cardId: DivCardID,
     variables: DivVariables
   ) {
-    let changeEvent: ChangeEvent? = lock.withLock {
-      let oldValues = allValues
-      cardVariables[cardId] = variables
+    let cardStorage = getOrCreateCardStorage(cardId)
+    let oldValues = cardStorage.values
+    cardStorage.replaceAll(variables)
 
-      let changedVariables = makeChangedVariables(
-        old: oldValues.local[cardId] ?? [:],
-        new: variables
-      )
-      if changedVariables.isEmpty {
-        return nil
-      }
-      return ChangeEvent(
-        kind: .local(cardId, changedVariables),
-        newValues: allValues
-      )
+    let changedVariables = makeChangedVariables(old: oldValues, new: variables)
+    if changedVariables.isEmpty {
+      return
     }
-    if let changeEvent {
-      notify(changeEvent)
-    }
+
+    notify(ChangeEvent(
+      kind: .local(cardId, changedVariables),
+      newValues: allValues
+    ))
   }
 
+  /// Adds new card variables.
+  /// Does not affect global variables.
   public func append(
     variables newVariables: DivVariables,
     for cardId: DivCardID,
     replaceExisting: Bool = true
   ) {
-    let oldVariables = lock.withLock {
-      cardVariables[cardId] ?? [:]
-    }
+    let oldVariables = getOrCreateCardStorage(cardId).values
     let resultVariables = replaceExisting ?
       oldVariables + newVariables :
       newVariables + oldVariables
@@ -141,27 +142,41 @@ public final class DivVariablesStorage {
     globalStorage.put(variables, notifyObservers: triggerUpdate)
   }
 
+  /// Deprecated. Do not use this method.
   public func makeVariables(for cardId: DivCardID) -> DivVariables {
     lock.withLock {
-      globalStorage.allValues + (cardVariables[cardId] ?? [:])
+      cardStorages[cardId]?.allValues ?? globalStorage.allValues
     }
   }
 
   public func reset() {
     lock.withLock {
       globalStorage.clear()
-      cardVariables = [:]
+      cardStorages.forEach { $1.clear() }
+      cardStorages = [:]
     }
   }
 
   public func reset(cardId: DivCardID) {
     lock.withLock {
-      cardVariables[cardId] = [:]
+      cardStorages[cardId]?.clear()
+      cardStorages[cardId] = nil
     }
   }
 
   public func addObserver(_ action: @escaping (ChangeEvent) -> Void) -> Disposable {
     changeEvents.addObserver(action)
+  }
+
+  private func getOrCreateCardStorage(_ cardId: DivCardID) -> DivVariableStorage {
+    lock.withLock {
+      if let cardStorage = cardStorages[cardId] {
+        return cardStorage
+      }
+      let cardStorage = DivVariableStorage(outerStorage: globalStorage)
+      cardStorages[cardId] = cardStorage
+      return cardStorage
+    }
   }
 
   private func notify(_ event: ChangeEvent) {
@@ -197,24 +212,18 @@ extension DivVariablesStorage: DivVariableUpdater {
     name: DivVariableName,
     valueFactory: (DivVariableValue) -> DivVariableValue?
   ) {
-    let changeEvent: ChangeEvent? = lock.withLock {
-      var variables = cardVariables[cardId]
-      if let oldValue = variables?[name] {
-        guard let newValue = valueFactory(oldValue), newValue != oldValue else {
-          return nil
-        }
-        variables?[name] = newValue
-        cardVariables[cardId] = variables
-        return ChangeEvent(
+    let cardStorage = lock.withLock {
+      cardStorages[cardId]
+    }
+    if let cardStorage {
+      if cardStorage.update(name: name, valueFactory: valueFactory) {
+        notify(ChangeEvent(
           kind: .local(cardId, [name]),
           newValues: allValues
-        )
+        ))
       }
-      globalStorage.update(name: name, valueFactory: valueFactory)
-      return nil
-    }
-    if let changeEvent {
-      notify(changeEvent)
+    } else {
+      _ = globalStorage.update(name: name, valueFactory: valueFactory)
     }
   }
 }

@@ -39,6 +39,7 @@ public final class DivSlider: DivBase {
     public let fontSize: Expression<Int> // constraint: number >= 0
     public let fontSizeUnit: Expression<DivSizeUnit> // default value: sp
     public let fontWeight: Expression<DivFontWeight> // default value: regular
+    public let fontWeightValue: Expression<Int>? // constraint: number > 0
     public let offset: DivPoint?
     public let textColor: Expression<Color> // default value: #FF000000
 
@@ -54,6 +55,10 @@ public final class DivSlider: DivBase {
       resolver.resolveEnum(fontWeight) ?? DivFontWeight.regular
     }
 
+    public func resolveFontWeightValue(_ resolver: ExpressionResolver) -> Int? {
+      resolver.resolveNumeric(fontWeightValue)
+    }
+
     public func resolveTextColor(_ resolver: ExpressionResolver) -> Color {
       resolver.resolveColor(textColor) ?? Color.colorWithARGBHexCode(0xFF000000)
     }
@@ -61,16 +66,21 @@ public final class DivSlider: DivBase {
     static let fontSizeValidator: AnyValueValidator<Int> =
       makeValueValidator(valueValidator: { $0 >= 0 })
 
+    static let fontWeightValueValidator: AnyValueValidator<Int> =
+      makeValueValidator(valueValidator: { $0 > 0 })
+
     init(
       fontSize: Expression<Int>,
       fontSizeUnit: Expression<DivSizeUnit>? = nil,
       fontWeight: Expression<DivFontWeight>? = nil,
+      fontWeightValue: Expression<Int>? = nil,
       offset: DivPoint? = nil,
       textColor: Expression<Color>? = nil
     ) {
       self.fontSize = fontSize
       self.fontSizeUnit = fontSizeUnit ?? .value(.sp)
       self.fontWeight = fontWeight ?? .value(.regular)
+      self.fontWeightValue = fontWeightValue
       self.offset = offset
       self.textColor = textColor ?? .value(Color.colorWithARGBHexCode(0xFF000000))
     }
@@ -113,6 +123,7 @@ public final class DivSlider: DivBase {
   public let transitionIn: DivAppearanceTransition?
   public let transitionOut: DivAppearanceTransition?
   public let transitionTriggers: [DivTransitionTrigger]? // at least 1 elements
+  public let variables: [DivVariable]?
   public let visibility: Expression<DivVisibility> // default value: visible
   public let visibilityAction: DivVisibilityAction?
   public let visibilityActions: [DivVisibilityAction]?
@@ -199,6 +210,7 @@ public final class DivSlider: DivBase {
     transitionIn: DivAppearanceTransition? = nil,
     transitionOut: DivAppearanceTransition? = nil,
     transitionTriggers: [DivTransitionTrigger]? = nil,
+    variables: [DivVariable]? = nil,
     visibility: Expression<DivVisibility>? = nil,
     visibilityAction: DivVisibilityAction? = nil,
     visibilityActions: [DivVisibilityAction]? = nil,
@@ -240,6 +252,7 @@ public final class DivSlider: DivBase {
     self.transitionIn = transitionIn
     self.transitionOut = transitionOut
     self.transitionTriggers = transitionTriggers
+    self.variables = variables
     self.visibility = visibility ?? .value(.visible)
     self.visibilityAction = visibilityAction
     self.visibilityActions = visibilityActions
@@ -335,13 +348,14 @@ extension DivSlider: Equatable {
       return false
     }
     guard
+      lhs.variables == rhs.variables,
       lhs.visibility == rhs.visibility,
-      lhs.visibilityAction == rhs.visibilityAction,
-      lhs.visibilityActions == rhs.visibilityActions
+      lhs.visibilityAction == rhs.visibilityAction
     else {
       return false
     }
     guard
+      lhs.visibilityActions == rhs.visibilityActions,
       lhs.width == rhs.width
     else {
       return false
@@ -391,6 +405,7 @@ extension DivSlider: Serializable {
     result["transition_in"] = transitionIn?.toDictionary()
     result["transition_out"] = transitionOut?.toDictionary()
     result["transition_triggers"] = transitionTriggers?.map { $0.rawValue }
+    result["variables"] = variables?.map { $0.toDictionary() }
     result["visibility"] = visibility.toValidSerializationValue()
     result["visibility_action"] = visibilityAction?.toDictionary()
     result["visibility_actions"] = visibilityActions?.map { $0.toDictionary() }
@@ -431,6 +446,7 @@ extension DivSlider.TextStyle: Equatable {
       return false
     }
     guard
+      lhs.fontWeightValue == rhs.fontWeightValue,
       lhs.offset == rhs.offset,
       lhs.textColor == rhs.textColor
     else {
@@ -459,6 +475,7 @@ extension DivSlider.TextStyle: Serializable {
     result["font_size"] = fontSize.toValidSerializationValue()
     result["font_size_unit"] = fontSizeUnit.toValidSerializationValue()
     result["font_weight"] = fontWeight.toValidSerializationValue()
+    result["font_weight_value"] = fontWeightValue?.toValidSerializationValue()
     result["offset"] = offset?.toDictionary()
     result["text_color"] = textColor.toValidSerializationValue()
     return result

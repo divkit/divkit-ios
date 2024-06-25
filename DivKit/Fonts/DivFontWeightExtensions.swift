@@ -1,16 +1,14 @@
-import BasePublic
-
 extension DivFontWeight {
-  var fontWeight: Font.Weight {
+  func toInt() -> Int {
     switch self {
     case .light:
-      .light
+      300
     case .regular:
-      .regular
+      400
     case .medium:
-      .medium
+      500
     case .bold:
-      .bold
+      700
     }
   }
 }

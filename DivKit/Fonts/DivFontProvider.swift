@@ -1,7 +1,6 @@
 import CoreGraphics
 
 import BasePublic
-import BaseUIPublic
 
 /// The `DivFontProvider` protocol is used to enable the transfer of custom fonts used in your
 /// application. By implementing this protocol, you can specify a custom font provider object that
@@ -22,32 +21,28 @@ public protocol DivFontProvider {
   ///
   /// - Returns: A `Font` that matches the specified font family, weight, and size.
   func font(family: String, weight: DivFontWeight, size: CGFloat) -> Font
+
+  func font(family: String, weight: Int, size: CGFloat) -> Font
 }
 
 extension DivFontProvider {
   public func font(weight: DivFontWeight = .regular, size: CGFloat) -> Font {
     font(family: "", weight: weight, size: size)
   }
-}
 
-final class DefaultFontProvider: DivFontProvider {
-  func font(family: String, weight: DivFontWeight, size: CGFloat) -> Font {
-    let fontSpecifier = family == "display" ? fontSpecifiers.display : fontSpecifiers.text
-    return fontSpecifier.font(weight: weight.baseUIFontWeight, size: size)
-  }
-}
-
-extension DivFontWeight {
-  fileprivate var baseUIFontWeight: BaseUIPublic.FontWeight {
-    switch self {
-    case .light:
+  public func font(family: String, weight: Int, size: CGFloat) -> Font {
+    let divFontWeight: DivFontWeight = switch weight {
+    case 0..<350:
       .light
-    case .regular:
+    case 350..<450:
       .regular
-    case .medium:
+    case 450..<600:
       .medium
-    case .bold:
+    case 600...Int.max:
       .bold
+    default:
+      .regular
     }
+    return font(family: family, weight: divFontWeight, size: size)
   }
 }
