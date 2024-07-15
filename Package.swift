@@ -5,7 +5,7 @@ import PackageDescription
 let vgsl = (
   url: "https://github.com/yandex/vgsl.git",
   packageName: "vgsl",
-  version: Version("5.1.0")
+  version: Version("6.0.0")
 )
 
 let package = Package(
@@ -28,8 +28,7 @@ let package = Package(
       name: "DivKit",
       dependencies: [
         "LayoutKit",
-        .product(name: "CommonCorePublic", package: vgsl.packageName),
-        .product(name: "NetworkingPublic", package: vgsl.packageName),
+        .product(name: "VGSL", package: vgsl.packageName),
         "Serialization",
       ],
       path: "DivKit"
@@ -44,8 +43,7 @@ let package = Package(
     .target(
       name: "LayoutKit",
       dependencies: [
-        .product(name: "NetworkingPublic", package: vgsl.packageName),
-        .product(name: "CommonCorePublic", package: vgsl.packageName),
+        .product(name: "VGSL", package: vgsl.packageName),
         "LayoutKitInterface",
       ],
       path: "LayoutKit/LayoutKit"
@@ -53,14 +51,14 @@ let package = Package(
     .target(
       name: "LayoutKitInterface",
       dependencies: [
-        .product(name: "BasePublic", package: vgsl.packageName),
+        .product(name: "VGSL", package: vgsl.packageName),
       ],
       path: "LayoutKit/Interface"
     ),
     .target(
       name: "Serialization",
       dependencies: [
-        .product(name: "CommonCorePublic", package: vgsl.packageName),
+        .product(name: "VGSL", package: vgsl.packageName),
       ],
       path: "Serialization"
     ),

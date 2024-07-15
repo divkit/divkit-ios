@@ -1,6 +1,6 @@
 import Foundation
 
-import BaseTinyPublic
+import VGSL
 
 public struct UIElementPath: CustomStringConvertible, ExpressibleByStringLiteral, Codable {
   private let address: ListNode
@@ -42,6 +42,13 @@ public struct UIElementPath: CustomStringConvertible, ExpressibleByStringLiteral
 
   public var leaf: String {
     address.value
+  }
+
+  public func starts(with path: UIElementPath) -> Bool {
+    if path == self {
+      return true
+    }
+    return parent?.starts(with: path) == true
   }
 
   public static func parse(_ path: String) -> UIElementPath {
@@ -121,7 +128,7 @@ extension ListNode: Equatable {
     if lhs === rhs {
       return true
     }
-    return lhs.value == rhs.value && lhs.next == rhs.next
+    return lhs.nextHash == rhs.nextHash && lhs.value == rhs.value && lhs.next == rhs.next
   }
 }
 

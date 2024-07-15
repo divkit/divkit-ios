@@ -2,9 +2,8 @@ import CoreFoundation
 import CoreGraphics
 import Foundation
 
-import BaseUIPublic
-import CommonCorePublic
 import LayoutKit
+import VGSL
 
 extension DivInput: DivBlockModeling {
   public func makeBlock(context: DivBlockModelingContext) throws -> Block {
@@ -13,10 +12,10 @@ extension DivInput: DivBlockModeling {
       to: { try makeBaseBlock(context: context, textBinding: textBinding) },
       context: context,
       actionsHolder: nil,
-      options: .noPaddings,
       customAccessibilityParams: CustomAccessibilityParams { [unowned self] in
         accessibility?.resolveDescription(context.expressionResolver) ?? textBinding.value
-      }
+      },
+      applyPaddings: false
     )
   }
 

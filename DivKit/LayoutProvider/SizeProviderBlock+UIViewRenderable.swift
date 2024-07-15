@@ -1,7 +1,7 @@
 import UIKit
 
-import CommonCorePublic
 import LayoutKit
+import VGSL
 
 extension SizeProviderBlock {
   static func makeBlockView() -> BlockView {
@@ -12,7 +12,7 @@ extension SizeProviderBlock {
     view is SizeProviderBlockView
   }
 
-  public func configureBlockView(
+  func configureBlockView(
     _ view: BlockView,
     observer: ElementStateObserver?,
     overscrollDelegate: ScrollDelegate?,

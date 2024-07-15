@@ -2,8 +2,8 @@ import CoreFoundation
 import CoreGraphics
 import Foundation
 
-import CommonCorePublic
 import LayoutKit
+import VGSL
 
 extension DivState: DivBlockModeling {
   public func makeBlock(context: DivBlockModelingContext) throws -> Block {
@@ -53,7 +53,7 @@ extension DivState: DivBlockModeling {
        previousState.stateId != activeStateId,
        let previousDiv = previousState.div {
       // state changed -> drop visibility cache for all children
-      context.lastVisibleBoundsCache.dropVisibleBounds(forMatchingPrefix: context.parentPath)
+      context.lastVisibleBoundsCache.dropVisibleBounds(prefix: context.parentPath)
       previousBlock = try previousDiv.value.makeBlock(
         context: context.makeContextForState(
           id: id,

@@ -1,14 +1,13 @@
-import DivKit
 import LayoutKit
 
-typealias ValueUpdater = (Int) -> Void
-
 final class SizeProviderBlock: WrapperBlock, LayoutCachingDefaultImpl {
-  public let child: Block
+  typealias ValueUpdater = (Int) -> Void
+
+  let child: Block
   let widthUpdater: ValueUpdater?
   let heightUpdater: ValueUpdater?
 
-  public init(
+  init(
     child: Block,
     widthUpdater: ValueUpdater?,
     heightUpdater: ValueUpdater?
@@ -18,7 +17,7 @@ final class SizeProviderBlock: WrapperBlock, LayoutCachingDefaultImpl {
     self.heightUpdater = heightUpdater
   }
 
-  public func makeCopy(wrapping: Block) -> SizeProviderBlock {
+  func makeCopy(wrapping: Block) -> SizeProviderBlock {
     SizeProviderBlock(
       child: wrapping,
       widthUpdater: widthUpdater,
@@ -26,7 +25,7 @@ final class SizeProviderBlock: WrapperBlock, LayoutCachingDefaultImpl {
     )
   }
 
-  public func equals(_ other: Block) -> Bool {
+  func equals(_ other: Block) -> Bool {
     guard let other = other as? SizeProviderBlock else {
       return false
     }
@@ -35,11 +34,11 @@ final class SizeProviderBlock: WrapperBlock, LayoutCachingDefaultImpl {
 }
 
 extension SizeProviderBlock: Equatable {
-  public static func ==(lhs: SizeProviderBlock, rhs: SizeProviderBlock) -> Bool {
+  static func ==(lhs: SizeProviderBlock, rhs: SizeProviderBlock) -> Bool {
     lhs.child == rhs.child
   }
 }
 
 extension SizeProviderBlock: CustomDebugStringConvertible {
-  public var debugDescription: String { "SizeProviderBlock" }
+  var debugDescription: String { "SizeProviderBlock" }
 }

@@ -1,16 +1,15 @@
 import CoreGraphics
 
-import BasePublic
-import BaseUIPublic
 import LayoutKit
+import VGSL
 
 extension DivBase {
   func applyBaseProperties(
     to block: () throws -> Block,
     context: DivBlockModelingContext,
     actionsHolder: DivActionsHolder?,
-    options: BasePropertiesOptions = [],
     customAccessibilityParams: CustomAccessibilityParams = .default,
+    applyPaddings: Bool = true,
     clipToBounds: Bool = true
   ) throws -> Block {
     let path = context.parentPath
@@ -39,7 +38,7 @@ extension DivBase {
           visibilityParams: visibilityParams
         )
       }
-      context.lastVisibleBoundsCache.dropVisibleBounds(forMatchingPrefix: path)
+      context.lastVisibleBoundsCache.onBecomeInvisible(path)
       return EmptyBlock.zeroSized
     }
 
@@ -49,14 +48,14 @@ extension DivBase {
       block = extensionHandler.applyBeforeBaseProperties(to: block, div: self, context: context)
     }
 
-    let internalInsets = options.contains(.noPaddings)
-      ? .zero
-      : paddings.resolve(context)
-    block = block.addingEdgeInsets(internalInsets, clipsToBounds: clipToBounds)
+    block = block.addingEdgeInsets(
+      applyPaddings ? paddings.resolve(context): .zero,
+      clipsToBounds: clipToBounds
+    )
 
     let externalInsets = margins.resolve(context)
     if visibility == .invisible {
-      context.lastVisibleBoundsCache.dropVisibleBounds(forMatchingPrefix: path)
+      context.lastVisibleBoundsCache.onBecomeInvisible(path)
       context.stateManager.setBlockVisibility(statePath: statePath, div: self, isVisible: false)
       block = applyExtensionHandlersAfterBaseProperties(
         to: block.addingEdgeInsets(externalInsets, clipsToBounds: clipToBounds),
@@ -65,6 +64,8 @@ extension DivBase {
       )
       return block.addingDecorations(alpha: 0)
     }
+
+    context.lastVisibleBoundsCache.onBecomeVisible(path)
 
     // We can't put container properties into single container.
     // Properties should be applied in specific order.
@@ -128,6 +129,10 @@ extension DivBase {
         boundary: clipToBounds ? nil : .noClip,
         alpha: CGFloat(resolveAlpha(expressionResolver))
       )
+
+    if let layoutProvider {
+      block = layoutProvider.apply(block: block, context: context)
+    }
 
     return applyExtensionHandlersAfterBaseProperties(
       to: block,
