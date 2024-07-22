@@ -1,7 +1,6 @@
 import CoreGraphics
 import Foundation
 
-import LayoutKitInterface
 import VGSL
 
 public final class GalleryBlock: BlockWithTraits {
@@ -67,7 +66,7 @@ extension GalleryBlock {
     gaps: [CGFloat],
     children: [Block],
     path: UIElementPath,
-    direction: GalleryViewModel.Direction,
+    direction: ScrollDirection,
     crossAlignment: Alignment,
     scrollMode: GalleryViewModel.ScrollMode = .default,
     state: GalleryViewState? = nil,
@@ -101,7 +100,7 @@ extension GalleryBlock {
     gaps: [CGFloat],
     children: [Block],
     path: UIElementPath,
-    direction: GalleryViewModel.Direction,
+    direction: ScrollDirection,
     crossAlignment: Alignment,
     scrollMode: GalleryViewModel.ScrollMode = .default,
     contentPosition: GalleryViewState.Position,

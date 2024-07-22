@@ -1,6 +1,5 @@
 import UIKit
 
-import LayoutKitInterface
 import VGSL
 
 private typealias CellType = GenericCollectionViewCell
@@ -447,7 +446,11 @@ extension GalleryViewModel.ScrollMode {
 extension GenericCollectionViewLayout {
   fileprivate func apply(_ layout: GalleryViewLayouting?) {
     self.layout = layout
-      .map { GenericCollectionLayout(frames: $0.blockFrames, contentSize: $0.contentSize) }
+      .map { GenericCollectionLayout(
+        frames: $0.blockFrames,
+        contentSize: $0.contentSize,
+        transformation: $0.transformation
+      ) }
   }
 }
 
