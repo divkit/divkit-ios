@@ -113,14 +113,16 @@ extension DivPageTransformation {
         previousElementAlpha: transformation.resolvePreviousPageAlpha(resolver),
         nextElementScale: transformation.resolveNextPageScale(resolver),
         previousElementScale: transformation.resolvePreviousPageScale(resolver),
+        style: .slide,
         scrollDirection: scrollDirection
       )
-    case .divPageTransformationOverlap:
+    case let .divPageTransformationOverlap(transformation):
       return .init(
-        nextElementAlpha: 1,
-        previousElementAlpha: 1,
-        nextElementScale: 1,
-        previousElementScale: 1,
+        nextElementAlpha: transformation.resolveNextPageAlpha(resolver),
+        previousElementAlpha: transformation.resolvePreviousPageAlpha(resolver),
+        nextElementScale: transformation.resolveNextPageScale(resolver),
+        previousElementScale: transformation.resolvePreviousPageScale(resolver),
+        style: .overlap,
         scrollDirection: scrollDirection
       )
     }

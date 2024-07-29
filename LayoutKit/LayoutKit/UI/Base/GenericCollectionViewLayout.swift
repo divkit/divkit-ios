@@ -43,12 +43,22 @@ public final class GenericCollectionViewLayout: UICollectionViewLayout {
     -> UICollectionViewLayoutAttributes {
     guard let collectionView = self.collectionView,
           let transformation = layout?.transformation else { return attributes }
+
+    let originalCenter = attributes.center
+
+    if transformation.style == .overlap {
+      let contentOffset = collectionView.contentOffset
+      let offset = layout?.frames.first?.origin ?? .zero
+      attributes.frame.origin.x = max(attributes.frame.origin.x, contentOffset.x + offset.x)
+      attributes.zIndex = attributes.indexPath.item
+    }
+
     let collectionCenter = collectionView.frame.size.width / 2
 
     let normalizedCenter = if transformation.scrollDirection == .horizontal {
-      attributes.center.x - collectionView.contentOffset.x
+      originalCenter.x - collectionView.contentOffset.x
     } else {
-      attributes.center.y - collectionView.contentOffset.y
+      originalCenter.y - collectionView.contentOffset.y
     }
 
     let maxDistance = if transformation.scrollDirection == .horizontal {
@@ -72,8 +82,7 @@ public final class GenericCollectionViewLayout: UICollectionViewLayout {
         .previousElementScale + ratio * (1 - transformation.previousElementScale)
     }
     attributes.alpha = alpha
-    attributes.transform3D = CATransform3DScale(CATransform3DIdentity, scale, scale, 1)
-
+    attributes.transform = CGAffineTransform(scale: scale)
     return attributes
   }
 
