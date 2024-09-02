@@ -121,12 +121,12 @@ public final class DivView: VisibleBoundsTrackingView {
   public override func layoutSubviews() {
     super.layoutSubviews()
     guard let blockView else { return }
-    blockView.frame = bounds
-    blockView.layoutIfNeeded()
     blockView.onVisibleBoundsChanged(
       from: oldBounds,
       to: blockProvider?.lastVisibleBounds ?? .zero
     )
+    blockView.frame = bounds
+    blockView.layoutIfNeeded()
   }
 
   /// Returns ``DivCardSize`` of the ``DivView``.
@@ -202,7 +202,11 @@ public final class DivView: VisibleBoundsTrackingView {
   ///  - to: The new bounds rectangle.
   public func onVisibleBoundsChanged(to: CGRect) {
     blockProvider?.lastVisibleBounds = to
-    setNeedsLayout()
+    if window == nil {
+      forceLayout()
+    } else {
+      setNeedsLayout()
+    }
   }
 
   /// Use ``onVisibleBoundsChanged(to:)`` instead.
