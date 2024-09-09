@@ -16,12 +16,14 @@ let package = Package(
   products: [
     .library(name: "DivKit", targets: ["DivKit"]),
     .library(name: "DivKitExtensions", targets: ["DivKitExtensions"]),
+    .library(name: "DivKitMarkdownExtension", targets: ["DivKitMarkdownExtension"]),
   ],
   dependencies: [
     .package(
       url: vgsl.url,
       from: vgsl.version
     ),
+    .package(url: "https://github.com/apple/swift-markdown.git", from: "0.4.0"),
   ],
   targets: [
     .target(
@@ -39,6 +41,16 @@ let package = Package(
         "DivKit",
       ],
       path: "DivKitExtensions"
+    ),
+    .target(
+      name: "DivKitMarkdownExtension",
+      dependencies: [
+        "DivKit",
+        "LayoutKit",
+        .product(name: "VGSL", package: vgsl.packageName),
+        .product(name: "Markdown", package: "swift-markdown"),
+      ],
+      path: "DivKitMarkdownExtension"
     ),
     .target(
       name: "LayoutKit",
