@@ -50,10 +50,9 @@ public protocol TooltipManager: AnyObject, TooltipActionPerformer, RenderingDele
   /// - Parameter anchorView: The event that anchorView disappeared from view hierarchy.  An anchor
   /// view is the view to which a tooltip is attached.
   func tooltipAnchorViewRemoved(anchorView: TooltipAnchorView)
-}
 
-extension TooltipManager {
-  public func mapView(_: BlockView, to _: BlockViewID) {}
+  /// Removes all tooltips.
+  func reset()
 }
 
 public final class DefaultTooltipManager: TooltipManager {
@@ -118,18 +117,19 @@ public final class DefaultTooltipManager: TooltipManager {
     existingAnchorViews.remove(anchorView)
   }
 
+  public func reset() {
+    showingTooltips = [:]
+    tooltipWindow = nil
+  }
+
   private func setupTooltipWindow() {
-    if #available(iOS 13.0, *) {
-      if tooltipWindow == nil {
-        guard let windowScene = UIApplication.shared.connectedScenes
-          .first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene
-        else { return }
-        tooltipWindow = UIWindow(windowScene: windowScene)
-        tooltipWindow?.windowLevel = UIWindow.Level.alert + 1
-        tooltipWindow?.isHidden = true
-      }
-    } else {
-      tooltipWindow = UIApplication.shared.windows.first
+    if tooltipWindow == nil {
+      guard let windowScene = UIApplication.shared.connectedScenes
+        .first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene
+      else { return }
+      tooltipWindow = UIWindow(windowScene: windowScene)
+      tooltipWindow?.windowLevel = UIWindow.Level.alert + 1
+      tooltipWindow?.isHidden = true
     }
   }
 }
@@ -163,3 +163,8 @@ public final class DefaultTooltipManager: TooltipManager {
   public func hideTooltip(id _: String) {}
 }
 #endif
+
+extension TooltipManager {
+  public func mapView(_: BlockView, to _: BlockViewID) {}
+  public func reset() {}
+}
