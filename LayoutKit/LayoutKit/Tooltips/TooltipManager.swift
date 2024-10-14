@@ -75,12 +75,22 @@ public final class DefaultTooltipManager: TooltipManager {
   ) {
     self.handleAction = handleAction
     self.shownTooltips = shownTooltips
+
+    NotificationCenter.default.addObserver(
+      self,
+      selector: #selector(orientationDidChange),
+      name: UIDevice.orientationDidChangeNotification,
+      object: nil
+    )
   }
 
   public func showTooltip(info: TooltipInfo) {
-    if !info.multiple, !shownTooltips.value.insert(info.id).inserted { return }
+    setupTooltipWindow()
+    guard let tooltipWindow else { return }
     guard !showingTooltips.keys.contains(info.id),
-          let tooltip = existingAnchorViews.compactMap({ $0?.makeTooltip(id: info.id) }).first
+          let tooltip = existingAnchorViews.compactMap({ 
+            $0?.makeTooltip(id: info.id, in: tooltipWindow.bounds)
+          }).first
     else { return }
 
     setupTooltipWindow()
@@ -94,10 +104,13 @@ public final class DefaultTooltipManager: TooltipManager {
         self?.tooltipWindow?.isHidden = true
       }
     )
-    tooltipWindow?.addSubview(view)
-    tooltipWindow?.isHidden = false
-    tooltipWindow?.makeKeyAndVisible()
-    view.frame = tooltipWindow?.bounds ?? .zero
+    // Window won't rotate if `rootViewController` is not set
+    let vc = UIViewController()
+    vc.view = view
+    tooltipWindow.rootViewController = vc
+    tooltipWindow.isHidden = false
+    tooltipWindow.makeKeyAndVisible()
+    view.frame = tooltipWindow.bounds
     showingTooltips[info.id] = view
     if !tooltip.duration.value.isZero {
       after(tooltip.duration.value, block: { self.hideTooltip(id: tooltip.id) })
@@ -121,6 +134,18 @@ public final class DefaultTooltipManager: TooltipManager {
     showingTooltips = [:]
     tooltipWindow = nil
   }
+  
+  deinit {
+    NotificationCenter.default.removeObserver(
+      self,
+      name: UIDevice.orientationDidChangeNotification,
+      object: nil
+    )
+  }
+
+  @objc func orientationDidChange(_ notification: Notification) {
+    reset()
+  }
 
   private func setupTooltipWindow() {
     if tooltipWindow == nil {
@@ -135,7 +160,7 @@ public final class DefaultTooltipManager: TooltipManager {
 }
 
 extension TooltipAnchorView {
-  fileprivate func makeTooltip(id: String) -> DefaultTooltipManager.Tooltip? {
+  fileprivate func makeTooltip(id: String, in constraint: CGRect) -> DefaultTooltipManager.Tooltip? {
     tooltips
       .first { $0.id == id }
       .flatMap {
@@ -144,9 +169,11 @@ extension TooltipAnchorView {
           id: tooltip.id,
           duration: tooltip.duration,
           view: {
-            let frame = tooltip.calculateFrame(targeting: bounds)
             let tooltipView = tooltip.tooltipViewFactory?.value ?? tooltip.block.makeBlockView()
-            tooltipView.frame = convert(frame, to: nil)
+            tooltipView.frame = tooltip.calculateFrame(
+              targeting: convert(bounds, to: nil),
+              constrainedBy: constraint
+            )
             return tooltipView
           }()
         )

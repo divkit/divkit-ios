@@ -14,11 +14,16 @@ public enum DivActionTyped {
   case divActionClearFocus(DivActionClearFocus)
   case divActionCopyToClipboard(DivActionCopyToClipboard)
   case divActionDictSetValue(DivActionDictSetValue)
+  case divActionDownload(DivActionDownload)
   case divActionFocusElement(DivActionFocusElement)
   case divActionHideTooltip(DivActionHideTooltip)
+  case divActionScrollBy(DivActionScrollBy)
+  case divActionScrollTo(DivActionScrollTo)
   case divActionSetState(DivActionSetState)
+  case divActionSetStoredValue(DivActionSetStoredValue)
   case divActionSetVariable(DivActionSetVariable)
   case divActionShowTooltip(DivActionShowTooltip)
+  case divActionSubmit(DivActionSubmit)
   case divActionTimer(DivActionTimer)
   case divActionVideo(DivActionVideo)
 
@@ -40,15 +45,25 @@ public enum DivActionTyped {
       return value
     case let .divActionDictSetValue(value):
       return value
+    case let .divActionDownload(value):
+      return value
     case let .divActionFocusElement(value):
       return value
     case let .divActionHideTooltip(value):
       return value
+    case let .divActionScrollBy(value):
+      return value
+    case let .divActionScrollTo(value):
+      return value
     case let .divActionSetState(value):
+      return value
+    case let .divActionSetStoredValue(value):
       return value
     case let .divActionSetVariable(value):
       return value
     case let .divActionShowTooltip(value):
+      return value
+    case let .divActionSubmit(value):
       return value
     case let .divActionTimer(value):
       return value
@@ -78,15 +93,25 @@ extension DivActionTyped: Equatable {
       return l == r
     case let (.divActionDictSetValue(l), .divActionDictSetValue(r)):
       return l == r
+    case let (.divActionDownload(l), .divActionDownload(r)):
+      return l == r
     case let (.divActionFocusElement(l), .divActionFocusElement(r)):
       return l == r
     case let (.divActionHideTooltip(l), .divActionHideTooltip(r)):
       return l == r
+    case let (.divActionScrollBy(l), .divActionScrollBy(r)):
+      return l == r
+    case let (.divActionScrollTo(l), .divActionScrollTo(r)):
+      return l == r
     case let (.divActionSetState(l), .divActionSetState(r)):
+      return l == r
+    case let (.divActionSetStoredValue(l), .divActionSetStoredValue(r)):
       return l == r
     case let (.divActionSetVariable(l), .divActionSetVariable(r)):
       return l == r
     case let (.divActionShowTooltip(l), .divActionShowTooltip(r)):
+      return l == r
+    case let (.divActionSubmit(l), .divActionSubmit(r)):
       return l == r
     case let (.divActionTimer(l), .divActionTimer(r)):
       return l == r
