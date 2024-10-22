@@ -26,14 +26,17 @@ public final class DivActionHandler {
   private let copyToClipboardActionHandler = CopyToClipboardActionHandler()
   private let focusElementActionHandler = FocusElementActionHandler()
   private let setVariableActionHandler = SetVariableActionHandler()
+  private let submitActionHandler: SubmitActionHandler
   private let timerActionHandler: TimerActionHandler
   private let videoActionHandler = VideoActionHandler()
+  private let animatorHandler: AnimatorActionHandler
 
   /// Deprecated. Do not create `DivActionHandler`. Use the instance from `DivKitComponents`.
   public convenience init(
     stateUpdater: DivStateUpdater,
     blockStateStorage: DivBlockStateStorage = DivBlockStateStorage(),
     patchProvider: DivPatchProvider,
+    submitter: DivSubmitter,
     variablesStorage: DivVariablesStorage = DivVariablesStorage(),
     functionsStorage: DivFunctionsStorage? = nil,
     updateCard: @escaping DivActionURLHandler.UpdateCardAction,
@@ -51,6 +54,7 @@ public final class DivActionHandler {
       stateUpdater: stateUpdater,
       blockStateStorage: blockStateStorage,
       patchProvider: patchProvider,
+      submitter: submitter,
       variablesStorage: variablesStorage,
       functionsStorage: functionsStorage,
       updateCard: updateCard,
@@ -63,7 +67,8 @@ public final class DivActionHandler {
       urlHandler: urlHandler,
       persistentValuesStorage: persistentValuesStorage,
       reporter: reporter ?? DefaultDivReporter(),
-      idToPath: IdToPath()
+      idToPath: IdToPath(),
+      animatorController: DivAnimatorController()
     )
   }
 
@@ -71,6 +76,7 @@ public final class DivActionHandler {
     stateUpdater: DivStateUpdater,
     blockStateStorage: DivBlockStateStorage,
     patchProvider: DivPatchProvider,
+    submitter: DivSubmitter,
     variablesStorage: DivVariablesStorage,
     functionsStorage: DivFunctionsStorage?,
     updateCard: @escaping DivActionURLHandler.UpdateCardAction,
@@ -83,7 +89,8 @@ public final class DivActionHandler {
     urlHandler: DivUrlHandler,
     persistentValuesStorage: DivPersistentValuesStorage,
     reporter: DivReporter,
-    idToPath: IdToPath
+    idToPath: IdToPath,
+    animatorController: DivAnimatorController
   ) {
     self.divActionURLHandler = DivActionURLHandler(
       stateUpdater: stateUpdater,
@@ -98,6 +105,7 @@ public final class DivActionHandler {
     )
     self.urlHandler = urlHandler
     self.logger = logger
+    self.submitActionHandler = SubmitActionHandler(submitter: submitter)
     self.trackVisibility = trackVisibility
     self.trackDisappear = trackDisappear
     self.variablesStorage = variablesStorage
@@ -108,6 +116,7 @@ public final class DivActionHandler {
     self.reporter = reporter
     self.timerActionHandler = TimerActionHandler(performer: performTimerAction)
     self.idToPath = idToPath
+    self.animatorHandler = AnimatorActionHandler(animatorController: animatorController)
   }
 
   public func handle(
@@ -174,6 +183,7 @@ public final class DivActionHandler {
       expressionResolver: expressionResolver,
       variablesStorage: variablesStorage,
       blockStateStorage: blockStateStorage,
+      actionHandler: self,
       updateCard: updateCard
     )
 
@@ -199,8 +209,13 @@ public final class DivActionHandler {
       timerActionHandler.handle(action, context: context)
     case let .divActionVideo(action):
       videoActionHandler.handle(action, context: context)
-    case .divActionAnimatorStart, .divActionAnimatorStop, .divActionSubmit,
-         .divActionShowTooltip, .divActionHideTooltip, .divActionDownload,
+    case let .divActionSubmit(action):
+      submitActionHandler.handle(action, context: context)
+    case let .divActionAnimatorStart(action):
+      animatorHandler.handle(action, context: context)
+    case let .divActionAnimatorStop(action):
+      animatorHandler.handle(action, context: context)
+    case .divActionShowTooltip, .divActionHideTooltip, .divActionDownload,
          .divActionSetState, .divActionSetStoredValue, .divActionScrollBy, .divActionScrollTo:
       break
     case .none:

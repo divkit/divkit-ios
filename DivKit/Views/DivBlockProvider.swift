@@ -171,8 +171,10 @@ final class DivBlockProvider {
       self.divData = nil
       return
     }
-    divKitComponents.setVariablesAndTriggers(divData: divData, cardId: cardId)
-    divKitComponents.setTimers(divData: divData, cardId: cardId)
+    if !id.isTooltip {
+      divKitComponents.setVariablesAndTriggers(divData: divData, cardId: cardId)
+      divKitComponents.setTimers(divData: divData, cardId: cardId)
+    }
     self.divData = divData
   }
 
@@ -260,6 +262,14 @@ final class DivBlockProvider {
   func update(withStates blockStates: BlocksState) {
     do {
       block = try block.updated(withStates: blockStates)
+    } catch {
+      block = handleError(error: error)
+    }
+  }
+
+  func update(path: UIElementPath, isFocused: Bool) {
+    do {
+      block = try block.updated(path: path, isFocused: isFocused)
     } catch {
       block = handleError(error: error)
     }
