@@ -31,6 +31,7 @@ public final class DivActionHandler {
   private let videoActionHandler = VideoActionHandler()
   private let animatorHandler: AnimatorActionHandler
   private let showTooltipActionHandler: ShowTooltipActionHandler
+  private let hideTooltipActionHandler: HideTooltipActionHandler
 
   /// Deprecated. Do not create `DivActionHandler`. Use the instance from `DivKitComponents`.
   public convenience init(
@@ -122,6 +123,10 @@ public final class DivActionHandler {
       performer: tooltipActionPerformer,
       showTooltip: showTooltip
     )
+    self.hideTooltipActionHandler = HideTooltipActionHandler(
+      performer: tooltipActionPerformer,
+      showTooltip: showTooltip
+    )
   }
 
   public func handle(
@@ -151,7 +156,7 @@ public final class DivActionHandler {
 
   /// Deprecated. This method is intended for backward compatibility only. Do not use it.
   public func handleDivActionUrl(_ url: URL, cardId: DivCardID) -> Bool {
-    divActionURLHandler.handleURL(url, path: cardId.path)
+    divActionURLHandler.handleURL(url, cardId: cardId)
   }
 
   func handle(
@@ -222,8 +227,10 @@ public final class DivActionHandler {
       animatorHandler.handle(action, context: context)
     case let .divActionAnimatorStop(action):
       animatorHandler.handle(action, context: context)
-    case .divActionHideTooltip, .divActionDownload,
-         .divActionSetState, .divActionSetStoredValue, .divActionScrollBy, .divActionScrollTo:
+    case let .divActionHideTooltip(action):
+      hideTooltipActionHandler.handle(action, context: context)
+    case .divActionDownload, .divActionSetState, 
+         .divActionSetStoredValue, .divActionScrollBy, .divActionScrollTo:
       break
     case .none:
       isHandled = false
@@ -274,7 +281,7 @@ public final class DivActionHandler {
 
     let isDivActionURLHandled = divActionURLHandler.handleURL(
       url,
-      path: info.path,
+      info: info,
       completion: { [weak self] result in
         guard let self else {
           return
