@@ -1,4 +1,3 @@
-import Foundation
 import UIKit
 
 import DivKit
@@ -24,31 +23,19 @@ public final class ShimmerImagePreviewExtension: DivExtensionHandler {
     }
 
     let expressionResolver = context.expressionResolver
-    let shimmerViewProvider = ShimmerViewProvider(
-      style: div.resolveShimmerStyle(expressionResolver) ?? .default,
+    let style = div.resolveExtensionParams(for: extensionID).flatMap {
+      try? ShimmerImagePreviewStyle(dictionary: $0, expressionResolver: expressionResolver)
+    } ?? .default
+    let ShimmerImagePreviewViewProvider = ShimmerImagePreviewViewProvider(
+      style: style,
       effectBeginTime: effectBeginTime,
       path: context.parentPath
     )
     let imageHolder = context.imageHolderFactory.make(
       div.resolveImageUrl(expressionResolver),
-      .view(shimmerViewProvider)
+      .view(ShimmerImagePreviewViewProvider)
     )
     return block.makeCopy(with: imageHolder)
-  }
-}
-
-extension DivBase {
-  fileprivate func resolveShimmerStyle(
-    _ expressionResolver: ExpressionResolver
-  ) -> ShimmerStyle? {
-    guard let shimmerExtensionsParams = extensions?.first(where: { $0.id == extensionID })?.params,
-          let style = try? ShimmerStyle(
-            dictionary: shimmerExtensionsParams,
-            expressionResolver: expressionResolver
-          ) else {
-      return nil
-    }
-    return style
   }
 }
 
