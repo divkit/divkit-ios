@@ -192,7 +192,7 @@ extension DivBase {
     let expressionResolver = context.expressionResolver
     return BlockAlignment2D(
       horizontal: resolveAlignmentHorizontal(expressionResolver)?
-        .makeContentAlignment(uiLayoutDirection: context.layoutDirection)
+        .makeContentAlignment(layoutDirection: context.layoutDirection)
         ?? defaultAlignment.horizontal,
       vertical: resolveAlignmentVertical(expressionResolver)?.alignment
         ?? defaultAlignment.vertical
@@ -323,8 +323,14 @@ extension DivBase {
   }
 
   func resolveContentWidthTrait(_ context: DivBlockModelingContext) -> LayoutTrait {
-    resolveWidthTrait(context)
-      .trim(paddings.resolve(context).horizontalInsets)
+    resolveContentWidthTrait(context, paddings: paddings.resolve(context))
+  }
+
+  func resolveContentWidthTrait(
+    _ context: DivBlockModelingContext,
+    paddings: EdgeInsets
+  ) -> LayoutTrait {
+    resolveWidthTrait(context).trim(paddings.horizontalInsets)
   }
 
   func getTransformedHeight(_ context: DivBlockModelingContext) -> DivSize {
@@ -336,8 +342,14 @@ extension DivBase {
   }
 
   func resolveContentHeightTrait(_ context: DivBlockModelingContext) -> LayoutTrait {
-    resolveHeightTrait(context)
-      .trim(paddings.resolve(context).verticalInsets)
+    resolveContentHeightTrait(context, paddings: paddings.resolve(context))
+  }
+
+  func resolveContentHeightTrait(
+    _ context: DivBlockModelingContext,
+    paddings: EdgeInsets
+  ) -> LayoutTrait {
+    resolveHeightTrait(context).trim(paddings.verticalInsets)
   }
 }
 
@@ -354,6 +366,25 @@ extension LayoutTrait {
       )
     case .weighted:
       self
+    }
+  }
+}
+
+extension DivAlignmentHorizontal {
+  fileprivate func makeContentAlignment(
+    layoutDirection: UserInterfaceLayoutDirection
+  ) -> Alignment {
+    switch self {
+    case .left:
+      .leading
+    case .right:
+      .trailing
+    case .start:
+      layoutDirection == .leftToRight ? .leading : .trailing
+    case .center:
+      .center
+    case .end:
+      layoutDirection == .rightToLeft ? .leading : .trailing
     }
   }
 }
