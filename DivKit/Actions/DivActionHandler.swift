@@ -1,5 +1,4 @@
 import Foundation
-
 import LayoutKit
 import Serialization
 import VGSL
@@ -27,7 +26,9 @@ public final class DivActionHandler {
   private let dictSetValueActionHandler = DictSetValueActionHandler()
   private let focusElementActionHandler = FocusElementActionHandler()
   private let hideTooltipActionHandler: HideTooltipActionHandler
+  private let scrollActionHandler: ScrollActionHandler
   private let setStateActionHandler: SetStateActionHandler
+  private let setStoredValueActionHandler: SetStoredValueActionHandler
   private let setVariableActionHandler = SetVariableActionHandler()
   private let showTooltipActionHandler: ShowTooltipActionHandler
   private let submitActionHandler: SubmitActionHandler
@@ -118,18 +119,25 @@ public final class DivActionHandler {
     self.reporter = reporter
     self.idToPath = idToPath
 
-    self.animatorActionHandler = AnimatorActionHandler(animatorController: animatorController)
-    self.hideTooltipActionHandler = HideTooltipActionHandler(
+    animatorActionHandler = AnimatorActionHandler(animatorController: animatorController)
+    hideTooltipActionHandler = HideTooltipActionHandler(
       performer: tooltipActionPerformer,
       showTooltip: showTooltip
     )
-    self.setStateActionHandler = SetStateActionHandler(stateUpdater: stateUpdater)
-    self.showTooltipActionHandler = ShowTooltipActionHandler(
+    scrollActionHandler = ScrollActionHandler(
+      blockStateStorage: blockStateStorage,
+      updateCard: updateCard
+    )
+    setStateActionHandler = SetStateActionHandler(stateUpdater: stateUpdater)
+    setStoredValueActionHandler = SetStoredValueActionHandler(
+      persistentValuesStorage: persistentValuesStorage
+    )
+    showTooltipActionHandler = ShowTooltipActionHandler(
       performer: tooltipActionPerformer,
       showTooltip: showTooltip
     )
-    self.submitActionHandler = SubmitActionHandler(submitter: submitter)
-    self.timerActionHandler = TimerActionHandler(performer: performTimerAction)
+    submitActionHandler = SubmitActionHandler(submitter: submitter)
+    timerActionHandler = TimerActionHandler(performer: performTimerAction)
   }
 
   public func handle(
@@ -213,32 +221,35 @@ public final class DivActionHandler {
       arrayActionsHandler.handle(action, context: context)
     case let .divActionArraySetValue(action):
       arrayActionsHandler.handle(action, context: context)
-    case let .divActionDictSetValue(action):
-      dictSetValueActionHandler.handle(action, context: context)
     case .divActionClearFocus:
       clearFocusActionHandler.handle(context: context)
     case let .divActionCopyToClipboard(action):
       copyToClipboardActionHandler.handle(action, context: context)
+    case let .divActionDictSetValue(action):
+      dictSetValueActionHandler.handle(action, context: context)
     case let .divActionFocusElement(action):
       focusElementActionHandler.handle(action, context: context)
+    case let .divActionHideTooltip(action):
+      hideTooltipActionHandler.handle(action, context: context)
+    case let .divActionScrollBy(action):
+      scrollActionHandler.handle(action, context: context)
+    case let .divActionScrollTo(action):
+      scrollActionHandler.handle(action, context: context)
     case let .divActionSetVariable(action):
       setVariableActionHandler.handle(action, context: context)
     case let .divActionSetState(action):
       setStateActionHandler.handle(action, context: context)
-    case let .divActionTimer(action):
-      timerActionHandler.handle(action, context: context)
-    case let .divActionVideo(action):
-      videoActionHandler.handle(action, context: context)
+    case let .divActionSetStoredValue(action):
+      setStoredValueActionHandler.handle(action, context: context)
     case let .divActionShowTooltip(action):
       showTooltipActionHandler.handle(action, context: context)
     case let .divActionSubmit(action):
       submitActionHandler.handle(action, context: context)
-    case let .divActionHideTooltip(action):
-      hideTooltipActionHandler.handle(action, context: context)
-    case .divActionDownload,
-         .divActionSetStoredValue,
-         .divActionScrollBy,
-         .divActionScrollTo:
+    case let .divActionTimer(action):
+      timerActionHandler.handle(action, context: context)
+    case let .divActionVideo(action):
+      videoActionHandler.handle(action, context: context)
+    case .divActionDownload:
       break
     case .none:
       isHandled = false
