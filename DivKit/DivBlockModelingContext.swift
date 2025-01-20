@@ -1,5 +1,4 @@
 import CoreGraphics
-
 import LayoutKit
 import VGSL
 
@@ -10,7 +9,7 @@ import AppKit
 #endif
 
 public struct DivBlockModelingContext {
-  let viewId: DivViewId
+  private(set) var viewId: DivViewId
   private(set) var cardLogId: String?
   private(set) var parentDivStatePath: DivStatePath?
   let stateManager: DivStateManager
@@ -30,6 +29,7 @@ public struct DivBlockModelingContext {
   let playerFactory: PlayerFactory?
   private(set) weak var parentScrollView: ScrollView?
   public private(set) var errorsStorage: DivErrorsStorage
+  let debugErrorCollector: DebugErrorCollector?
   private let persistentValuesStorage: DivPersistentValuesStorage
   let tooltipViewFactory: DivTooltipViewFactory?
   let functionsStorage: DivFunctionsStorage?
@@ -102,6 +102,7 @@ public struct DivBlockModelingContext {
       scheduler: scheduler,
       parentScrollView: parentScrollView,
       errorsStorage: errorsStorage,
+      debugErrorCollector: nil,
       layoutDirection: layoutDirection,
       variableTracker: variableTracker,
       persistentValuesStorage: persistentValuesStorage,
@@ -136,6 +137,7 @@ public struct DivBlockModelingContext {
     scheduler: Scheduling?,
     parentScrollView: ScrollView?,
     errorsStorage: DivErrorsStorage?,
+    debugErrorCollector: DebugErrorCollector?,
     layoutDirection: UserInterfaceLayoutDirection,
     variableTracker: DivVariableTracker?,
     persistentValuesStorage: DivPersistentValuesStorage?,
@@ -146,8 +148,7 @@ public struct DivBlockModelingContext {
   ) {
     self.viewId = viewId
     self.cardLogId = cardLogId
-    let cardId = viewId.cardId
-    let parentPath = parentPath ?? UIElementPath(cardId.rawValue)
+    let parentPath = parentPath ?? makeParentPath(viewId: viewId)
     self.parentPath = parentPath
     self.parentDivStatePath = parentDivStatePath
     self.stateManager = stateManager
@@ -165,6 +166,7 @@ public struct DivBlockModelingContext {
     self.scheduler = scheduler ?? TimerScheduler()
     self.parentScrollView = parentScrollView
     let errorsStorage = errorsStorage ?? DivErrorsStorage(errors: [])
+    self.debugErrorCollector = debugErrorCollector
     self.errorsStorage = errorsStorage
     self.layoutDirection = layoutDirection
     self.variableTracker = variableTracker
@@ -296,6 +298,14 @@ public struct DivBlockModelingContext {
 
     return context
   }
+
+  func cloneForTooltip(tooltipId: String) -> Self {
+    var context = self
+    let viewId = DivViewId(cardId: cardId, additionalId: tooltipId)
+    context.viewId = DivViewId(cardId: cardId, additionalId: tooltipId)
+    context.parentPath = makeParentPath(viewId: viewId)
+    return context
+  }
 }
 
 struct PrototypeParams {
@@ -331,6 +341,15 @@ private func makeExpressionResolver(
       errorsStorage.add(DivExpressionError(error, path: path))
     }
   )
+}
+
+private func makeParentPath(viewId: DivViewId) -> UIElementPath {
+  let cardIdPath = UIElementPath(viewId.cardId.rawValue)
+  return if let additionalId = viewId.additionalId {
+    cardIdPath + additionalId
+  } else {
+    cardIdPath
+  }
 }
 
 extension [DivExtensionHandler] {
