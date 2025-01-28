@@ -10,8 +10,6 @@ import AppKit
 #endif
 
 public final class DivKitComponents {
-  public typealias UpdateCardAction = (NonEmptyArray<DivActionURLHandler.UpdateReason>) -> Void
-
   public let actionHandler: DivActionHandler
   public let blockStateStorage = DivBlockStateStorage()
   public let divCustomBlockFactory: DivCustomBlockFactory
@@ -20,35 +18,35 @@ public final class DivKitComponents {
   public let fontProvider: DivFontProvider
   public let imageHolderFactory: DivImageHolderFactory
   public let layoutDirection: UserInterfaceLayoutDirection
-  public let submitter: DivSubmitter
   public let patchProvider: DivPatchProvider
   public let playerFactory: PlayerFactory?
   public let reporter: DivReporter
   public let safeAreaManager: DivSafeAreaManager
   public let stateManagement: DivStateManagement
-  public let showToolip: DivActionURLHandler.ShowTooltipAction?
+  public let submitter: DivSubmitter
   public let tooltipManager: TooltipManager
   public let triggersStorage: DivTriggersStorage
   public let urlHandler: DivUrlHandler
   public let variablesStorage: DivVariablesStorage
+  @_spi(Internal)
   public let visibilityCounter = DivVisibilityCounter()
 
   public var updateCardSignal: Signal<[DivActionURLHandler.UpdateReason]> {
     updateCardPipe.signal
   }
 
+  private let animatorController = DivAnimatorController()
   private let disposePool = AutodisposePool()
+  private let idToPath = IdToPath()
+  private let functionsStorage: DivFunctionsStorage
   private let lastVisibleBoundsCache = DivLastVisibleBoundsCache()
   private let layoutProviderHandler: DivLayoutProviderHandler
   private let persistentValuesStorage = DivPersistentValuesStorage()
   private let timerStorage: DivTimerStorage
-  private let functionsStorage: DivFunctionsStorage
   private let updateAggregator: RunLoopCardUpdateAggregator
-  private let updateCard: DivActionURLHandler.UpdateCardAction
+  private let updateCard: DivActionHandler.UpdateCardAction
   private let updateCardPipe: SignalPipe<[DivActionURLHandler.UpdateReason]>
   private let variableTracker = DivVariableTracker()
-  private let idToPath = IdToPath()
-  private let animatorController = DivAnimatorController()
   private var debugErrorCollectors = [DivCardID: DebugErrorCollector]()
 
   /// You can create an instance of `DivKitComponents` with various optional parameters that allow
@@ -85,8 +83,6 @@ public final class DivKitComponents {
   /// ``reporter`` instead.
   ///   - trackDisappear: A closure that tracks the disappearance of elements. Deprecated. Use
   /// ``reporter`` instead.
-  ///   - updateCardAction: Deprecated. This parameter is deprecated, use ``updateCardSignal``
-  /// instead.
   ///   - playerFactory: An optional `PlayerFactory` object responsible for creating custom video
   /// players.
   ///   - urlHandler: An optional ``DivUrlHandler`` object that allows you to implement custom
@@ -103,13 +99,12 @@ public final class DivKitComponents {
     patchProvider: DivPatchProvider? = nil,
     requestPerformer: URLRequestPerforming? = nil,
     reporter: DivReporter? = nil,
-    showTooltip: DivActionURLHandler.ShowTooltipAction? = nil,
+    showTooltip: DivActionHandler.ShowTooltipAction? = nil,
     stateManagement: DivStateManagement = DefaultDivStateManagement(),
     submitter: DivSubmitter? = nil,
     tooltipManager: TooltipManager? = nil,
     trackVisibility: @escaping DivActionHandler.TrackVisibility = { _, _ in },
     trackDisappear: @escaping DivActionHandler.TrackVisibility = { _, _ in },
-    updateCardAction: UpdateCardAction? = nil,
     playerFactory: PlayerFactory? = nil,
     urlHandler: DivUrlHandler = DivUrlHandlerDelegate { _ in },
     variablesStorage: DivVariablesStorage = DivVariablesStorage()
@@ -122,32 +117,24 @@ public final class DivKitComponents {
     self.playerFactory = playerFactory ?? defaultPlayerFactory
     let reporter = reporter ?? DefaultDivReporter()
     self.reporter = reporter
-    self.showToolip = showTooltip
     self.stateManagement = stateManagement
     self.urlHandler = urlHandler
     self.variablesStorage = variablesStorage
 
-    let updateCardActionSignalPipe = SignalPipe<[DivActionURLHandler.UpdateReason]>()
-    self.updateCardPipe = updateCardActionSignalPipe
+    let updateCardPipe = SignalPipe<[DivActionURLHandler.UpdateReason]>()
+    self.updateCardPipe = updateCardPipe
 
     layoutProviderHandler = DivLayoutProviderHandler(variablesStorage: variablesStorage)
 
     safeAreaManager = DivSafeAreaManager(storage: variablesStorage)
 
-    updateAggregator = RunLoopCardUpdateAggregator(updateCardAction: {
-      updateCardAction?($0)
-      updateCardActionSignalPipe.send($0.asArray())
-    })
+    updateAggregator = RunLoopCardUpdateAggregator(updateCardAction: updateCardPipe.send)
     updateCard = updateAggregator.aggregate(_:)
 
     let requestPerformer = requestPerformer ?? URLRequestPerformer(urlTransform: nil)
 
     self.imageHolderFactory = (
-      imageHolderFactory
-        ?? DefaultImageHolderFactory(
-          requestPerformer: requestPerformer,
-          imageLoadingOptimizationEnabled: flagsInfo.imageLoadingOptimizationEnabled
-        )
+      imageHolderFactory ?? DefaultImageHolderFactory(requestPerformer: requestPerformer)
     ).withAssets()
 
     self.submitter = submitter
@@ -170,7 +157,6 @@ public final class DivKitComponents {
       updateCard: updateCard,
       showTooltip: showTooltip,
       tooltipActionPerformer: self.tooltipManager,
-      logger: EmptyDivActionLogger(),
       trackVisibility: trackVisibility,
       trackDisappear: trackDisappear,
       performTimerAction: { weakTimerStorage?.perform($0, $1, $2) },
@@ -178,13 +164,14 @@ public final class DivKitComponents {
       persistentValuesStorage: persistentValuesStorage,
       reporter: reporter,
       idToPath: idToPath,
-      animatorController: animatorController
+      animatorController: animatorController,
+      flags: .default
     )
 
     triggersStorage = DivTriggersStorage(
       variablesStorage: variablesStorage,
       functionsStorage: functionsStorage,
-      stateUpdates: blockStateStorage.stateUpdates,
+      blockStateStorage: blockStateStorage,
       actionHandler: actionHandler,
       persistentValuesStorage: persistentValuesStorage,
       reporter: reporter
@@ -309,25 +296,16 @@ public final class DivKitComponents {
     let viewId = DivViewId(cardId: cardId, additionalId: additionalId)
     variableTracker.onModelingStarted(id: viewId)
 
-    // for now tooltip state management is broken
-    let stateManager = viewId.isTooltip
-      ? DivStateManager()
-      : stateManagement.getStateManagerForCard(cardId: cardId)
-
     let errorsStorage = DivErrorsStorage(errors: [])
     return DivBlockModelingContext(
       viewId: viewId,
-      cardLogId: nil,
-      parentPath: nil,
-      parentDivStatePath: nil,
-      stateManager: stateManager,
+      stateManager: stateManagement.getStateManagerForCard(cardId: cardId),
       actionHandler: actionHandler,
       blockStateStorage: blockStateStorage,
       visibilityCounter: visibilityCounter,
       lastVisibleBoundsCache: lastVisibleBoundsCache,
       imageHolderFactory: imageHolderFactory
         .withCache(cachedImageHolders),
-      highPriorityImageHolderFactory: nil,
       divCustomBlockFactory: divCustomBlockFactory,
       fontProvider: fontProvider,
       flagsInfo: flagsInfo,

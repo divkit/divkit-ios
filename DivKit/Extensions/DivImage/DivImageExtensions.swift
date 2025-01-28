@@ -17,16 +17,8 @@ extension DivImage: DivBlockModeling, DivImageProtocol {
 
     let expressionResolver = context.expressionResolver
     let highPriority = resolveHighPriorityPreviewShow(expressionResolver)
-    let imageHolderFactory: DivImageHolderFactory = if highPriority,
-                                                       let highPriorityImageHolderFactory = context
-                                                       .highPriorityImageHolderFactory {
-      highPriorityImageHolderFactory
-    } else {
-      context.imageHolderFactory
-    }
-
     return ImageBlock(
-      imageHolder: imageHolderFactory.make(
+      imageHolder: context.imageHolderFactory.make(
         resolveImageUrl(expressionResolver),
         resolvePlaceholder(expressionResolver, highPriority: highPriority)
       ),
@@ -76,8 +68,8 @@ extension DivFadeTransition {
       kind: .fade,
       start: resolveAlpha(expressionResolver),
       end: 1,
-      duration: Duration(milliseconds: resolveDuration(expressionResolver)),
-      delay: Delay(milliseconds: resolveStartDelay(expressionResolver)),
+      duration: TimeInterval(milliseconds: resolveDuration(expressionResolver)),
+      delay: TimeInterval(milliseconds: resolveStartDelay(expressionResolver)),
       timingFunction: resolveInterpolator(expressionResolver).asTimingFunction()
     )
   }
