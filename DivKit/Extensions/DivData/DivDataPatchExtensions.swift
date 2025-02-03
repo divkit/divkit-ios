@@ -24,6 +24,7 @@ extension DivData {
       State(div: $0.div.applySingleItemPatch(patch, callbacks: callbacks), stateId: $0.stateId)
     }
     return DivData(
+      functions: functions,
       logId: logId,
       states: states,
       timers: timers,
@@ -284,6 +285,7 @@ extension DivPager {
       background: background,
       border: border,
       columnSpan: columnSpan,
+      crossAxisAlignment: crossAxisAlignment,
       defaultItem: defaultItem,
       disappearActions: disappearActions,
       extensions: extensions,
