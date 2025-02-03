@@ -1,4 +1,5 @@
 {
+  ".":"divkit/public-ios",
   "DivKit/Actions/AnimatorActionHandler.swift":"divkit/public-ios/DivKit/Actions/AnimatorActionHandler.swift",
   "DivKit/Actions/ArrayActionsHandler.swift":"divkit/public-ios/DivKit/Actions/ArrayActionsHandler.swift",
   "DivKit/Actions/ClearFocusActionHandler.swift":"divkit/public-ios/DivKit/Actions/ClearFocusActionHandler.swift",
