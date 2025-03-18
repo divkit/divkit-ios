@@ -14,6 +14,8 @@ extension TextInputBlock {
     inputView.setLayoutDirection(layoutDirection)
     inputView.setInputType(inputType)
     inputView.setInputAccessoryView(accessoryView)
+    inputView.setAutocorrection(autocorrection)
+    inputView.setSecure(isSecure)
     inputView.setAutocapitalizationType(autocapitalizationType)
     inputView.setEnterKeyType(enterKeyType)
     inputView.setValidators(validators)
@@ -195,14 +197,22 @@ private final class TextInputBlockView: BlockView, VisibleBoundsTrackingLeaf {
   private func setKeyboardType(_ type: TextInputBlock.InputType.KeyboardType) {
     multiLineInput.keyboardType = type.uiType
     singleLineInput.keyboardType = type.uiType
-
-    singleLineInput.autocorrectionType = type.autoCorrectionType
-    multiLineInput.autocorrectionType = type.autoCorrectionType
   }
 
   func setInputAccessoryView(_ accessoryView: ViewType?) {
     multiLineInput.inputAccessoryView = accessoryView
     singleLineInput.inputAccessoryView = accessoryView
+  }
+
+  func setAutocorrection(_ isEnabled: Bool) {
+    let uiType: UITextAutocorrectionType = isEnabled ? .yes : .no
+    multiLineInput.autocorrectionType = uiType
+    singleLineInput.autocorrectionType = uiType
+  }
+
+  func setSecure(_ isSecure: Bool) {
+    multiLineInput.isSecureTextEntry = isSecure
+    singleLineInput.isSecureTextEntry = isSecure
   }
 
   func setAutocapitalizationType(_ type: TextInputBlock.AutocapitalizationType) {
@@ -377,11 +387,13 @@ private final class TextInputBlockView: BlockView, VisibleBoundsTrackingLeaf {
     guard self.maskedViewModel == nil else {
       maskedViewModel?.rawText = rawTextValue.value
       maskedViewModel?.maskValidator = mask
+      maskedViewModel?.typo = typo
       return
     }
     self.maskedViewModel = MaskedInputViewModel(
       rawText: self.rawTextValue.value,
       maskValidator: mask,
+      typo: typo,
       signal: userInputPipe.signal
     )
     maskedViewModel?.$cursorPosition.currentAndNewValues.addObserver { [weak self] range in
@@ -775,14 +787,8 @@ extension TextInputBlock.InputType.KeyboardType {
     switch self {
     case .default:
       .default
-    case .asciiCapable:
-      .asciiCapable
-    case .numbersAndPunctuation:
-      .numbersAndPunctuation
     case .URL:
       .URL
-    case .numberPad:
-      .numberPad
     case .phonePad:
       .phonePad
     case .namePhonePad:
@@ -791,24 +797,6 @@ extension TextInputBlock.InputType.KeyboardType {
       .emailAddress
     case .decimalPad:
       .decimalPad
-    case .twitter:
-      .twitter
-    case .webSearch:
-      .webSearch
-    case .asciiCapableNumberPad:
-      .asciiCapableNumberPad
-    }
-  }
-
-  fileprivate var autoCorrectionType: UITextAutocorrectionType {
-    switch self {
-    case .URL, .webSearch, .twitter, .emailAddress:
-      return .no
-    case .default:
-      return .default
-    case .asciiCapable, .numbersAndPunctuation, .numberPad, .phonePad,
-         .namePhonePad, .decimalPad, .asciiCapableNumberPad:
-      return .yes
     }
   }
 }

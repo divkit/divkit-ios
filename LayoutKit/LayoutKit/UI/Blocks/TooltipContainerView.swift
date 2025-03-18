@@ -60,6 +60,12 @@ public final class TooltipContainerView: UIView, UIActionEventPerforming {
     tooltip.params.mode == .modal
   }
 
+  func animateAppear() {
+    if let animationIn = tooltip.params.animationIn {
+      setInitialParamsAndAnimate(animations: animationIn)
+    }
+  }
+
   @objc private func handleTap(_ sender: UITapGestureRecognizer) {
     let point = sender.location(in: self)
     if !isPointInsideTooltip(point) {
@@ -71,7 +77,7 @@ public final class TooltipContainerView: UIView, UIActionEventPerforming {
     if !isPointInsideTooltip(point, event: event), !isModal {
       if tooltip.params.closeByTapOutside {
         DispatchQueue.main.async {
-          self.close()
+          self.close(animated: true)
         }
       }
       return nil
@@ -85,7 +91,7 @@ public final class TooltipContainerView: UIView, UIActionEventPerforming {
 
     if let lastNonZeroBounds,
        lastNonZeroBounds != bounds {
-      close()
+      close(animated: true)
     }
 
     if bounds != .zero {
@@ -102,13 +108,26 @@ public final class TooltipContainerView: UIView, UIActionEventPerforming {
     handleAction(event)
   }
 
-  public func close() {
+  public func close(animated: Bool) {
     guard !isClosing else { return }
     isClosing = true
     tooltip.view.onVisibleBoundsChanged(from: tooltip.view.bounds, to: .zero)
-    removeFromParentAnimated(completion: {
-      self.onCloseAction()
-    })
+
+    if animated {
+      if let animationOut = tooltip.params.animationOut {
+        setInitialParamsAndAnimate(animations: animationOut) {
+          self.removeFromSuperview()
+          self.onCloseAction()
+        }
+      } else {
+        removeFromParentAnimated {
+          self.onCloseAction()
+        }
+      }
+    } else {
+      removeFromSuperview()
+      onCloseAction()
+    }
   }
 
   private func performTapOutsideActions() {
@@ -118,7 +137,7 @@ public final class TooltipContainerView: UIView, UIActionEventPerforming {
     perform(uiActionEvents: uiActionEvents, from: self)
 
     if tooltip.params.closeByTapOutside {
-      close()
+      close(animated: true)
     }
   }
 
