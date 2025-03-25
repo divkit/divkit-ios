@@ -5,10 +5,12 @@ import LayoutKit
 import VGSL
 
 extension DivState: DivBlockModeling {
-  public func makeBlock(context: DivBlockModelingContext) throws -> Block {
-    try addSwipeHandling(
+  public func makeBlock(context parentContext: DivBlockModelingContext) throws -> Block {
+    let stateId = parentContext.overridenId ?? divId ?? id ?? ""
+    let context = modifiedContextParentPath(parentContext)
+    return try addSwipeHandling(
       to: applyBaseProperties(
-        to: { try makeBaseBlock(context: context) },
+        to: { try makeBaseBlock(context: context, id: stateId) },
         context: context,
         actionsHolder: nil
       ),
@@ -16,8 +18,7 @@ extension DivState: DivBlockModeling {
     )
   }
 
-  private func makeBaseBlock(context: DivBlockModelingContext) throws -> Block {
-    let id = context.elementId ?? divId ?? id ?? ""
+  private func makeBaseBlock(context: DivBlockModelingContext, id: String) throws -> Block {
     if id == "" {
       context.addWarning(message: "DivState has no id")
     }
@@ -52,11 +53,13 @@ extension DivState: DivBlockModeling {
        previousState.stateId != activeStateId,
        let previousDiv = previousState.div {
       context.triggersStorage?
-        .disableTriggers(path: context.parentPath + id + previousState.stateId)
-      context.triggersStorage?.enableTriggers(path: context.parentPath + id + activeStateId)
+        .disableTriggers(path: context.path + previousState.stateId)
+      context.triggersStorage?.enableTriggers(path: context.path + activeStateId)
 
       // state changed -> drop visibility cache for all children
-      context.lastVisibleBoundsCache.dropVisibleBounds(prefix: context.parentPath)
+      if let parentPrefix = context.path.parent {
+        context.lastVisibleBoundsCache.dropVisibleBounds(prefix: parentPrefix)
+      }
       previousBlock = try previousDiv.value.makeBlock(
         context: context.makeContextForState(
           id: id,
@@ -130,7 +133,7 @@ extension DivState: DivBlockModeling {
     return SwipeContainerBlock(
       child: child,
       state: .default,
-      path: context.parentPath + DivState.type,
+      path: context.path,
       swipeOutActions: swipeOutActions.uiActions(context: context)
     )
   }
@@ -157,7 +160,7 @@ extension DivBlockModelingContext {
     stateId: String
   ) -> DivBlockModelingContext {
     modifying(
-      parentPath: parentPath + id + stateId,
+      pathSuffix: stateId,
       parentDivStatePath: parentDivStatePath + id + stateId
     )
   }
