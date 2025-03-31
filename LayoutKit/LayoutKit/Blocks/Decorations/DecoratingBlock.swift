@@ -27,6 +27,7 @@ final class DecoratingBlock: WrapperBlock {
   let reuseId: String
   let path: UIElementPath?
   let isEmpty: Bool
+  let isFocused: Bool
 
   init(
     child: Block,
@@ -47,7 +48,8 @@ final class DecoratingBlock: WrapperBlock {
     accessibilityElement: AccessibilityElement? = nil,
     reuseId: String? = nil,
     path: UIElementPath? = nil,
-    isEmpty: Bool = false
+    isEmpty: Bool = false,
+    isFocused: Bool = false
   ) {
     self.child = child
     self.backgroundColor = backgroundColor
@@ -68,16 +70,17 @@ final class DecoratingBlock: WrapperBlock {
     self.reuseId = reuseId ?? DecoratingBlock.defaultReuseId
     self.path = path
     self.isEmpty = isEmpty
+    self.isFocused = isFocused
   }
 
   var intrinsicContentWidth: CGFloat {
-    child.intrinsicContentWidth.roundedToScreenScale + paddings.horizontalInsets.sum
+    child.intrinsicContentWidth.roundedToScreenScale + paddings.horizontal.sum
   }
 
   func intrinsicContentHeight(forWidth width: CGFloat) -> CGFloat {
-    let childWidth = max(0, width - paddings.horizontalInsets.sum)
+    let childWidth = max(0, width - paddings.horizontal.sum)
     return child.intrinsicContentHeight(forWidth: childWidth).roundedToScreenScale
-      + paddings.verticalInsets.sum
+      + paddings.vertical.sum
   }
 
   var widthOfHorizontallyNonResizableBlock: CGFloat {
@@ -92,11 +95,11 @@ final class DecoratingBlock: WrapperBlock {
     guard let childAscent = child.ascent(forWidth: width) else {
       return nil
     }
-    return childAscent + paddings.verticalInsets.leading
+    return childAscent + paddings.vertical.leading
   }
 
   func laidOut(for width: CGFloat) -> Block {
-    let childWidth = width - paddings.horizontalInsets.sum
+    let childWidth = width - paddings.horizontal.sum
     return updatingChild(child.laidOut(for: childWidth))
   }
 
@@ -125,6 +128,7 @@ final class DecoratingBlock: WrapperBlock {
       && reuseId == other.reuseId
       && isEmpty == other.isEmpty
       && path == other.path
+      && isFocused == other.isFocused
   }
 
   func makeCopy(wrapping child: Block) -> DecoratingBlock {
@@ -157,7 +161,8 @@ extension DecoratingBlock {
     accessibilityElement: AccessibilityElement? = nil,
     reuseId: String? = nil,
     path: UIElementPath? = nil,
-    isEmpty: Bool? = nil
+    isEmpty: Bool? = nil,
+    isFocused: Bool? = nil
   ) -> DecoratingBlock {
     DecoratingBlock(
       child: child ?? self.child,
@@ -178,7 +183,8 @@ extension DecoratingBlock {
       accessibilityElement: accessibilityElement ?? self.accessibilityElement,
       reuseId: reuseId ?? self.reuseId,
       path: path ?? self.path,
-      isEmpty: isEmpty ?? self.isEmpty
+      isEmpty: isEmpty ?? self.isEmpty,
+      isFocused: isFocused ?? self.isFocused
     )
   }
 }
