@@ -226,8 +226,16 @@ private final class TextInputBlockView: BlockView, VisibleBoundsTrackingLeaf {
   }
 
   func setEnterKeyType(_ type: TextInputBlock.EnterKeyType) {
-    singleLineInput.returnKeyType = type.uiType
-    multiLineInput.returnKeyType = type.uiType
+    let uiType = type.uiType
+    if singleLineInput.returnKeyType != uiType {
+      singleLineInput.returnKeyType = uiType
+      singleLineInput.reloadInputViews()
+    }
+
+    if multiLineInput.returnKeyType != uiType {
+      multiLineInput.returnKeyType = uiType
+      multiLineInput.reloadInputViews()
+    }
   }
 
   func setTextAlignmentHorizontal(_ alignment: TextInputBlock.TextAlignmentHorizontal) {
@@ -261,7 +269,6 @@ private final class TextInputBlockView: BlockView, VisibleBoundsTrackingLeaf {
   }
 
   func setIsFocused(_ isFocused: Bool, shouldClear: Bool) {
-    isInputFocused = isFocused
     if isFocused {
       if allSuperviewsAreVisible() {
         focusTextInput()
@@ -587,6 +594,8 @@ extension TextInputBlockView {
   }
 
   private func onBlur() {
+    guard isInputFocused else { return }
+
     onBlurActions.perform(sendingFrom: self)
     isInputFocused = false
     guard let path else { return }

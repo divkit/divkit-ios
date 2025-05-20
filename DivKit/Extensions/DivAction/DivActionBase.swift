@@ -9,11 +9,13 @@ public protocol DivActionBase: Serializable {
   var typed: DivActionTyped? { get }
   var url: Expression<URL>? { get }
   var scopeId: String? { get }
+  var isEnabled: Expression<Bool> { get }
 
   func resolveLogId(_ resolver: ExpressionResolver) -> String?
   func resolveLogUrl(_ resolver: ExpressionResolver) -> URL?
   func resolveReferer(_ resolver: ExpressionResolver) -> URL?
   func resolveUrl(_ resolver: ExpressionResolver) -> URL?
+  func resolveIsEnabled(_ resolver: ExpressionResolver) -> Bool
 }
 
 extension DivActionBase {
@@ -25,12 +27,16 @@ extension DivActionBase {
     DivActionInfo(
       path: path,
       logId: resolveLogId(expressionResolver) ?? "",
-      url: resolveUrl(expressionResolver),
+      url: resolveUrl(expressionResolver)?.encodeHexSymbol(),
       logUrl: resolveLogUrl(expressionResolver),
       referer: resolveReferer(expressionResolver),
       source: source,
       payload: payload
     )
+  }
+
+  func resolveIsEnabled(_ resolver: ExpressionResolver) -> Bool {
+    resolver.resolveNumeric(isEnabled) ?? true
   }
 
   func makeDivActionPayload(
@@ -67,5 +73,15 @@ extension URL {
     return URLByAddingGETParameters(
       ["card_id": cardId].compactMapValues { $0 }
     )
+  }
+
+  fileprivate func encodeHexSymbol() -> URL? {
+    guard let components = URLComponents(url: self, resolvingAgainstBaseURL: false),
+          components.scheme?.lowercased() == "div-action"
+    else {
+      return self
+    }
+
+    return URL(string: absoluteString.replacingOccurrences(of: "#", with: "%23"))
   }
 }

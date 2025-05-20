@@ -43,7 +43,7 @@ public final class DivVariablesStorage {
   }
 
   public init(outerStorage: DivVariableStorage?) {
-    globalStorage = DivVariableStorage(outerStorage: outerStorage)
+    globalStorage = DivVariableStorage(outerStorage: outerStorage, initialPath: nil)
 
     let globalStorageEvents: Signal<ChangeEvent> = globalStorage.changeEvents.compactMap {
       ChangeEvent(.global($0.changedVariables))
@@ -51,11 +51,26 @@ public final class DivVariablesStorage {
     changeEvents = Signal.merge(globalStorageEvents, changeEventsPipe.signal)
   }
 
-  func getVariables(cardId: DivCardID, elementId: String) -> [DivVariables] {
+  func getOnlyElementVariables(cardId: DivCardID, elementId: String) -> DivVariables? {
     lock.withLock {
-      localStorages.filter {
+      let storages = localStorages.filter {
         $0.key.leaf == elementId && $0.key.cardId == cardId
-      }.map(\.value.values)
+      }.map(\.value)
+
+      guard let storage = storages.first else {
+        DivKitLogger.error("Element with id \(elementId) not found")
+        return nil
+      }
+      guard storages.count == 1 else {
+        DivKitLogger.error("Found multiple elements that respond to id: \(elementId)")
+        return nil
+      }
+
+      guard storage.initialPath?.leaf == elementId else {
+        return [:]
+      }
+
+      return storage.values
     }
   }
 
@@ -102,7 +117,7 @@ public final class DivVariablesStorage {
         // optimization that allows to access the local storage for one operation
         localStorages[path] = nearestStorage
       } else {
-        let localStorage = DivVariableStorage(outerStorage: nearestStorage)
+        let localStorage = DivVariableStorage(outerStorage: nearestStorage, initialPath: path)
         localStorage.replaceAll(variables, notifyObservers: false)
         localStorages[path] = localStorage
       }
@@ -120,7 +135,7 @@ public final class DivVariablesStorage {
       if let localStorage = localStorages[path] {
         return localStorage
       }
-      let localStorage = DivVariableStorage(outerStorage: globalStorage)
+      let localStorage = DivVariableStorage(outerStorage: globalStorage, initialPath: path)
       localStorages[path] = localStorage
       return localStorage
     }
@@ -336,38 +351,55 @@ private func parseCollectionVar<T>(_ val: String) -> T? {
 }
 
 extension Collection<DivVariable> {
-  public func extractDivVariableValues() -> DivVariables {
+  public func extractDivVariableValues(_ resolver: ExpressionResolver) -> DivVariables {
     var variables = DivVariables()
     forEach { variable in
+      let resolver = resolver.modifying(variableValueProvider: {
+        variables[DivVariableName(rawValue: $0)]?.typedValue()
+      })
       switch variable {
       case let .stringVariable(stringVariable):
         let name = DivVariableName(rawValue: stringVariable.name)
-        if variables.keys.contains(name) { return }
-        variables[name] = .string(stringVariable.value)
+        guard !variables.keys.contains(name), let value = stringVariable.resolveValue(resolver)
+        else { return }
+
+        variables[name] = .string(value)
       case let .numberVariable(numberVariable):
         let name = DivVariableName(rawValue: numberVariable.name)
-        if variables.keys.contains(name) { return }
-        variables[name] = .number(numberVariable.value)
+        guard !variables.keys.contains(name), let value = numberVariable.resolveValue(resolver)
+        else { return }
+
+        variables[name] = .number(value)
       case let .integerVariable(integerVariable):
         let name = DivVariableName(rawValue: integerVariable.name)
-        if variables.keys.contains(name) { return }
-        variables[name] = .integer(integerVariable.value)
+        guard !variables.keys.contains(name), let value = integerVariable.resolveValue(resolver)
+        else { return }
+
+        variables[name] = .integer(value)
       case let .booleanVariable(booleanVariable):
         let name = DivVariableName(rawValue: booleanVariable.name)
-        if variables.keys.contains(name) { return }
-        variables[name] = .bool(booleanVariable.value)
+        guard !variables.keys.contains(name), let value = booleanVariable.resolveValue(resolver)
+        else { return }
+
+        variables[name] = .bool(value)
       case let .colorVariable(colorVariable):
         let name = DivVariableName(rawValue: colorVariable.name)
-        if variables.keys.contains(name) { return }
-        variables[name] = .color(colorVariable.value)
+        guard !variables.keys.contains(name), let value = colorVariable.resolveValue(resolver)
+        else { return }
+
+        variables[name] = .color(value)
       case let .urlVariable(urlVariable):
         let name = DivVariableName(rawValue: urlVariable.name)
-        if variables.keys.contains(name) { return }
-        variables[name] = .url(urlVariable.value)
+        guard !variables.keys.contains(name), let value = urlVariable.resolveValue(resolver)
+        else { return }
+
+        variables[name] = .url(value)
       case let .dictVariable(dictVariable):
         let name = DivVariableName(rawValue: dictVariable.name)
-        if variables.keys.contains(name) { return }
-        if let dictionary = DivDictionary.fromAny(dictVariable.value) {
+        guard !variables.keys.contains(name), let value = dictVariable.resolveValue(resolver)
+        else { return }
+
+        if let dictionary = DivDictionary.fromAny(value) {
           variables[name] = .dict(dictionary)
         } else {
           DivKitLogger.error("Incorrect value for dict variable \(name): \(dictVariable.value)")
@@ -375,8 +407,10 @@ extension Collection<DivVariable> {
         }
       case let .arrayVariable(arrayVariable):
         let name = DivVariableName(rawValue: arrayVariable.name)
-        if variables.keys.contains(name) { return }
-        if let array = DivArray.fromAny(arrayVariable.value) {
+        guard !variables.keys.contains(name), let value = arrayVariable.resolveValue(resolver)
+        else { return }
+
+        if let array = DivArray.fromAny(value) {
           variables[name] = .array(array)
         } else {
           DivKitLogger.error("Incorrect value for array variable \(name): \(arrayVariable.value)")
