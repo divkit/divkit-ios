@@ -61,6 +61,10 @@ public final class LottieExtensionHandler: DivExtensionHandler {
     )
   }
 
+  public func getPreloadURLs(div: DivBase, expressionResolver _: ExpressionResolver) -> [URL] {
+    [Self.getPreloadURL(div: div)].compactMap { $0 }
+  }
+
   static func getPreloadURL(div: DivBase) -> URL? {
     let extensionData = div.extensions?.first { $0.id == "lottie" }
     guard let paramsDict = extensionData?.params,
@@ -125,6 +129,8 @@ private struct LottieExtensionParams {
     if let repeatCount = params["repeat_count"] {
       if let repeatCountFloat = repeatCount as? Float {
         self.repeatCount = repeatCountFloat
+      } else if let repeatCountInt = repeatCount as? Int {
+        self.repeatCount = Float(repeatCountInt)
       } else {
         DivKitLogger.error("Not valid repeat_count")
         return nil
