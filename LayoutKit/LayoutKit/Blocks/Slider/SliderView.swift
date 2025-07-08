@@ -209,6 +209,7 @@ final class SliderView: BlockView, VisibleBoundsTrackingLeaf {
         to: currentValue.rounded(.toNearestOrAwayFromZero),
         from: currentValue
       )
+      updateProgress(currentValue.rounded(.toNearestOrAwayFromZero))
       layoutIfNeeded()
     @unknown default: break
     }
@@ -274,7 +275,6 @@ final class SliderView: BlockView, VisibleBoundsTrackingLeaf {
       thumbModel: sliderModel.secondThumb
     )
 
-    marksView.configuration.horizontalInset = sliderModel.horizontalInset
     configureSliderView(marksView)
 
     configureSliderView(inactiveTrackView, with: sliderModel.horizontalInset)
