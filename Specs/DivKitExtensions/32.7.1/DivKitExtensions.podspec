@@ -1,7 +1,7 @@
 Pod::Spec.new do |s|
-  s.name             = 'DivKitSVG'
-  s.version          = '32.7.0'
-  s.summary          = 'Part of DivKit framework'
+  s.name             = 'DivKitExtensions'
+  s.version          = '32.7.1'
+  s.summary          = 'DivKit framework extensions'
   s.description      = 'Part of DivKit framework'
   s.homepage         = 'https://divkit.tech'
 
@@ -15,9 +15,8 @@ Pod::Spec.new do |s|
   s.platforms = { :ios => '13.0' }
 
   s.dependency 'DivKit', s.version.to_s
-  s.dependency 'VGSL', '~> 7.3'
 
   s.source_files = [
-    'DivKitSVG/**/*'
+    'DivKitExtensions/**/*'
   ]
 end

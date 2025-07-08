@@ -1,7 +1,8 @@
 Pod::Spec.new do |s|
-  s.name             = 'DivKitExtensions'
-  s.version          = '32.7.0'
-  s.summary          = 'DivKit framework extensions'
+  s.name             = 'DivKit_Serialization'
+  s.module_name      = 'Serialization'
+  s.version          = '32.7.1'
+  s.summary          = 'Part of DivKit framework'
   s.description      = 'Part of DivKit framework'
   s.homepage         = 'https://divkit.tech'
 
@@ -14,9 +15,9 @@ Pod::Spec.new do |s|
   s.prefix_header_file = false
   s.platforms = { :ios => '13.0' }
 
-  s.dependency 'DivKit', s.version.to_s
+  s.dependency 'VGSL', '~> 7.3'
 
   s.source_files = [
-    'DivKitExtensions/**/*'
+    'Serialization/**/*'
   ]
 end

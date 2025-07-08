@@ -1,7 +1,7 @@
 Pod::Spec.new do |s|
   s.name             = 'DivKit_LayoutKitInterface'
   s.module_name      = 'LayoutKitInterface'
-  s.version          = '32.7.0'
+  s.version          = '32.7.1'
   s.summary          = 'Part of DivKit framework'
   s.description      = 'Part of DivKit framework'
   s.homepage         = 'https://divkit.tech'
