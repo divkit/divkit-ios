@@ -1,3 +1,4 @@
+#if os(iOS)
 import LayoutKit
 import UIKit
 import VGSL
@@ -174,7 +175,7 @@ public final class DivView: VisibleBoundsTrackingView {
   public override func layoutSublayers(of layer: CALayer) {
     super.layoutSublayers(of: layer)
 
-    boundsDidChange()
+    invalidateIntrinsicContentSizeIfBoundsChanged()
   }
 
   public override func removeFromSuperview() {
@@ -259,9 +260,10 @@ public final class DivView: VisibleBoundsTrackingView {
     setNeedsLayout()
   }
 
-  private func boundsDidChange() {
-    if blockProvider?.cardSize?.width == .matchParent ||
-      blockProvider?.cardSize?.height == .matchParent {
+  private func invalidateIntrinsicContentSizeIfBoundsChanged() {
+    let oldBounds = boundsTracker.previousBounds
+    if oldBounds.width != bounds.width, blockProvider?.cardSize?.width == .matchParent ||
+      oldBounds.height != bounds.height, blockProvider?.cardSize?.height == .matchParent {
       invalidateIntrinsicContentSize()
     }
   }
@@ -402,3 +404,4 @@ extension DivView: UIGestureRecognizerDelegate {
     return view.isDescendant(of: otherView)
   }
 }
+#endif

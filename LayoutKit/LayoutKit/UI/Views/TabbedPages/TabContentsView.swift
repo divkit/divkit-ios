@@ -1,3 +1,4 @@
+#if os(iOS)
 import UIKit
 import VGSL
 
@@ -178,16 +179,16 @@ final class TabContentsView: BlockView {
     relativeContentOffset = offset
     updateSelectedPageIndexIfNeeded(relativeContentOffset)
   }
-  
+
   func updateSelectedPageIndexIfNeeded(_ idx: CGFloat) {
     guard selectedPageIndex.isApproximatelyNotEqualTo(idx) else {
       delegate?.tabContentsViewDidEndAnimation()
       return
     }
-    
+
     selectedPageIndex = idx
   }
-  
+
   private func updateContentOffset(animated: Bool = true) {
     collectionView.setContentOffset(selectedPageContentOffset, animated: animated)
   }
@@ -203,7 +204,7 @@ final class TabContentsView: BlockView {
       collectionView.frame = bounds
       updateContentOffset(animated: false)
     }
-    
+
     let newLayout = TabContentsViewLayout(
       pages: model.pages.map(\.block),
       footer: model.footer,
@@ -232,7 +233,7 @@ final class TabContentsView: BlockView {
       return
     }
     let index = isIntermediate ? selectedPageIndex : roundedIndex
-    
+
     updateSelectedPageIndexIfNeeded(index)
     updatesDelegate?.onSelectedPageIndexChanged(index, inModel: model)
     let state = TabViewState(selectedPageIndex: index, countOfPages: countOfPages)
@@ -326,3 +327,4 @@ extension TabContentsView: UICollectionViewDelegate {
 }
 
 extension TabContentsView: VisibleBoundsTrackingContainer {}
+#endif

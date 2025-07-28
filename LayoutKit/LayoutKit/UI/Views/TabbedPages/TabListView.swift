@@ -1,3 +1,4 @@
+#if os(iOS)
 import UIKit
 import VGSL
 
@@ -46,7 +47,7 @@ final class TabListView: UIView {
     contentSize: CGSize,
     selection: CGFloat
   )?
-  
+
   private var animationInfo: AnimationInfo? {
     didSet {
       setNeedsLayout()
@@ -66,7 +67,7 @@ final class TabListView: UIView {
   init() {
     collectionView = makeCollectionView(layout: collectionViewLayout)
     delegate = TabListViewDelegate(collectionView: collectionView)
-    
+
     super.init(frame: .zero)
     clipsToBounds = true
 
@@ -176,7 +177,7 @@ final class TabListView: UIView {
   func endScrollingAnimation() {
     animationInfo = nil
   }
-  
+
   func setInitialModel(_ model: TabTitlesViewModel) {
     guard !setInitialModel else { return }
     self.model = model
@@ -236,3 +237,4 @@ private func makeCollectionView(layout: UICollectionViewLayout) -> UICollectionV
   collectionView.contentInsetAdjustmentBehavior = .never
   return collectionView
 }
+#endif

@@ -1,3 +1,4 @@
+#if os(iOS)
 import Foundation
 import UIKit
 import VGSL
@@ -123,7 +124,7 @@ private class GradientContainerView: UIView {
   private let model: TextBlock.GradientModel
   private let rangedTextWithColorTextBlockView: TextBlockView
   let gradientView: UIView
-  
+
   init?(model: TextBlock.GradientModel?, mask: UIView) {
     guard let model else {
       return nil
@@ -131,27 +132,29 @@ private class GradientContainerView: UIView {
     self.model = model
     gradientView = model.gradient.uiView
     gradientView.mask = mask
-    
+
     rangedTextWithColorTextBlockView = TextBlockView()
-    
+
     super.init(frame: .zero)
-    
+
     gradientView.addSubview(rangedTextWithColorTextBlockView)
     addSubview(gradientView)
   }
-  
+
+  @available(*, unavailable)
   required init(coder _: NSCoder) {
     fatalError("init(coder:) has not been implemented")
   }
-  
+
   override func layoutSubviews() {
     super.layoutSubviews()
     gradientView.frame = bounds
     rangedTextWithColorTextBlockView.frame = bounds
   }
-  
+
   func configureRangedTextColor(textBlockViewModel: TextBlockView.Model) {
-    rangedTextWithColorTextBlockView.model = textBlockViewModel.updated(with: model.rangedTextWithColor)
+    rangedTextWithColorTextBlockView.model = textBlockViewModel
+      .updated(with: model.rangedTextWithColor)
   }
 }
 
@@ -700,3 +703,4 @@ extension TextBlockView.Model {
     )
   }
 }
+#endif

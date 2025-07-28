@@ -1,3 +1,4 @@
+#if os(iOS)
 import LayoutKit
 import Serialization
 import UIKit
@@ -173,7 +174,7 @@ final class DivBlockProvider {
       self.divData = nil
       return
     }
-    
+
     if let resourcesPreloader = divKitComponents.resourcesPreloader {
       resourcesPreloader.downloadResources(
         for: divData,
@@ -413,3 +414,4 @@ extension [DivError] {
     return false
   }
 }
+#endif

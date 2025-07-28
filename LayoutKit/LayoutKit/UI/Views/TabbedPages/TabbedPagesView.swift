@@ -1,3 +1,4 @@
+#if os(iOS)
 import UIKit
 import VGSL
 
@@ -26,7 +27,7 @@ public final class TabbedPagesView: BlockView, VisibleBoundsTrackingContainer {
 
   public var effectiveBackgroundColor: UIColor? { tabContentsView.effectiveBackgroundColor }
   public var layoutReporter: LayoutReporter?
-  
+
   public func configure(
     model: TabViewModel,
     state: TabViewState,
@@ -119,3 +120,4 @@ public final class TabbedPagesView: BlockView, VisibleBoundsTrackingContainer {
     view.backgroundColor = separatorStyle.color.systemColor
   }
 }
+#endif
