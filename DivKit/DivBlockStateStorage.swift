@@ -29,32 +29,10 @@ public final class DivBlockStateStorage {
     case idFocused(IdAndCardId)
   }
 
+  private(set) var isInputFocused = false
+
   private var shouldRefreshCachedStates = false
   private var _cachedStates: BlocksState?
-
-  public var states: BlocksState {
-    if let cached = _cachedStates,
-       !shouldRefreshCachedStates {
-      return cached
-    }
-
-    return lock.withLock {
-      let dict = Dictionary(
-        _states.compactMap { key, value in
-          if let path = key.path {
-            return (path, value)
-          } else {
-            return nil
-          }
-        },
-        uniquingKeysWith: { _, new in new }
-      )
-
-      _cachedStates = dict
-      shouldRefreshCachedStates = false
-      return dict
-    }
-  }
 
   private var _states: [StateKey: ElementState] {
     didSet {
@@ -71,7 +49,29 @@ public final class DivBlockStateStorage {
   private let lock = AllocatedUnfairLock()
   private let stateUpdatesPipe = SignalPipe<ChangeEvent>()
 
-  private(set) var isInputFocused = false
+  public var states: BlocksState {
+    if let cached = _cachedStates,
+       !shouldRefreshCachedStates {
+      return cached
+    }
+
+    return lock.withLock {
+      let dict = Dictionary(
+        _states.compactMap { key, value in
+          if let path = key.path {
+            (path, value)
+          } else {
+            nil
+          }
+        },
+        uniquingKeysWith: { _, new in new }
+      )
+
+      _cachedStates = dict
+      shouldRefreshCachedStates = false
+      return dict
+    }
+  }
 
   var stateUpdates: Signal<ChangeEvent> {
     stateUpdatesPipe.signal
@@ -147,12 +147,6 @@ public final class DivBlockStateStorage {
     }
   }
 
-  func setFocused(isFocused: Bool, element: IdAndCardId) {
-    lock.withLock {
-      focusedElement = isFocused ? .idFocused(element) : removeFocus(from: element)
-    }
-  }
-
   public func setFocused(
     isFocused: Bool,
     path: UIElementPath
@@ -168,20 +162,53 @@ public final class DivBlockStateStorage {
     }
   }
 
-  func isFocused(element: IdAndCardId) -> Bool {
-    lock.withLock {
-      isFocusedInternal(checkedElement: .idFocused(element))
-    }
-  }
-
   public func isFocused(path: UIElementPath) -> Bool {
     lock.withLock {
       isFocusedInternal(checkedElement: .pathFocused(path))
     }
   }
 
+  public func reset() {
+    lock.withLock {
+      _states = [:]
+      focusedElement = .none
+    }
+  }
+
+  public func reset(cardId: DivCardID) {
+    lock.withLock {
+      _states = _states.filter { $0.key.cardID != cardId }
+      if getFocusedElement()?.cardId == cardId {
+        focusedElement = .none
+      }
+    }
+  }
+
+  func setFocused(isFocused: Bool, element: IdAndCardId) {
+    lock.withLock {
+      focusedElement = isFocused ? .idFocused(element) : removeFocus(from: element)
+    }
+  }
+
+  func isFocused(element: IdAndCardId) -> Bool {
+    lock.withLock {
+      isFocusedInternal(checkedElement: .idFocused(element))
+    }
+  }
+
   func setInputFocused() {
     isInputFocused = true
+  }
+
+  func getFocusedElement() -> IdAndCardId? {
+    switch focusedElement {
+    case .none:
+      nil
+    case let .pathFocused(focusedPath):
+      IdAndCardId(path: focusedPath)
+    case let .idFocused(focusedId):
+      focusedId
+    }
   }
 
   private func isFocusedInternal(checkedElement: FocusedElement) -> Bool {
@@ -203,32 +230,6 @@ public final class DivBlockStateStorage {
     isFocusedInternal(checkedElement: FocusedElement.idFocused(element)) ? .none : focusedElement
   }
 
-  func getFocusedElement() -> IdAndCardId? {
-    switch focusedElement {
-    case .none:
-      nil
-    case let .pathFocused(focusedPath):
-      IdAndCardId(path: focusedPath)
-    case let .idFocused(focusedId):
-      focusedId
-    }
-  }
-
-  public func reset() {
-    lock.withLock {
-      _states = [:]
-      focusedElement = .none
-    }
-  }
-
-  public func reset(cardId: DivCardID) {
-    lock.withLock {
-      _states = _states.filter { $0.key.cardID != cardId }
-      if getFocusedElement()?.cardId == cardId {
-        focusedElement = .none
-      }
-    }
-  }
 }
 
 extension DivBlockStateStorage: ElementStateObserver {

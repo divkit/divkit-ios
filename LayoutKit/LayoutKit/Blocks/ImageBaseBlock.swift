@@ -19,6 +19,7 @@ public enum ImageBlockHeight: Equatable {
 
 public struct ImageBaseBlockState: ElementState, Equatable {
   public let intrinsicContentSize: CGSize?
+
   public init(widthTrait: LayoutTrait, height: ImageBlockHeight, imageHolder: ImageHolder) {
     let hasIntrinsicSize = widthTrait == .intrinsic || height == .trait(.intrinsic)
     self.intrinsicContentSize = hasIntrinsicSize ? imageHolder.currentImageSize : nil
@@ -51,16 +52,15 @@ extension ImageBaseBlock {
     case let .trait(.fixed(value)):
       return value
     case .trait(let .intrinsic(_, minHeight, maxHeight)):
-      let intrinsicHeight: CGFloat
-      switch widthTrait {
+      let intrinsicHeight: CGFloat = switch widthTrait {
       case let .fixed(width):
         if let aspectRatio = imageHolder.currentImageSize.aspectRatio {
-          intrinsicHeight = width / aspectRatio
+          width / aspectRatio
         } else {
-          intrinsicHeight = 0
+          0
         }
       case .intrinsic, .weighted:
-        intrinsicHeight = imageHolder.currentImageSize.height
+        imageHolder.currentImageSize.height
       }
 
       return clamp(intrinsicHeight, min: minHeight, max: maxHeight)
