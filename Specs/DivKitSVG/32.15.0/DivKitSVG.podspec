@@ -1,8 +1,8 @@
 Pod::Spec.new do |s|
-  s.name             = 'DivKitKMP'
-  s.version          = '32.14.0'
-  s.summary          = 'DivKit obj-C interface for Kotlin Multiplatform applications'
-  s.description      = 'DivKit obj-C interface for Kotlin Multiplatform applications'
+  s.name             = 'DivKitSVG'
+  s.version          = '32.15.0'
+  s.summary          = 'Part of DivKit framework'
+  s.description      = 'Part of DivKit framework'
   s.homepage         = 'https://divkit.tech'
 
   s.license          = { :type => 'Apache License, Version 2.0', :file => 'LICENSE' }
@@ -15,10 +15,9 @@ Pod::Spec.new do |s|
   s.platforms = { :ios => '13.0' }
 
   s.dependency 'DivKit', s.version.to_s
-  s.dependency 'DivKitExtensions', s.version.to_s
   s.dependency 'VGSL', '~> 7.7'
 
   s.source_files = [
-    'DivKitKMP/**/*'
+    'DivKitSVG/**/*'
   ]
 end
