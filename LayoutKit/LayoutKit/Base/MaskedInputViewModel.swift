@@ -5,12 +5,12 @@ import VGSL
 
 public class MaskedInputViewModel {
   public enum Action: Equatable {
-    case insert(string: String, range: Range<String.Index>)
-    case clear(pos: String.Index)
-    case clearRange(range: Range<String.Index>)
+    case insert(string: String, range: Range<Int>)
+    case clear(pos: Int)
+    case clearRange(range: Range<Int>)
   }
 
-  @ObservableVariable var text: String
+  @ObservableVariable var formattedText: String
   @ObservableVariable var cursorPosition: NSRange?
   @ObservableProperty var rawText: String
   @ObservableProperty var maskValidator: MaskValidator
@@ -46,7 +46,7 @@ public class MaskedInputViewModel {
         res.cursorPosition.flatMap { NSRange($0.rawValue..<$0.rawValue, in: res.text) }
       )
     }
-    _text = ObservableVariable(initialValue: "", newValues: resultSignal.map(\.0))
+    _formattedText = ObservableVariable(initialValue: "", newValues: resultSignal.map(\.0))
     _cursorPosition = ObservableVariable<NSRange?>(
       initialValue: nil,
       newValues: resultSignal.map(\.1)
@@ -63,16 +63,20 @@ public class MaskedInputViewModel {
       let newCursorPosition: CursorData?
       switch action {
       case let .clear(pos: pos):
+        let pos = self.formattedText.rangeOfCharsIn(0..<max(pos - 1, 0)).upperBound
         (newString, newCursorPosition) = self.maskValidator.removeSymbols(
           at: pos,
           data: self.maskValidator.formatted(rawText: self.rawText)
         )
       case let .clearRange(range: range):
+        let range = self.formattedText.rangeOfCharsIn(range)
         (newString, newCursorPosition) = self.maskValidator.removeSymbols(
           at: range,
           data: self.maskValidator.formatted(rawText: self.rawText)
         )
       case let .insert(string: string, range: range):
+        let range = self.formattedText.rangeOfCharsIn(range)
+
         (newString, newCursorPosition) = self.maskValidator.addSymbols(
           at: range,
           data: self.maskValidator.formatted(rawText: self.rawText),
