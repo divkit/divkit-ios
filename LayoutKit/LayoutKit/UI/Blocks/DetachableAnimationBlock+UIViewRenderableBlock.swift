@@ -40,6 +40,8 @@ final class DetachableAnimationBlockView: BlockView, DelayedVisibilityActionView
     }
   }
 
+  var transitionChangeAnimationContainer: UIView?
+
   private var childView: BlockView? {
     didSet {
       guard childView !== oldValue else { return }
@@ -90,6 +92,11 @@ final class DetachableAnimationBlockView: BlockView, DelayedVisibilityActionView
     }
   }
 
+  override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+    let result = super.hitTest(point, with: event)
+    return result === self ? nil : result
+  }
+
   func convertFrame(to container: UIView) -> CGRect {
     convert(bounds, to: container)
   }
@@ -107,14 +114,15 @@ final class DetachableAnimationBlockView: BlockView, DelayedVisibilityActionView
 
     guard finishFrame != startFrame else { return }
 
-    self.childView = nil
+    removeChildView()
 
-    let animationContainer = UIView()
-    animationContainer.frame = startFrame
-    animationContainer.clipsToBounds = false
-    animationContainer.addSubview(childView)
+    transitionChangeAnimationContainer = UIView()
+    guard let transitionChangeAnimationContainer else { return }
+    transitionChangeAnimationContainer.frame = startFrame
+    transitionChangeAnimationContainer.clipsToBounds = false
+    transitionChangeAnimationContainer.addSubview(childView)
 
-    container.addSubview(animationContainer)
+    container.addSubview(transitionChangeAnimationContainer)
     container.layoutIfNeeded()
 
     UIView.animate(
@@ -122,16 +130,17 @@ final class DetachableAnimationBlockView: BlockView, DelayedVisibilityActionView
       delay: animationChange.delay,
       options: [animationChange.timingFunction.cast()],
       animations: {
-        animationContainer.frame = finishFrame
-        childView.frame.size = animationContainer.bounds.size
+        transitionChangeAnimationContainer.frame = finishFrame
+        childView.frame.size = transitionChangeAnimationContainer.bounds.size
         childView.layoutIfNeeded()
         container.layoutIfNeeded()
       },
       completion: { [weak self] _ in
         self?.animationChange = nil
-        if animationContainer.superview == container {
-          animationContainer.removeFromSuperview()
+        if transitionChangeAnimationContainer.superview == container {
+          transitionChangeAnimationContainer.removeFromSuperview()
           self?.childView = childView
+          self?.transitionChangeAnimationContainer = nil
         }
       }
     )
@@ -216,6 +225,10 @@ final class DetachableAnimationBlockView: BlockView, DelayedVisibilityActionView
   func cancelAnimations() {
     queuedAnimation?.cancel()
     queuedAnimation = nil
+  }
+
+  func removeChildView() {
+    self.childView = nil
   }
 }
 
