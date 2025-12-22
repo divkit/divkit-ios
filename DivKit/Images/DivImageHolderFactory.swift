@@ -29,6 +29,39 @@ extension DivImageHolderFactory {
   }
 }
 
+extension DivImageHolderFactory {
+  public func withInMemoryCache(imageCountLimit: Int) -> ImageHolderFactory {
+    let memoizedFactory = memoizeNonSendable(
+      sizeLimit: UInt(imageCountLimit),
+      keyMapper: calculateKey,
+      size: { _ in 1 },
+      makeCached
+    )
+
+    return ImageHolderFactory(make: { url, placeholder in
+      if let url {
+        memoizedFactory((url, placeholder))
+      } else {
+        make(url, placeholder)
+      }
+    })
+  }
+
+  private func makeCached(url: URL, placeholder: ImagePlaceholder?) -> ImageHolder {
+    let imageHolder = make(url, placeholder)
+
+    return if let remoteImageHolder = imageHolder as? RemoteImageHolder {
+      CachedRemoteImageHolder(wrapped: remoteImageHolder)
+    } else {
+      imageHolder
+    }
+  }
+
+  private func calculateKey(url: URL, placeholder: ImagePlaceholder?) -> String {
+    url.absoluteString + (placeholder?.key ?? "")
+  }
+}
+
 extension ImageHolderFactory: DivImageHolderFactory {}
 
 final class DefaultImageHolderFactory: DivImageHolderFactory {
@@ -95,5 +128,20 @@ private struct AssetsImageProvider: DivImageHolderFactory {
       localImage = Image(named: "divkit.\(name)")
     }
     return localImage ?? imageHolderFactory.make(url, placeholder)
+  }
+}
+
+extension ImagePlaceholder {
+  fileprivate var key: String {
+    switch self {
+    case let .imageData(imageData):
+      String(imageData.hashValue)
+    case let .image(image):
+      String(ObjectIdentifier(image).hashValue)
+    case let .color(color):
+      String(color.hashValue)
+    case let .view(viewProvider):
+      String((viewProvider as? AnyHashable).hashValue)
+    }
   }
 }
