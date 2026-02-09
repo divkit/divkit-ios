@@ -26,11 +26,11 @@ extension UIViewRenderable {
   ) {
     var view = view
     view.layoutReporter = LayoutReporter(
-      willLayoutSubviews: {
+      willLayoutSubviews: { [weak renderingDelegate] in
         guard let path else { return }
         renderingDelegate?.reportViewWillLayout(path: path)
       },
-      didLayoutSubviews: {
+      didLayoutSubviews: { [weak renderingDelegate] in
         guard let path else { return }
         renderingDelegate?.reportViewDidLayout(path: path)
       }
@@ -56,6 +56,8 @@ extension UIViewRenderable {
     renderingDelegate.reportBlockWillConfigure(path: path)
     configure()
     renderingDelegate.reportBlockDidConfigure(path: path)
+
+    renderingDelegate.mapView(view, to: BlockViewID(rawValue: path.leaf))
   }
 
   public func makeBlockView(
