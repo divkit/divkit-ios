@@ -27,6 +27,13 @@ struct IndicatorState {
       return
     }
 
+    let isBoundaryPage = currentPosition <= 0 || currentPosition >= CGFloat(numberOfPages - 1)
+    if params.visiblePageCount == 3, !isBoundaryPage {
+      progress = 1
+      kind = .normal
+      return
+    }
+
     let clampedIndex = floatIndex.clamp(1...CGFloat(numberOfPages - 2))
     let scrollOffsetProgress = params.scrollOffsetProgress
     let headIndexOffset = CGFloat(params.head) + scrollOffsetProgress
