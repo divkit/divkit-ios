@@ -16,6 +16,7 @@ let package = Package(
   products: [
     .library(name: "DivKit", targets: ["DivKit"]),
     .library(name: "DivKitExtensions", targets: ["DivKitExtensions"]),
+    .library(name: "DivKitKMP", targets: ["DivKitKMP"]),
     .library(name: "DivKitMarkdownExtension", targets: ["DivKitMarkdownExtension"]),
     .library(name: "DivKitSVG", targets: ["DivKitSVG"]),
   ],
@@ -52,6 +53,15 @@ let package = Package(
         .product(name: "Markdown", package: "swift-markdown"),
       ],
       path: "DivKitMarkdownExtension"
+    ),
+    .target(
+      name: "DivKitKMP",
+      dependencies: [
+        "DivKit",
+        "DivKitExtensions",
+        .product(name: "VGSL", package: vgsl.packageName),
+      ],
+      path: "DivKitKMP"
     ),
     .target(
       name: "DivKitSVG",

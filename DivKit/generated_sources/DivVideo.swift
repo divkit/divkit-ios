@@ -31,7 +31,7 @@ public final class DivVideo: DivBase, @unchecked Sendable {
   public let muted: Expression<Bool> // default value: false
   public let paddings: DivEdgeInsets?
   public let pauseActions: [DivAction]?
-  public let playerSettingsPayload: [String: Any]?
+  public let playerSettingsPayload: Expression<[String: Any]>?
   public let preloadRequired: Expression<Bool> // default value: false
   public let preview: Expression<String>?
   public let repeatable: Expression<Bool> // default value: false
@@ -49,7 +49,7 @@ public final class DivVideo: DivBase, @unchecked Sendable {
   public let transitionTriggers: [DivTransitionTrigger]? // at least 1 elements
   public let variableTriggers: [DivTrigger]?
   public let variables: [DivVariable]?
-  public let videoSources: [DivVideoSource] // at least 1 elements
+  public let videoSources: [DivVideoSource]?
   public let visibility: Expression<DivVisibility> // default value: visible
   public let visibilityAction: DivVisibilityAction?
   public let visibilityActions: [DivVisibilityAction]?
@@ -77,6 +77,10 @@ public final class DivVideo: DivBase, @unchecked Sendable {
 
   public func resolveMuted(_ resolver: ExpressionResolver) -> Bool {
     resolver.resolveNumeric(muted) ?? false
+  }
+
+  public func resolvePlayerSettingsPayload(_ resolver: ExpressionResolver) -> [String: Any]? {
+    resolver.resolveDict(playerSettingsPayload)
   }
 
   public func resolvePreloadRequired(_ resolver: ExpressionResolver) -> Bool {
@@ -119,9 +123,6 @@ public final class DivVideo: DivBase, @unchecked Sendable {
   static let transitionTriggersValidator: AnyArrayValueValidator<DivTransitionTrigger> =
     makeArrayValidator(minItems: 1)
 
-  static let videoSourcesValidator: AnyArrayValueValidator<DivVideoSource> =
-    makeArrayValidator(minItems: 1)
-
   public convenience init(dictionary: [String: Any], context: ParsingContext) throws {
     self.init(
       accessibility: try dictionary.getOptionalField("accessibility", transform: { (dict: [String: Any]) in try DivAccessibility(dictionary: dict, context: context) }),
@@ -149,7 +150,7 @@ public final class DivVideo: DivBase, @unchecked Sendable {
       muted: try dictionary.getOptionalExpressionField("muted", context: context),
       paddings: try dictionary.getOptionalField("paddings", transform: { (dict: [String: Any]) in try DivEdgeInsets(dictionary: dict, context: context) }),
       pauseActions: try dictionary.getOptionalArray("pause_actions", transform: { (dict: [String: Any]) in try? DivAction(dictionary: dict, context: context) }),
-      playerSettingsPayload: try dictionary.getOptionalField("player_settings_payload", context: context),
+      playerSettingsPayload: try dictionary.getOptionalExpressionField("player_settings_payload", context: context),
       preloadRequired: try dictionary.getOptionalExpressionField("preload_required", context: context),
       preview: try dictionary.getOptionalExpressionField("preview", context: context),
       repeatable: try dictionary.getOptionalExpressionField("repeatable", context: context),
@@ -167,7 +168,7 @@ public final class DivVideo: DivBase, @unchecked Sendable {
       transitionTriggers: try dictionary.getOptionalArray("transition_triggers", validator: Self.transitionTriggersValidator, context: context),
       variableTriggers: try dictionary.getOptionalArray("variable_triggers", transform: { (dict: [String: Any]) in try? DivTrigger(dictionary: dict, context: context) }),
       variables: try dictionary.getOptionalArray("variables", transform: { (dict: [String: Any]) in try? DivVariable(dictionary: dict, context: context) }),
-      videoSources: try dictionary.getArray("video_sources", transform: { (dict: [String: Any]) in try? DivVideoSource(dictionary: dict, context: context) }, validator: Self.videoSourcesValidator, context: context),
+      videoSources: try dictionary.getOptionalArray("video_sources", transform: { (dict: [String: Any]) in try? DivVideoSource(dictionary: dict, context: context) }),
       visibility: try dictionary.getOptionalExpressionField("visibility", context: context),
       visibilityAction: try dictionary.getOptionalField("visibility_action", transform: { (dict: [String: Any]) in try DivVisibilityAction(dictionary: dict, context: context) }),
       visibilityActions: try dictionary.getOptionalArray("visibility_actions", transform: { (dict: [String: Any]) in try? DivVisibilityAction(dictionary: dict, context: context) }),
@@ -201,7 +202,7 @@ public final class DivVideo: DivBase, @unchecked Sendable {
     muted: Expression<Bool>? = nil,
     paddings: DivEdgeInsets? = nil,
     pauseActions: [DivAction]? = nil,
-    playerSettingsPayload: [String: Any]? = nil,
+    playerSettingsPayload: Expression<[String: Any]>? = nil,
     preloadRequired: Expression<Bool>? = nil,
     preview: Expression<String>? = nil,
     repeatable: Expression<Bool>? = nil,
@@ -219,7 +220,7 @@ public final class DivVideo: DivBase, @unchecked Sendable {
     transitionTriggers: [DivTransitionTrigger]? = nil,
     variableTriggers: [DivTrigger]? = nil,
     variables: [DivVariable]? = nil,
-    videoSources: [DivVideoSource],
+    videoSources: [DivVideoSource]? = nil,
     visibility: Expression<DivVisibility>? = nil,
     visibilityAction: DivVisibilityAction? = nil,
     visibilityActions: [DivVisibilityAction]? = nil,
@@ -426,7 +427,7 @@ extension DivVideo: Serializable {
     result["muted"] = muted.toValidSerializationValue()
     result["paddings"] = paddings?.toDictionary()
     result["pause_actions"] = pauseActions?.map { $0.toDictionary() }
-    result["player_settings_payload"] = playerSettingsPayload
+    result["player_settings_payload"] = playerSettingsPayload?.toValidSerializationValue()
     result["preload_required"] = preloadRequired.toValidSerializationValue()
     result["preview"] = preview?.toValidSerializationValue()
     result["repeatable"] = repeatable.toValidSerializationValue()
@@ -444,7 +445,7 @@ extension DivVideo: Serializable {
     result["transition_triggers"] = transitionTriggers?.map { $0.rawValue }
     result["variable_triggers"] = variableTriggers?.map { $0.toDictionary() }
     result["variables"] = variables?.map { $0.toDictionary() }
-    result["video_sources"] = videoSources.map { $0.toDictionary() }
+    result["video_sources"] = videoSources?.map { $0.toDictionary() }
     result["visibility"] = visibility.toValidSerializationValue()
     result["visibility_action"] = visibilityAction?.toDictionary()
     result["visibility_actions"] = visibilityActions?.map { $0.toDictionary() }
