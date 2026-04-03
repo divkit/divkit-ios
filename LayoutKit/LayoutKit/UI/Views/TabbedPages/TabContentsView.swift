@@ -88,6 +88,7 @@ final class TabContentsView: BlockView {
   private var selectedPageContentOffset: CGPoint {
     CGPoint(x: collectionView.bounds.width * selectedPageIndex, y: 0)
   }
+  private var isAnimatingTransition = false
 
   init() {
     collectionView = VisibleBoundsTrackingCollectionView(
@@ -199,7 +200,9 @@ final class TabContentsView: BlockView {
     collectionView.isScrollEnabled = model.scrollingEnabled
 
     if oldModel != model || layout == nil || state.selectedPageIndex != selectedPageIndex {
-      updateSelectedPageIndexIfNeeded(state.selectedPageIndex)
+      if !isAnimatingTransition {
+        updateSelectedPageIndexIfNeeded(state.selectedPageIndex)
+      }
       setNeedsLayout()
     }
   }
@@ -215,6 +218,7 @@ final class TabContentsView: BlockView {
       return
     }
 
+    isAnimatingTransition = true
     selectedPageIndex = idx
     updateContentOffset()
   }
@@ -226,7 +230,8 @@ final class TabContentsView: BlockView {
         model: blocks[indexPath.row],
         observer: observer,
         overscrollDelegate: overscrollDelegate,
-        renderingDelegate: renderingDelegate
+        renderingDelegate: renderingDelegate,
+        accessibilityElement: blocks[indexPath.row].accessibilityElement
       )
     }
   }
@@ -271,6 +276,7 @@ extension TabContentsView: UICollectionViewDelegate {
 
   func scrollViewDidEndScrollingAnimation(_ scrollView: UIScrollView) {
     overscrollDelegate?.onDidEndScrollingAnimation(scrollView)
+    isAnimatingTransition = false
     delegate?.tabContentsViewDidEndAnimation()
     updateSelectedPageIndexFromRelativeContentOffset(isIntermediate: false)
   }
