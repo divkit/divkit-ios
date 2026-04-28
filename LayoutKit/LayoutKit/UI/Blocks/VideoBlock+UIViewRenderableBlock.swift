@@ -58,9 +58,9 @@ private final class VideoBlockView: BlockView, VisibleBoundsTrackingContainer {
     )
 
     playerSignal = player?.signal.addObserver { [weak self] event in
-      onMainThread {
-        guard let self else { return }
+      guard let self else { return }
 
+      let action = {
         switch event {
         case let .currentTimeUpdate(time):
           self.model.elapsedTime?.value = Int(time)
@@ -90,6 +90,16 @@ private final class VideoBlockView: BlockView, VisibleBoundsTrackingContainer {
           self.model.duration?.value = duration
         }
       }
+
+      if window == nil {
+        onMainThread {
+          action()
+        }
+      } else {
+        onMainThreadAsync {
+          action()
+        }
+      }
     }
 
     player.flatMap { videoView?.attach(player: $0) }
@@ -99,7 +109,7 @@ private final class VideoBlockView: BlockView, VisibleBoundsTrackingContainer {
 
   private let preview = Lazy(getter: {
     let view = UIImageView(image: nil)
-    view.contentMode = .scaleAspectFit
+    view.clipsToBounds = true
     view.backgroundColor = .black
     return view
   })
@@ -147,6 +157,9 @@ private final class VideoBlockView: BlockView, VisibleBoundsTrackingContainer {
 
     if model.scale != oldValue.scale {
       videoView?.set(scale: model.scale)
+      if preview.currentValue != nil {
+        preview.value.contentMode = model.scale.previewContentMode
+      }
     }
 
     if !model.hasEqualVideoData(to: oldValue) {
@@ -176,11 +189,13 @@ private final class VideoBlockView: BlockView, VisibleBoundsTrackingContainer {
 
   private func updatePreview(_ image: Image?) {
     preview.value.image = image
+    preview.value.contentMode = model.scale.previewContentMode
     preview.value.frame = adjustPreviewFrame()
   }
 
   private func adjustPreviewFrame() -> CGRect {
-    guard let videoView,
+    guard model.scale == .fit,
+          let videoView,
           let videoRatio = videoView.videoRatio else {
       return videoView?.frame ?? .zero
     }
@@ -232,6 +247,16 @@ extension CGSize {
 extension [String: Any] {
   fileprivate func isEqual(to other: [String: Any]) -> Bool {
     NSDictionary(dictionary: self).isEqual(to: other)
+  }
+}
+
+extension VideoScale {
+  fileprivate var previewContentMode: UIView.ContentMode {
+    switch self {
+    case .fill: .scaleAspectFill
+    case .fit: .scaleAspectFit
+    case .noScale: .center
+    }
   }
 }
 #endif
