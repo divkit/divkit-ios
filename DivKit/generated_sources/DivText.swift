@@ -15,7 +15,9 @@ public final class DivText: DivBase, @unchecked Sendable {
 
   public final class Ellipsis: Sendable {
     public let actions: [DivAction]?
+    public let imageBuilder: ImageBuilder?
     public let images: [Image]?
+    public let rangeBuilder: RangeBuilder?
     public let ranges: [Range]?
     public let text: Expression<String>
 
@@ -26,7 +28,9 @@ public final class DivText: DivBase, @unchecked Sendable {
     public convenience init(dictionary: [String: Any], context: ParsingContext) throws {
       self.init(
         actions: try dictionary.getOptionalArray("actions", transform: { (dict: [String: Any]) in try? DivAction(dictionary: dict, context: context) }),
+        imageBuilder: try dictionary.getOptionalField("image_builder", transform: { (dict: [String: Any]) in try DivText.ImageBuilder(dictionary: dict, context: context) }),
         images: try dictionary.getOptionalArray("images", transform: { (dict: [String: Any]) in try? DivText.Image(dictionary: dict, context: context) }),
+        rangeBuilder: try dictionary.getOptionalField("range_builder", transform: { (dict: [String: Any]) in try DivText.RangeBuilder(dictionary: dict, context: context) }),
         ranges: try dictionary.getOptionalArray("ranges", transform: { (dict: [String: Any]) in try? DivText.Range(dictionary: dict, context: context) }),
         text: try dictionary.getExpressionField("text", context: context)
       )
@@ -34,12 +38,16 @@ public final class DivText: DivBase, @unchecked Sendable {
 
     init(
       actions: [DivAction]? = nil,
+      imageBuilder: ImageBuilder? = nil,
       images: [Image]? = nil,
+      rangeBuilder: RangeBuilder? = nil,
       ranges: [Range]? = nil,
       text: Expression<String>
     ) {
       self.actions = actions
+      self.imageBuilder = imageBuilder
       self.images = images
+      self.rangeBuilder = rangeBuilder
       self.ranges = ranges
       self.text = text
     }
@@ -164,6 +172,61 @@ public final class DivText: DivBase, @unchecked Sendable {
       self.tintMode = tintMode ?? .value(.sourceIn)
       self.url = url
       self.width = width ?? DivFixedSize(value: .value(20))
+    }
+  }
+
+  public final class ImageBuilder: @unchecked Sendable {
+    public final class Prototype: Sendable {
+      public let image: Image
+      public let selector: Expression<Bool> // default value: true
+
+      public func resolveSelector(_ resolver: ExpressionResolver) -> Bool {
+        resolver.resolveNumeric(selector) ?? true
+      }
+
+      public convenience init(dictionary: [String: Any], context: ParsingContext) throws {
+        self.init(
+          image: try dictionary.getField("image", transform: { (dict: [String: Any]) in try DivText.Image(dictionary: dict, context: context) }, context: context),
+          selector: try dictionary.getOptionalExpressionField("selector", context: context)
+        )
+      }
+
+      init(
+        image: Image,
+        selector: Expression<Bool>? = nil
+      ) {
+        self.image = image
+        self.selector = selector ?? .value(true)
+      }
+    }
+
+    public let data: Expression<[Any]>
+    public let dataElementName: String // default value: it
+    public let prototypes: [Prototype] // at least 1 elements
+
+    public func resolveData(_ resolver: ExpressionResolver) -> [Any]? {
+      resolver.resolveArray(data)
+    }
+
+    static let prototypesValidator: AnyArrayValueValidator<DivText.ImageBuilder.Prototype> =
+      makeArrayValidator(minItems: 1)
+
+    public convenience init(dictionary: [String: Any], context: ParsingContext) throws {
+      self.init(
+        data: try dictionary.getExpressionField("data", context: context),
+        dataElementName: try dictionary.getOptionalField("data_element_name", context: context),
+        prototypes: try dictionary.getArray("prototypes", transform: { (dict: [String: Any]) in try? DivText.ImageBuilder.Prototype(dictionary: dict, context: context) }, validator: Self.prototypesValidator, context: context)
+      )
+    }
+
+    init(
+      data: Expression<[Any]>,
+      dataElementName: String? = nil,
+      prototypes: [Prototype]
+    ) {
+      self.data = data
+      self.dataElementName = dataElementName ?? "it"
+      self.prototypes = prototypes
     }
   }
 
@@ -353,6 +416,61 @@ public final class DivText: DivBase, @unchecked Sendable {
     }
   }
 
+  public final class RangeBuilder: @unchecked Sendable {
+    public final class Prototype: Sendable {
+      public let range: Range
+      public let selector: Expression<Bool> // default value: true
+
+      public func resolveSelector(_ resolver: ExpressionResolver) -> Bool {
+        resolver.resolveNumeric(selector) ?? true
+      }
+
+      public convenience init(dictionary: [String: Any], context: ParsingContext) throws {
+        self.init(
+          range: try dictionary.getField("range", transform: { (dict: [String: Any]) in try DivText.Range(dictionary: dict, context: context) }, context: context),
+          selector: try dictionary.getOptionalExpressionField("selector", context: context)
+        )
+      }
+
+      init(
+        range: Range,
+        selector: Expression<Bool>? = nil
+      ) {
+        self.range = range
+        self.selector = selector ?? .value(true)
+      }
+    }
+
+    public let data: Expression<[Any]>
+    public let dataElementName: String // default value: it
+    public let prototypes: [Prototype] // at least 1 elements
+
+    public func resolveData(_ resolver: ExpressionResolver) -> [Any]? {
+      resolver.resolveArray(data)
+    }
+
+    static let prototypesValidator: AnyArrayValueValidator<DivText.RangeBuilder.Prototype> =
+      makeArrayValidator(minItems: 1)
+
+    public convenience init(dictionary: [String: Any], context: ParsingContext) throws {
+      self.init(
+        data: try dictionary.getExpressionField("data", context: context),
+        dataElementName: try dictionary.getOptionalField("data_element_name", context: context),
+        prototypes: try dictionary.getArray("prototypes", transform: { (dict: [String: Any]) in try? DivText.RangeBuilder.Prototype(dictionary: dict, context: context) }, validator: Self.prototypesValidator, context: context)
+      )
+    }
+
+    init(
+      data: Expression<[Any]>,
+      dataElementName: String? = nil,
+      prototypes: [Prototype]
+    ) {
+      self.data = data
+      self.dataElementName = dataElementName ?? "it"
+      self.prototypes = prototypes
+    }
+  }
+
   public static let type: String = "text"
   public let accessibility: DivAccessibility?
   public let action: DivAction?
@@ -385,6 +503,7 @@ public final class DivText: DivBase, @unchecked Sendable {
   public let hoverEndActions: [DivAction]?
   public let hoverStartActions: [DivAction]?
   public let id: String?
+  public let imageBuilder: ImageBuilder?
   public let images: [Image]?
   public let layoutProvider: DivLayoutProvider?
   public let letterSpacing: Expression<Double> // default value: 0
@@ -396,6 +515,7 @@ public final class DivText: DivBase, @unchecked Sendable {
   public let paddings: DivEdgeInsets?
   public let pressEndActions: [DivAction]?
   public let pressStartActions: [DivAction]?
+  public let rangeBuilder: RangeBuilder?
   public let ranges: [Range]?
   public let reuseId: Expression<String>?
   public let rowSpan: Expression<Int>? // constraint: number >= 0
@@ -605,6 +725,7 @@ public final class DivText: DivBase, @unchecked Sendable {
       hoverEndActions: try dictionary.getOptionalArray("hover_end_actions", transform: { (dict: [String: Any]) in try? DivAction(dictionary: dict, context: context) }),
       hoverStartActions: try dictionary.getOptionalArray("hover_start_actions", transform: { (dict: [String: Any]) in try? DivAction(dictionary: dict, context: context) }),
       id: try dictionary.getOptionalField("id", context: context),
+      imageBuilder: try dictionary.getOptionalField("image_builder", transform: { (dict: [String: Any]) in try DivText.ImageBuilder(dictionary: dict, context: context) }),
       images: try dictionary.getOptionalArray("images", transform: { (dict: [String: Any]) in try? DivText.Image(dictionary: dict, context: context) }),
       layoutProvider: try dictionary.getOptionalField("layout_provider", transform: { (dict: [String: Any]) in try DivLayoutProvider(dictionary: dict, context: context) }),
       letterSpacing: try dictionary.getOptionalExpressionField("letter_spacing", context: context),
@@ -616,6 +737,7 @@ public final class DivText: DivBase, @unchecked Sendable {
       paddings: try dictionary.getOptionalField("paddings", transform: { (dict: [String: Any]) in try DivEdgeInsets(dictionary: dict, context: context) }),
       pressEndActions: try dictionary.getOptionalArray("press_end_actions", transform: { (dict: [String: Any]) in try? DivAction(dictionary: dict, context: context) }),
       pressStartActions: try dictionary.getOptionalArray("press_start_actions", transform: { (dict: [String: Any]) in try? DivAction(dictionary: dict, context: context) }),
+      rangeBuilder: try dictionary.getOptionalField("range_builder", transform: { (dict: [String: Any]) in try DivText.RangeBuilder(dictionary: dict, context: context) }),
       ranges: try dictionary.getOptionalArray("ranges", transform: { (dict: [String: Any]) in try? DivText.Range(dictionary: dict, context: context) }),
       reuseId: try dictionary.getOptionalExpressionField("reuse_id", context: context),
       rowSpan: try dictionary.getOptionalExpressionField("row_span", validator: Self.rowSpanValidator, context: context),
@@ -679,6 +801,7 @@ public final class DivText: DivBase, @unchecked Sendable {
     hoverEndActions: [DivAction]? = nil,
     hoverStartActions: [DivAction]? = nil,
     id: String? = nil,
+    imageBuilder: ImageBuilder? = nil,
     images: [Image]? = nil,
     layoutProvider: DivLayoutProvider? = nil,
     letterSpacing: Expression<Double>? = nil,
@@ -690,6 +813,7 @@ public final class DivText: DivBase, @unchecked Sendable {
     paddings: DivEdgeInsets? = nil,
     pressEndActions: [DivAction]? = nil,
     pressStartActions: [DivAction]? = nil,
+    rangeBuilder: RangeBuilder? = nil,
     ranges: [Range]? = nil,
     reuseId: Expression<String>? = nil,
     rowSpan: Expression<Int>? = nil,
@@ -750,6 +874,7 @@ public final class DivText: DivBase, @unchecked Sendable {
     self.hoverEndActions = hoverEndActions
     self.hoverStartActions = hoverStartActions
     self.id = id
+    self.imageBuilder = imageBuilder
     self.images = images
     self.layoutProvider = layoutProvider
     self.letterSpacing = letterSpacing ?? .value(0)
@@ -761,6 +886,7 @@ public final class DivText: DivBase, @unchecked Sendable {
     self.paddings = paddings
     self.pressEndActions = pressEndActions
     self.pressStartActions = pressStartActions
+    self.rangeBuilder = rangeBuilder
     self.ranges = ranges
     self.reuseId = reuseId
     self.rowSpan = rowSpan
@@ -867,91 +993,97 @@ extension DivText: Equatable {
       return false
     }
     guard
+      lhs.imageBuilder == rhs.imageBuilder,
       lhs.images == rhs.images,
-      lhs.layoutProvider == rhs.layoutProvider,
-      lhs.letterSpacing == rhs.letterSpacing
+      lhs.layoutProvider == rhs.layoutProvider
     else {
       return false
     }
     guard
+      lhs.letterSpacing == rhs.letterSpacing,
       lhs.lineHeight == rhs.lineHeight,
-      lhs.longtapActions == rhs.longtapActions,
-      lhs.margins == rhs.margins
+      lhs.longtapActions == rhs.longtapActions
     else {
       return false
     }
     guard
+      lhs.margins == rhs.margins,
       lhs.maxLines == rhs.maxLines,
-      lhs.minHiddenLines == rhs.minHiddenLines,
-      lhs.paddings == rhs.paddings
+      lhs.minHiddenLines == rhs.minHiddenLines
     else {
       return false
     }
     guard
+      lhs.paddings == rhs.paddings,
       lhs.pressEndActions == rhs.pressEndActions,
-      lhs.pressStartActions == rhs.pressStartActions,
-      lhs.ranges == rhs.ranges
+      lhs.pressStartActions == rhs.pressStartActions
     else {
       return false
     }
     guard
-      lhs.reuseId == rhs.reuseId,
+      lhs.rangeBuilder == rhs.rangeBuilder,
+      lhs.ranges == rhs.ranges,
+      lhs.reuseId == rhs.reuseId
+    else {
+      return false
+    }
+    guard
       lhs.rowSpan == rhs.rowSpan,
-      lhs.selectable == rhs.selectable
+      lhs.selectable == rhs.selectable,
+      lhs.selectedActions == rhs.selectedActions
     else {
       return false
     }
     guard
-      lhs.selectedActions == rhs.selectedActions,
       lhs.strike == rhs.strike,
-      lhs.text == rhs.text
+      lhs.text == rhs.text,
+      lhs.textAlignmentHorizontal == rhs.textAlignmentHorizontal
     else {
       return false
     }
     guard
-      lhs.textAlignmentHorizontal == rhs.textAlignmentHorizontal,
       lhs.textAlignmentVertical == rhs.textAlignmentVertical,
-      lhs.textColor == rhs.textColor
+      lhs.textColor == rhs.textColor,
+      lhs.textGradient == rhs.textGradient
     else {
       return false
     }
     guard
-      lhs.textGradient == rhs.textGradient,
       lhs.textShadow == rhs.textShadow,
-      lhs.tightenWidth == rhs.tightenWidth
+      lhs.tightenWidth == rhs.tightenWidth,
+      lhs.tooltips == rhs.tooltips
     else {
       return false
     }
     guard
-      lhs.tooltips == rhs.tooltips,
       lhs.transform == rhs.transform,
-      lhs.transformations == rhs.transformations
+      lhs.transformations == rhs.transformations,
+      lhs.transitionChange == rhs.transitionChange
     else {
       return false
     }
     guard
-      lhs.transitionChange == rhs.transitionChange,
       lhs.transitionIn == rhs.transitionIn,
-      lhs.transitionOut == rhs.transitionOut
+      lhs.transitionOut == rhs.transitionOut,
+      lhs.transitionTriggers == rhs.transitionTriggers
     else {
       return false
     }
     guard
-      lhs.transitionTriggers == rhs.transitionTriggers,
       lhs.truncate == rhs.truncate,
-      lhs.underline == rhs.underline
+      lhs.underline == rhs.underline,
+      lhs.variableTriggers == rhs.variableTriggers
     else {
       return false
     }
     guard
-      lhs.variableTriggers == rhs.variableTriggers,
       lhs.variables == rhs.variables,
-      lhs.visibility == rhs.visibility
+      lhs.visibility == rhs.visibility,
+      lhs.visibilityAction == rhs.visibilityAction
     else {
       return false
     }
     guard
-      lhs.visibilityAction == rhs.visibilityAction,
       lhs.visibilityActions == rhs.visibilityActions,
       lhs.width == rhs.width
     else {
@@ -998,6 +1130,7 @@ extension DivText: Serializable {
     result["hover_end_actions"] = hoverEndActions?.map { $0.toDictionary() }
     result["hover_start_actions"] = hoverStartActions?.map { $0.toDictionary() }
     result["id"] = id
+    result["image_builder"] = imageBuilder?.toDictionary()
     result["images"] = images?.map { $0.toDictionary() }
     result["layout_provider"] = layoutProvider?.toDictionary()
     result["letter_spacing"] = letterSpacing.toValidSerializationValue()
@@ -1009,6 +1142,7 @@ extension DivText: Serializable {
     result["paddings"] = paddings?.toDictionary()
     result["press_end_actions"] = pressEndActions?.map { $0.toDictionary() }
     result["press_start_actions"] = pressStartActions?.map { $0.toDictionary() }
+    result["range_builder"] = rangeBuilder?.toDictionary()
     result["ranges"] = ranges?.map { $0.toDictionary() }
     result["reuse_id"] = reuseId?.toValidSerializationValue()
     result["row_span"] = rowSpan?.toValidSerializationValue()
@@ -1040,6 +1174,21 @@ extension DivText: Serializable {
     return result
   }
 }
+
+#if DEBUG
+// WARNING: this == is incomplete because of [String: Any] in class fields
+extension DivText.ImageBuilder: Equatable {
+  public static func ==(lhs: DivText.ImageBuilder, rhs: DivText.ImageBuilder) -> Bool {
+    guard
+      lhs.dataElementName == rhs.dataElementName,
+      lhs.prototypes == rhs.prototypes
+    else {
+      return false
+    }
+    return true
+  }
+}
+#endif
 
 #if DEBUG
 // WARNING: this == is incomplete because of [String: Any] in class fields
@@ -1100,16 +1249,33 @@ extension DivText.Range: Equatable {
 #endif
 
 #if DEBUG
+// WARNING: this == is incomplete because of [String: Any] in class fields
+extension DivText.RangeBuilder: Equatable {
+  public static func ==(lhs: DivText.RangeBuilder, rhs: DivText.RangeBuilder) -> Bool {
+    guard
+      lhs.dataElementName == rhs.dataElementName,
+      lhs.prototypes == rhs.prototypes
+    else {
+      return false
+    }
+    return true
+  }
+}
+#endif
+
+#if DEBUG
 extension DivText.Ellipsis: Equatable {
   public static func ==(lhs: DivText.Ellipsis, rhs: DivText.Ellipsis) -> Bool {
     guard
       lhs.actions == rhs.actions,
-      lhs.images == rhs.images,
-      lhs.ranges == rhs.ranges
+      lhs.imageBuilder == rhs.imageBuilder,
+      lhs.images == rhs.images
     else {
       return false
     }
     guard
+      lhs.rangeBuilder == rhs.rangeBuilder,
+      lhs.ranges == rhs.ranges,
       lhs.text == rhs.text
     else {
       return false
@@ -1167,12 +1333,42 @@ extension DivText.Image: Equatable {
 }
 #endif
 
+#if DEBUG
+extension DivText.ImageBuilder.Prototype: Equatable {
+  public static func ==(lhs: DivText.ImageBuilder.Prototype, rhs: DivText.ImageBuilder.Prototype) -> Bool {
+    guard
+      lhs.image == rhs.image,
+      lhs.selector == rhs.selector
+    else {
+      return false
+    }
+    return true
+  }
+}
+#endif
+
+#if DEBUG
+extension DivText.RangeBuilder.Prototype: Equatable {
+  public static func ==(lhs: DivText.RangeBuilder.Prototype, rhs: DivText.RangeBuilder.Prototype) -> Bool {
+    guard
+      lhs.range == rhs.range,
+      lhs.selector == rhs.selector
+    else {
+      return false
+    }
+    return true
+  }
+}
+#endif
+
 extension DivText.Ellipsis: Serializable {
   @_optimize(size)
   public func toDictionary() -> [String: ValidSerializationValue] {
     var result: [String: ValidSerializationValue] = [:]
     result["actions"] = actions?.map { $0.toDictionary() }
+    result["image_builder"] = imageBuilder?.toDictionary()
     result["images"] = images?.map { $0.toDictionary() }
+    result["range_builder"] = rangeBuilder?.toDictionary()
     result["ranges"] = ranges?.map { $0.toDictionary() }
     result["text"] = text.toValidSerializationValue()
     return result
@@ -1207,6 +1403,27 @@ extension DivText.Image: Serializable {
   }
 }
 
+extension DivText.ImageBuilder.Prototype: Serializable {
+  @_optimize(size)
+  public func toDictionary() -> [String: ValidSerializationValue] {
+    var result: [String: ValidSerializationValue] = [:]
+    result["image"] = image.toDictionary()
+    result["selector"] = selector.toValidSerializationValue()
+    return result
+  }
+}
+
+extension DivText.ImageBuilder: Serializable {
+  @_optimize(size)
+  public func toDictionary() -> [String: ValidSerializationValue] {
+    var result: [String: ValidSerializationValue] = [:]
+    result["data"] = data.toValidSerializationValue()
+    result["data_element_name"] = dataElementName
+    result["prototypes"] = prototypes.map { $0.toDictionary() }
+    return result
+  }
+}
+
 extension DivText.Range: Serializable {
   @_optimize(size)
   public func toDictionary() -> [String: ValidSerializationValue] {
@@ -1233,6 +1450,27 @@ extension DivText.Range: Serializable {
     result["text_shadow"] = textShadow?.toDictionary()
     result["top_offset"] = topOffset?.toValidSerializationValue()
     result["underline"] = underline?.toValidSerializationValue()
+    return result
+  }
+}
+
+extension DivText.RangeBuilder.Prototype: Serializable {
+  @_optimize(size)
+  public func toDictionary() -> [String: ValidSerializationValue] {
+    var result: [String: ValidSerializationValue] = [:]
+    result["range"] = range.toDictionary()
+    result["selector"] = selector.toValidSerializationValue()
+    return result
+  }
+}
+
+extension DivText.RangeBuilder: Serializable {
+  @_optimize(size)
+  public func toDictionary() -> [String: ValidSerializationValue] {
+    var result: [String: ValidSerializationValue] = [:]
+    result["data"] = data.toValidSerializationValue()
+    result["data_element_name"] = dataElementName
+    result["prototypes"] = prototypes.map { $0.toDictionary() }
     return result
   }
 }

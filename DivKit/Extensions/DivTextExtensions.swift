@@ -87,13 +87,13 @@ extension DivText: DivBlockModeling {
       typo = typo.with(lineBreakMode: lineBreakMode)
     }
 
+    let resolvedRanges = makeRanges(ranges, rangeBuilder: rangeBuilder, context: context)
     let makeAttributedStringWithTypo: (Typo) -> NSAttributedString = {
       self.makeAttributedString(
         text: text.value as CFString,
         typo: $0,
-        ranges: self.ranges,
+        ranges: resolvedRanges,
         actions: nil,
-        context: context,
         fontParams: fontParams
       )
     }
@@ -109,8 +109,7 @@ extension DivText: DivBlockModeling {
     }
 
     let images = makeInlineImages(
-      context: context,
-      images: self.images,
+      images: makeImages(self.images, imageBuilder: imageBuilder, context: context),
       text: attributedString
     )
 
@@ -118,15 +117,13 @@ extension DivText: DivBlockModeling {
       makeAttributedString(
         text: ($0.resolveText(expressionResolver) ?? "") as CFString,
         typo: typo,
-        ranges: $0.ranges,
+        ranges: makeRanges($0.ranges, rangeBuilder: $0.rangeBuilder, context: context),
         actions: $0.actions?.uiActions(context: context),
-        context: context,
         fontParams: fontParams
       )
     }
     let truncationImages = makeInlineImages(
-      context: context,
-      images: ellipsis?.images,
+      images: makeImages(ellipsis?.images, imageBuilder: ellipsis?.imageBuilder, context: context),
       text: truncationToken
     )
 
@@ -138,7 +135,7 @@ extension DivText: DivBlockModeling {
       )
     }
 
-    let additionalTextInsets = additionalTextInsets(context: context)
+    let additionalTextInsets = additionalTextInsets(ranges: resolvedRanges)
 
     return TextBlock(
       widthTrait: resolveContentWidthTrait(context),
@@ -165,9 +162,8 @@ extension DivText: DivBlockModeling {
   private func makeAttributedString(
     text: CFString,
     typo: Typo,
-    ranges: [Range]?,
+    ranges: [(Range, DivBlockModelingContext)],
     actions: [UserInterfaceAction]?,
-    context: DivBlockModelingContext,
     fontParams: FontParams
   ) -> NSAttributedString {
     let length = CFStringGetLength(text)
@@ -177,23 +173,25 @@ extension DivText: DivBlockModeling {
     let fullRange = CFRange(location: 0, length: length)
     typo.apply(to: attributedString, at: fullRange)
     attributedString.apply(actions: actions, mask: nil, at: fullRange)
-    ranges?.forEach { apply($0, to: attributedString, context: context, fontParams: fontParams) }
+    for (range, rangeContext) in ranges {
+      apply(range, to: attributedString, context: rangeContext, fontParams: fontParams)
+    }
     CFAttributedStringEndEditing(attributedString)
     return attributedString
   }
 
   private func makeInlineImages(
-    context: DivBlockModelingContext,
-    images: [Image]?,
+    images: [(Image, DivBlockModelingContext)],
     text: NSAttributedString?
   ) -> [TextBlock.InlineImage] {
     guard let text else {
       return []
     }
-    return (images ?? []).compactMap {
-      $0.makeImage(
-        context: context,
-        textLength: CFAttributedStringGetLength(text)
+    let textLength = CFAttributedStringGetLength(text)
+    return images.compactMap { image, imageContext in
+      image.makeImage(
+        context: imageContext,
+        textLength: textLength
       )
     }
   }
@@ -290,15 +288,14 @@ extension DivText: DivBlockModeling {
   }
 
   private func additionalTextInsets(
-    context: DivBlockModelingContext
+    ranges: [(Range, DivBlockModelingContext)]
   ) -> EdgeInsets {
     var additionalInsets: EdgeInsets = .zero
-    ranges?.forEach {
-      if case let .divCloudBackground(background) = $0.background {
-        let backgroundInsets = background.paddings?.resolve(context) ?? .zero
+    for (range, rangeContext) in ranges {
+      if case let .divCloudBackground(background) = range.background {
+        let backgroundInsets = background.paddings?.resolve(rangeContext) ?? .zero
         additionalInsets = EdgeInsets(
           top: max(additionalInsets.top, backgroundInsets.top),
-
           left: max(additionalInsets.left, backgroundInsets.left),
           bottom: max(additionalInsets.bottom, backgroundInsets.bottom),
           right: max(additionalInsets.right, backgroundInsets.right)

@@ -7,14 +7,18 @@ import VGSL
 public final class DivTextTemplate: TemplateValue, @unchecked Sendable {
   public final class EllipsisTemplate: TemplateValue, Sendable {
     public let actions: Field<[DivActionTemplate]>?
+    public let imageBuilder: Field<ImageBuilderTemplate>?
     public let images: Field<[ImageTemplate]>?
+    public let rangeBuilder: Field<RangeBuilderTemplate>?
     public let ranges: Field<[RangeTemplate]>?
     public let text: Field<Expression<String>>?
 
     public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
       self.init(
         actions: dictionary.getOptionalArray("actions", templateToType: templateToType),
+        imageBuilder: dictionary.getOptionalField("image_builder", templateToType: templateToType),
         images: dictionary.getOptionalArray("images", templateToType: templateToType),
+        rangeBuilder: dictionary.getOptionalField("range_builder", templateToType: templateToType),
         ranges: dictionary.getOptionalArray("ranges", templateToType: templateToType),
         text: dictionary.getOptionalExpressionField("text")
       )
@@ -22,24 +26,32 @@ public final class DivTextTemplate: TemplateValue, @unchecked Sendable {
 
     init(
       actions: Field<[DivActionTemplate]>? = nil,
+      imageBuilder: Field<ImageBuilderTemplate>? = nil,
       images: Field<[ImageTemplate]>? = nil,
+      rangeBuilder: Field<RangeBuilderTemplate>? = nil,
       ranges: Field<[RangeTemplate]>? = nil,
       text: Field<Expression<String>>? = nil
     ) {
       self.actions = actions
+      self.imageBuilder = imageBuilder
       self.images = images
+      self.rangeBuilder = rangeBuilder
       self.ranges = ranges
       self.text = text
     }
 
     private static func resolveOnlyLinks(context: TemplatesContext, parent: EllipsisTemplate?) -> DeserializationResult<DivText.Ellipsis> {
       let actionsValue = { parent?.actions?.resolveOptionalValue(context: context, useOnlyLinks: true) ?? .noValue }()
+      let imageBuilderValue = { parent?.imageBuilder?.resolveOptionalValue(context: context, useOnlyLinks: true) ?? .noValue }()
       let imagesValue = { parent?.images?.resolveOptionalValue(context: context, useOnlyLinks: true) ?? .noValue }()
+      let rangeBuilderValue = { parent?.rangeBuilder?.resolveOptionalValue(context: context, useOnlyLinks: true) ?? .noValue }()
       let rangesValue = { parent?.ranges?.resolveOptionalValue(context: context, useOnlyLinks: true) ?? .noValue }()
       let textValue = { parent?.text?.resolveValue(context: context) ?? .noValue }()
       var errors = mergeErrors(
         actionsValue.errorsOrWarnings?.map { .nestedObjectError(field: "actions", error: $0) },
+        imageBuilderValue.errorsOrWarnings?.map { .nestedObjectError(field: "image_builder", error: $0) },
         imagesValue.errorsOrWarnings?.map { .nestedObjectError(field: "images", error: $0) },
+        rangeBuilderValue.errorsOrWarnings?.map { .nestedObjectError(field: "range_builder", error: $0) },
         rangesValue.errorsOrWarnings?.map { .nestedObjectError(field: "ranges", error: $0) },
         textValue.errorsOrWarnings?.map { .nestedObjectError(field: "text", error: $0) }
       )
@@ -53,7 +65,9 @@ public final class DivTextTemplate: TemplateValue, @unchecked Sendable {
       }
       let result = DivText.Ellipsis(
         actions: { actionsValue.value }(),
+        imageBuilder: { imageBuilderValue.value }(),
         images: { imagesValue.value }(),
+        rangeBuilder: { rangeBuilderValue.value }(),
         ranges: { rangesValue.value }(),
         text: { textNonNil }()
       )
@@ -65,7 +79,9 @@ public final class DivTextTemplate: TemplateValue, @unchecked Sendable {
         return resolveOnlyLinks(context: context, parent: parent)
       }
       var actionsValue: DeserializationResult<[DivAction]> = .noValue
+      var imageBuilderValue: DeserializationResult<DivText.ImageBuilder> = .noValue
       var imagesValue: DeserializationResult<[DivText.Image]> = .noValue
+      var rangeBuilderValue: DeserializationResult<DivText.RangeBuilder> = .noValue
       var rangesValue: DeserializationResult<[DivText.Range]> = .noValue
       var textValue: DeserializationResult<Expression<String>> = { parent?.text?.value() ?? .noValue }()
       _ = {
@@ -79,8 +95,18 @@ public final class DivTextTemplate: TemplateValue, @unchecked Sendable {
             }
           }()
           _ = {
+            if key == "image_builder" {
+             imageBuilderValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivTextTemplate.ImageBuilderTemplate.self).merged(with: imageBuilderValue)
+            }
+          }()
+          _ = {
             if key == "images" {
              imagesValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivTextTemplate.ImageTemplate.self).merged(with: imagesValue)
+            }
+          }()
+          _ = {
+            if key == "range_builder" {
+             rangeBuilderValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivTextTemplate.RangeBuilderTemplate.self).merged(with: rangeBuilderValue)
             }
           }()
           _ = {
@@ -99,8 +125,18 @@ public final class DivTextTemplate: TemplateValue, @unchecked Sendable {
             }
           }()
           _ = {
+           if key == parent?.imageBuilder?.link {
+             imageBuilderValue = imageBuilderValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivTextTemplate.ImageBuilderTemplate.self) })
+            }
+          }()
+          _ = {
            if key == parent?.images?.link {
              imagesValue = imagesValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivTextTemplate.ImageTemplate.self) })
+            }
+          }()
+          _ = {
+           if key == parent?.rangeBuilder?.link {
+             rangeBuilderValue = rangeBuilderValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivTextTemplate.RangeBuilderTemplate.self) })
             }
           }()
           _ = {
@@ -117,12 +153,16 @@ public final class DivTextTemplate: TemplateValue, @unchecked Sendable {
       }()
       if let parent = parent {
         _ = { actionsValue = actionsValue.merged(with: { parent.actions?.resolveOptionalValue(context: context, useOnlyLinks: true) }) }()
+        _ = { imageBuilderValue = imageBuilderValue.merged(with: { parent.imageBuilder?.resolveOptionalValue(context: context, useOnlyLinks: true) }) }()
         _ = { imagesValue = imagesValue.merged(with: { parent.images?.resolveOptionalValue(context: context, useOnlyLinks: true) }) }()
+        _ = { rangeBuilderValue = rangeBuilderValue.merged(with: { parent.rangeBuilder?.resolveOptionalValue(context: context, useOnlyLinks: true) }) }()
         _ = { rangesValue = rangesValue.merged(with: { parent.ranges?.resolveOptionalValue(context: context, useOnlyLinks: true) }) }()
       }
       var errors = mergeErrors(
         actionsValue.errorsOrWarnings?.map { .nestedObjectError(field: "actions", error: $0) },
+        imageBuilderValue.errorsOrWarnings?.map { .nestedObjectError(field: "image_builder", error: $0) },
         imagesValue.errorsOrWarnings?.map { .nestedObjectError(field: "images", error: $0) },
+        rangeBuilderValue.errorsOrWarnings?.map { .nestedObjectError(field: "range_builder", error: $0) },
         rangesValue.errorsOrWarnings?.map { .nestedObjectError(field: "ranges", error: $0) },
         textValue.errorsOrWarnings?.map { .nestedObjectError(field: "text", error: $0) }
       )
@@ -136,7 +176,9 @@ public final class DivTextTemplate: TemplateValue, @unchecked Sendable {
       }
       let result = DivText.Ellipsis(
         actions: { actionsValue.value }(),
+        imageBuilder: { imageBuilderValue.value }(),
         images: { imagesValue.value }(),
+        rangeBuilder: { rangeBuilderValue.value }(),
         ranges: { rangesValue.value }(),
         text: { textNonNil }()
       )
@@ -152,9 +194,260 @@ public final class DivTextTemplate: TemplateValue, @unchecked Sendable {
 
       return EllipsisTemplate(
         actions: merged.actions?.tryResolveParent(templates: templates),
+        imageBuilder: merged.imageBuilder?.tryResolveParent(templates: templates),
         images: merged.images?.tryResolveParent(templates: templates),
+        rangeBuilder: merged.rangeBuilder?.tryResolveParent(templates: templates),
         ranges: merged.ranges?.tryResolveParent(templates: templates),
         text: merged.text
+      )
+    }
+  }
+
+  public final class ImageBuilderTemplate: TemplateValue, @unchecked Sendable {
+    public final class PrototypeTemplate: TemplateValue, Sendable {
+      public let image: Field<ImageTemplate>?
+      public let selector: Field<Expression<Bool>>? // default value: true
+
+      public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
+        self.init(
+          image: dictionary.getOptionalField("image", templateToType: templateToType),
+          selector: dictionary.getOptionalExpressionField("selector")
+        )
+      }
+
+      init(
+        image: Field<ImageTemplate>? = nil,
+        selector: Field<Expression<Bool>>? = nil
+      ) {
+        self.image = image
+        self.selector = selector
+      }
+
+      private static func resolveOnlyLinks(context: TemplatesContext, parent: PrototypeTemplate?) -> DeserializationResult<DivText.ImageBuilder.Prototype> {
+        let imageValue = { parent?.image?.resolveValue(context: context, useOnlyLinks: true) ?? .noValue }()
+        let selectorValue = { parent?.selector?.resolveOptionalValue(context: context) ?? .noValue }()
+        var errors = mergeErrors(
+          imageValue.errorsOrWarnings?.map { .nestedObjectError(field: "image", error: $0) },
+          selectorValue.errorsOrWarnings?.map { .nestedObjectError(field: "selector", error: $0) }
+        )
+        if case .noValue = imageValue {
+          errors.append(.requiredFieldIsMissing(field: "image"))
+        }
+        guard
+          let imageNonNil = imageValue.value
+        else {
+          return .failure(NonEmptyArray(errors)!)
+        }
+        let result = DivText.ImageBuilder.Prototype(
+          image: { imageNonNil }(),
+          selector: { selectorValue.value }()
+        )
+        return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
+      }
+
+      public static func resolveValue(context: TemplatesContext, parent: PrototypeTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivText.ImageBuilder.Prototype> {
+        if useOnlyLinks {
+          return resolveOnlyLinks(context: context, parent: parent)
+        }
+        var imageValue: DeserializationResult<DivText.Image> = .noValue
+        var selectorValue: DeserializationResult<Expression<Bool>> = { parent?.selector?.value() ?? .noValue }()
+        _ = {
+          // Each field is parsed in its own lambda to keep the stack size managable
+          // Otherwise the compiler will allocate stack for each intermediate variable
+          // upfront even when we don't actually visit a relevant branch
+          for (key, __dictValue) in context.templateData {
+            _ = {
+              if key == "image" {
+               imageValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivTextTemplate.ImageTemplate.self).merged(with: imageValue)
+              }
+            }()
+            _ = {
+              if key == "selector" {
+               selectorValue = deserialize(__dictValue).merged(with: selectorValue)
+              }
+            }()
+            _ = {
+             if key == parent?.image?.link {
+               imageValue = imageValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivTextTemplate.ImageTemplate.self) })
+              }
+            }()
+            _ = {
+             if key == parent?.selector?.link {
+               selectorValue = selectorValue.merged(with: { deserialize(__dictValue) })
+              }
+            }()
+          }
+        }()
+        if let parent = parent {
+          _ = { imageValue = imageValue.merged(with: { parent.image?.resolveValue(context: context, useOnlyLinks: true) }) }()
+        }
+        var errors = mergeErrors(
+          imageValue.errorsOrWarnings?.map { .nestedObjectError(field: "image", error: $0) },
+          selectorValue.errorsOrWarnings?.map { .nestedObjectError(field: "selector", error: $0) }
+        )
+        if case .noValue = imageValue {
+          errors.append(.requiredFieldIsMissing(field: "image"))
+        }
+        guard
+          let imageNonNil = imageValue.value
+        else {
+          return .failure(NonEmptyArray(errors)!)
+        }
+        let result = DivText.ImageBuilder.Prototype(
+          image: { imageNonNil }(),
+          selector: { selectorValue.value }()
+        )
+        return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
+      }
+
+      private func mergedWithParent(templates: [TemplateName: Any]) throws -> PrototypeTemplate {
+        return self
+      }
+
+      public func resolveParent(templates: [TemplateName: Any]) throws -> PrototypeTemplate {
+        let merged = try mergedWithParent(templates: templates)
+
+        return PrototypeTemplate(
+          image: try merged.image?.resolveParent(templates: templates),
+          selector: merged.selector
+        )
+      }
+    }
+
+    public let data: Field<Expression<[Any]>>?
+    public let dataElementName: Field<String>? // default value: it
+    public let prototypes: Field<[PrototypeTemplate]>? // at least 1 elements
+
+    public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
+      self.init(
+        data: dictionary.getOptionalExpressionField("data"),
+        dataElementName: dictionary.getOptionalField("data_element_name"),
+        prototypes: dictionary.getOptionalArray("prototypes", templateToType: templateToType)
+      )
+    }
+
+    init(
+      data: Field<Expression<[Any]>>? = nil,
+      dataElementName: Field<String>? = nil,
+      prototypes: Field<[PrototypeTemplate]>? = nil
+    ) {
+      self.data = data
+      self.dataElementName = dataElementName
+      self.prototypes = prototypes
+    }
+
+    private static func resolveOnlyLinks(context: TemplatesContext, parent: ImageBuilderTemplate?) -> DeserializationResult<DivText.ImageBuilder> {
+      let dataValue = { parent?.data?.resolveValue(context: context) ?? .noValue }()
+      let dataElementNameValue = { parent?.dataElementName?.resolveOptionalValue(context: context) ?? .noValue }()
+      let prototypesValue = { parent?.prototypes?.resolveValue(context: context, validator: ResolvedValue.prototypesValidator, useOnlyLinks: true) ?? .noValue }()
+      var errors = mergeErrors(
+        dataValue.errorsOrWarnings?.map { .nestedObjectError(field: "data", error: $0) },
+        dataElementNameValue.errorsOrWarnings?.map { .nestedObjectError(field: "data_element_name", error: $0) },
+        prototypesValue.errorsOrWarnings?.map { .nestedObjectError(field: "prototypes", error: $0) }
+      )
+      if case .noValue = dataValue {
+        errors.append(.requiredFieldIsMissing(field: "data"))
+      }
+      if case .noValue = prototypesValue {
+        errors.append(.requiredFieldIsMissing(field: "prototypes"))
+      }
+      guard
+        let dataNonNil = dataValue.value,
+        let prototypesNonNil = prototypesValue.value
+      else {
+        return .failure(NonEmptyArray(errors)!)
+      }
+      let result = DivText.ImageBuilder(
+        data: { dataNonNil }(),
+        dataElementName: { dataElementNameValue.value }(),
+        prototypes: { prototypesNonNil }()
+      )
+      return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
+    }
+
+    public static func resolveValue(context: TemplatesContext, parent: ImageBuilderTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivText.ImageBuilder> {
+      if useOnlyLinks {
+        return resolveOnlyLinks(context: context, parent: parent)
+      }
+      var dataValue: DeserializationResult<Expression<[Any]>> = { parent?.data?.value() ?? .noValue }()
+      var dataElementNameValue: DeserializationResult<String> = { parent?.dataElementName?.value() ?? .noValue }()
+      var prototypesValue: DeserializationResult<[DivText.ImageBuilder.Prototype]> = .noValue
+      _ = {
+        // Each field is parsed in its own lambda to keep the stack size managable
+        // Otherwise the compiler will allocate stack for each intermediate variable
+        // upfront even when we don't actually visit a relevant branch
+        for (key, __dictValue) in context.templateData {
+          _ = {
+            if key == "data" {
+             dataValue = deserialize(__dictValue).merged(with: dataValue)
+            }
+          }()
+          _ = {
+            if key == "data_element_name" {
+             dataElementNameValue = deserialize(__dictValue).merged(with: dataElementNameValue)
+            }
+          }()
+          _ = {
+            if key == "prototypes" {
+             prototypesValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, validator: ResolvedValue.prototypesValidator, type: DivTextTemplate.ImageBuilderTemplate.PrototypeTemplate.self).merged(with: prototypesValue)
+            }
+          }()
+          _ = {
+           if key == parent?.data?.link {
+             dataValue = dataValue.merged(with: { deserialize(__dictValue) })
+            }
+          }()
+          _ = {
+           if key == parent?.dataElementName?.link {
+             dataElementNameValue = dataElementNameValue.merged(with: { deserialize(__dictValue) })
+            }
+          }()
+          _ = {
+           if key == parent?.prototypes?.link {
+             prototypesValue = prototypesValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, validator: ResolvedValue.prototypesValidator, type: DivTextTemplate.ImageBuilderTemplate.PrototypeTemplate.self) })
+            }
+          }()
+        }
+      }()
+      if let parent = parent {
+        _ = { prototypesValue = prototypesValue.merged(with: { parent.prototypes?.resolveValue(context: context, validator: ResolvedValue.prototypesValidator, useOnlyLinks: true) }) }()
+      }
+      var errors = mergeErrors(
+        dataValue.errorsOrWarnings?.map { .nestedObjectError(field: "data", error: $0) },
+        dataElementNameValue.errorsOrWarnings?.map { .nestedObjectError(field: "data_element_name", error: $0) },
+        prototypesValue.errorsOrWarnings?.map { .nestedObjectError(field: "prototypes", error: $0) }
+      )
+      if case .noValue = dataValue {
+        errors.append(.requiredFieldIsMissing(field: "data"))
+      }
+      if case .noValue = prototypesValue {
+        errors.append(.requiredFieldIsMissing(field: "prototypes"))
+      }
+      guard
+        let dataNonNil = dataValue.value,
+        let prototypesNonNil = prototypesValue.value
+      else {
+        return .failure(NonEmptyArray(errors)!)
+      }
+      let result = DivText.ImageBuilder(
+        data: { dataNonNil }(),
+        dataElementName: { dataElementNameValue.value }(),
+        prototypes: { prototypesNonNil }()
+      )
+      return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
+    }
+
+    private func mergedWithParent(templates: [TemplateName: Any]) throws -> ImageBuilderTemplate {
+      return self
+    }
+
+    public func resolveParent(templates: [TemplateName: Any]) throws -> ImageBuilderTemplate {
+      let merged = try mergedWithParent(templates: templates)
+
+      return ImageBuilderTemplate(
+        data: merged.data,
+        dataElementName: merged.dataElementName,
+        prototypes: try merged.prototypes?.resolveParent(templates: templates)
       )
     }
   }
@@ -533,6 +826,255 @@ public final class DivTextTemplate: TemplateValue, @unchecked Sendable {
         tintMode: merged.tintMode,
         url: merged.url,
         width: merged.width?.tryResolveParent(templates: templates)
+      )
+    }
+  }
+
+  public final class RangeBuilderTemplate: TemplateValue, @unchecked Sendable {
+    public final class PrototypeTemplate: TemplateValue, Sendable {
+      public let range: Field<RangeTemplate>?
+      public let selector: Field<Expression<Bool>>? // default value: true
+
+      public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
+        self.init(
+          range: dictionary.getOptionalField("range", templateToType: templateToType),
+          selector: dictionary.getOptionalExpressionField("selector")
+        )
+      }
+
+      init(
+        range: Field<RangeTemplate>? = nil,
+        selector: Field<Expression<Bool>>? = nil
+      ) {
+        self.range = range
+        self.selector = selector
+      }
+
+      private static func resolveOnlyLinks(context: TemplatesContext, parent: PrototypeTemplate?) -> DeserializationResult<DivText.RangeBuilder.Prototype> {
+        let rangeValue = { parent?.range?.resolveValue(context: context, useOnlyLinks: true) ?? .noValue }()
+        let selectorValue = { parent?.selector?.resolveOptionalValue(context: context) ?? .noValue }()
+        var errors = mergeErrors(
+          rangeValue.errorsOrWarnings?.map { .nestedObjectError(field: "range", error: $0) },
+          selectorValue.errorsOrWarnings?.map { .nestedObjectError(field: "selector", error: $0) }
+        )
+        if case .noValue = rangeValue {
+          errors.append(.requiredFieldIsMissing(field: "range"))
+        }
+        guard
+          let rangeNonNil = rangeValue.value
+        else {
+          return .failure(NonEmptyArray(errors)!)
+        }
+        let result = DivText.RangeBuilder.Prototype(
+          range: { rangeNonNil }(),
+          selector: { selectorValue.value }()
+        )
+        return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
+      }
+
+      public static func resolveValue(context: TemplatesContext, parent: PrototypeTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivText.RangeBuilder.Prototype> {
+        if useOnlyLinks {
+          return resolveOnlyLinks(context: context, parent: parent)
+        }
+        var rangeValue: DeserializationResult<DivText.Range> = .noValue
+        var selectorValue: DeserializationResult<Expression<Bool>> = { parent?.selector?.value() ?? .noValue }()
+        _ = {
+          // Each field is parsed in its own lambda to keep the stack size managable
+          // Otherwise the compiler will allocate stack for each intermediate variable
+          // upfront even when we don't actually visit a relevant branch
+          for (key, __dictValue) in context.templateData {
+            _ = {
+              if key == "range" {
+               rangeValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivTextTemplate.RangeTemplate.self).merged(with: rangeValue)
+              }
+            }()
+            _ = {
+              if key == "selector" {
+               selectorValue = deserialize(__dictValue).merged(with: selectorValue)
+              }
+            }()
+            _ = {
+             if key == parent?.range?.link {
+               rangeValue = rangeValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivTextTemplate.RangeTemplate.self) })
+              }
+            }()
+            _ = {
+             if key == parent?.selector?.link {
+               selectorValue = selectorValue.merged(with: { deserialize(__dictValue) })
+              }
+            }()
+          }
+        }()
+        if let parent = parent {
+          _ = { rangeValue = rangeValue.merged(with: { parent.range?.resolveValue(context: context, useOnlyLinks: true) }) }()
+        }
+        var errors = mergeErrors(
+          rangeValue.errorsOrWarnings?.map { .nestedObjectError(field: "range", error: $0) },
+          selectorValue.errorsOrWarnings?.map { .nestedObjectError(field: "selector", error: $0) }
+        )
+        if case .noValue = rangeValue {
+          errors.append(.requiredFieldIsMissing(field: "range"))
+        }
+        guard
+          let rangeNonNil = rangeValue.value
+        else {
+          return .failure(NonEmptyArray(errors)!)
+        }
+        let result = DivText.RangeBuilder.Prototype(
+          range: { rangeNonNil }(),
+          selector: { selectorValue.value }()
+        )
+        return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
+      }
+
+      private func mergedWithParent(templates: [TemplateName: Any]) throws -> PrototypeTemplate {
+        return self
+      }
+
+      public func resolveParent(templates: [TemplateName: Any]) throws -> PrototypeTemplate {
+        let merged = try mergedWithParent(templates: templates)
+
+        return PrototypeTemplate(
+          range: try merged.range?.resolveParent(templates: templates),
+          selector: merged.selector
+        )
+      }
+    }
+
+    public let data: Field<Expression<[Any]>>?
+    public let dataElementName: Field<String>? // default value: it
+    public let prototypes: Field<[PrototypeTemplate]>? // at least 1 elements
+
+    public convenience init(dictionary: [String: Any], templateToType: [TemplateName: String]) throws {
+      self.init(
+        data: dictionary.getOptionalExpressionField("data"),
+        dataElementName: dictionary.getOptionalField("data_element_name"),
+        prototypes: dictionary.getOptionalArray("prototypes", templateToType: templateToType)
+      )
+    }
+
+    init(
+      data: Field<Expression<[Any]>>? = nil,
+      dataElementName: Field<String>? = nil,
+      prototypes: Field<[PrototypeTemplate]>? = nil
+    ) {
+      self.data = data
+      self.dataElementName = dataElementName
+      self.prototypes = prototypes
+    }
+
+    private static func resolveOnlyLinks(context: TemplatesContext, parent: RangeBuilderTemplate?) -> DeserializationResult<DivText.RangeBuilder> {
+      let dataValue = { parent?.data?.resolveValue(context: context) ?? .noValue }()
+      let dataElementNameValue = { parent?.dataElementName?.resolveOptionalValue(context: context) ?? .noValue }()
+      let prototypesValue = { parent?.prototypes?.resolveValue(context: context, validator: ResolvedValue.prototypesValidator, useOnlyLinks: true) ?? .noValue }()
+      var errors = mergeErrors(
+        dataValue.errorsOrWarnings?.map { .nestedObjectError(field: "data", error: $0) },
+        dataElementNameValue.errorsOrWarnings?.map { .nestedObjectError(field: "data_element_name", error: $0) },
+        prototypesValue.errorsOrWarnings?.map { .nestedObjectError(field: "prototypes", error: $0) }
+      )
+      if case .noValue = dataValue {
+        errors.append(.requiredFieldIsMissing(field: "data"))
+      }
+      if case .noValue = prototypesValue {
+        errors.append(.requiredFieldIsMissing(field: "prototypes"))
+      }
+      guard
+        let dataNonNil = dataValue.value,
+        let prototypesNonNil = prototypesValue.value
+      else {
+        return .failure(NonEmptyArray(errors)!)
+      }
+      let result = DivText.RangeBuilder(
+        data: { dataNonNil }(),
+        dataElementName: { dataElementNameValue.value }(),
+        prototypes: { prototypesNonNil }()
+      )
+      return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
+    }
+
+    public static func resolveValue(context: TemplatesContext, parent: RangeBuilderTemplate?, useOnlyLinks: Bool) -> DeserializationResult<DivText.RangeBuilder> {
+      if useOnlyLinks {
+        return resolveOnlyLinks(context: context, parent: parent)
+      }
+      var dataValue: DeserializationResult<Expression<[Any]>> = { parent?.data?.value() ?? .noValue }()
+      var dataElementNameValue: DeserializationResult<String> = { parent?.dataElementName?.value() ?? .noValue }()
+      var prototypesValue: DeserializationResult<[DivText.RangeBuilder.Prototype]> = .noValue
+      _ = {
+        // Each field is parsed in its own lambda to keep the stack size managable
+        // Otherwise the compiler will allocate stack for each intermediate variable
+        // upfront even when we don't actually visit a relevant branch
+        for (key, __dictValue) in context.templateData {
+          _ = {
+            if key == "data" {
+             dataValue = deserialize(__dictValue).merged(with: dataValue)
+            }
+          }()
+          _ = {
+            if key == "data_element_name" {
+             dataElementNameValue = deserialize(__dictValue).merged(with: dataElementNameValue)
+            }
+          }()
+          _ = {
+            if key == "prototypes" {
+             prototypesValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, validator: ResolvedValue.prototypesValidator, type: DivTextTemplate.RangeBuilderTemplate.PrototypeTemplate.self).merged(with: prototypesValue)
+            }
+          }()
+          _ = {
+           if key == parent?.data?.link {
+             dataValue = dataValue.merged(with: { deserialize(__dictValue) })
+            }
+          }()
+          _ = {
+           if key == parent?.dataElementName?.link {
+             dataElementNameValue = dataElementNameValue.merged(with: { deserialize(__dictValue) })
+            }
+          }()
+          _ = {
+           if key == parent?.prototypes?.link {
+             prototypesValue = prototypesValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, validator: ResolvedValue.prototypesValidator, type: DivTextTemplate.RangeBuilderTemplate.PrototypeTemplate.self) })
+            }
+          }()
+        }
+      }()
+      if let parent = parent {
+        _ = { prototypesValue = prototypesValue.merged(with: { parent.prototypes?.resolveValue(context: context, validator: ResolvedValue.prototypesValidator, useOnlyLinks: true) }) }()
+      }
+      var errors = mergeErrors(
+        dataValue.errorsOrWarnings?.map { .nestedObjectError(field: "data", error: $0) },
+        dataElementNameValue.errorsOrWarnings?.map { .nestedObjectError(field: "data_element_name", error: $0) },
+        prototypesValue.errorsOrWarnings?.map { .nestedObjectError(field: "prototypes", error: $0) }
+      )
+      if case .noValue = dataValue {
+        errors.append(.requiredFieldIsMissing(field: "data"))
+      }
+      if case .noValue = prototypesValue {
+        errors.append(.requiredFieldIsMissing(field: "prototypes"))
+      }
+      guard
+        let dataNonNil = dataValue.value,
+        let prototypesNonNil = prototypesValue.value
+      else {
+        return .failure(NonEmptyArray(errors)!)
+      }
+      let result = DivText.RangeBuilder(
+        data: { dataNonNil }(),
+        dataElementName: { dataElementNameValue.value }(),
+        prototypes: { prototypesNonNil }()
+      )
+      return errors.isEmpty ? .success(result) : .partialSuccess(result, warnings: NonEmptyArray(errors)!)
+    }
+
+    private func mergedWithParent(templates: [TemplateName: Any]) throws -> RangeBuilderTemplate {
+      return self
+    }
+
+    public func resolveParent(templates: [TemplateName: Any]) throws -> RangeBuilderTemplate {
+      let merged = try mergedWithParent(templates: templates)
+
+      return RangeBuilderTemplate(
+        data: merged.data,
+        dataElementName: merged.dataElementName,
+        prototypes: try merged.prototypes?.resolveParent(templates: templates)
       )
     }
   }
@@ -1090,6 +1632,7 @@ public final class DivTextTemplate: TemplateValue, @unchecked Sendable {
   public let hoverEndActions: Field<[DivActionTemplate]>?
   public let hoverStartActions: Field<[DivActionTemplate]>?
   public let id: Field<String>?
+  public let imageBuilder: Field<ImageBuilderTemplate>?
   public let images: Field<[ImageTemplate]>?
   public let layoutProvider: Field<DivLayoutProviderTemplate>?
   public let letterSpacing: Field<Expression<Double>>? // default value: 0
@@ -1101,6 +1644,7 @@ public final class DivTextTemplate: TemplateValue, @unchecked Sendable {
   public let paddings: Field<DivEdgeInsetsTemplate>?
   public let pressEndActions: Field<[DivActionTemplate]>?
   public let pressStartActions: Field<[DivActionTemplate]>?
+  public let rangeBuilder: Field<RangeBuilderTemplate>?
   public let ranges: Field<[RangeTemplate]>?
   public let reuseId: Field<Expression<String>>?
   public let rowSpan: Field<Expression<Int>>? // constraint: number >= 0
@@ -1164,6 +1708,7 @@ public final class DivTextTemplate: TemplateValue, @unchecked Sendable {
       hoverEndActions: dictionary.getOptionalArray("hover_end_actions", templateToType: templateToType),
       hoverStartActions: dictionary.getOptionalArray("hover_start_actions", templateToType: templateToType),
       id: dictionary.getOptionalField("id"),
+      imageBuilder: dictionary.getOptionalField("image_builder", templateToType: templateToType),
       images: dictionary.getOptionalArray("images", templateToType: templateToType),
       layoutProvider: dictionary.getOptionalField("layout_provider", templateToType: templateToType),
       letterSpacing: dictionary.getOptionalExpressionField("letter_spacing"),
@@ -1175,6 +1720,7 @@ public final class DivTextTemplate: TemplateValue, @unchecked Sendable {
       paddings: dictionary.getOptionalField("paddings", templateToType: templateToType),
       pressEndActions: dictionary.getOptionalArray("press_end_actions", templateToType: templateToType),
       pressStartActions: dictionary.getOptionalArray("press_start_actions", templateToType: templateToType),
+      rangeBuilder: dictionary.getOptionalField("range_builder", templateToType: templateToType),
       ranges: dictionary.getOptionalArray("ranges", templateToType: templateToType),
       reuseId: dictionary.getOptionalExpressionField("reuse_id"),
       rowSpan: dictionary.getOptionalExpressionField("row_span"),
@@ -1239,6 +1785,7 @@ public final class DivTextTemplate: TemplateValue, @unchecked Sendable {
     hoverEndActions: Field<[DivActionTemplate]>? = nil,
     hoverStartActions: Field<[DivActionTemplate]>? = nil,
     id: Field<String>? = nil,
+    imageBuilder: Field<ImageBuilderTemplate>? = nil,
     images: Field<[ImageTemplate]>? = nil,
     layoutProvider: Field<DivLayoutProviderTemplate>? = nil,
     letterSpacing: Field<Expression<Double>>? = nil,
@@ -1250,6 +1797,7 @@ public final class DivTextTemplate: TemplateValue, @unchecked Sendable {
     paddings: Field<DivEdgeInsetsTemplate>? = nil,
     pressEndActions: Field<[DivActionTemplate]>? = nil,
     pressStartActions: Field<[DivActionTemplate]>? = nil,
+    rangeBuilder: Field<RangeBuilderTemplate>? = nil,
     ranges: Field<[RangeTemplate]>? = nil,
     reuseId: Field<Expression<String>>? = nil,
     rowSpan: Field<Expression<Int>>? = nil,
@@ -1311,6 +1859,7 @@ public final class DivTextTemplate: TemplateValue, @unchecked Sendable {
     self.hoverEndActions = hoverEndActions
     self.hoverStartActions = hoverStartActions
     self.id = id
+    self.imageBuilder = imageBuilder
     self.images = images
     self.layoutProvider = layoutProvider
     self.letterSpacing = letterSpacing
@@ -1322,6 +1871,7 @@ public final class DivTextTemplate: TemplateValue, @unchecked Sendable {
     self.paddings = paddings
     self.pressEndActions = pressEndActions
     self.pressStartActions = pressStartActions
+    self.rangeBuilder = rangeBuilder
     self.ranges = ranges
     self.reuseId = reuseId
     self.rowSpan = rowSpan
@@ -1384,6 +1934,7 @@ public final class DivTextTemplate: TemplateValue, @unchecked Sendable {
     let hoverEndActionsValue = { parent?.hoverEndActions?.resolveOptionalValue(context: context, useOnlyLinks: true) ?? .noValue }()
     let hoverStartActionsValue = { parent?.hoverStartActions?.resolveOptionalValue(context: context, useOnlyLinks: true) ?? .noValue }()
     let idValue = { parent?.id?.resolveOptionalValue(context: context) ?? .noValue }()
+    let imageBuilderValue = { parent?.imageBuilder?.resolveOptionalValue(context: context, useOnlyLinks: true) ?? .noValue }()
     let imagesValue = { parent?.images?.resolveOptionalValue(context: context, useOnlyLinks: true) ?? .noValue }()
     let layoutProviderValue = { parent?.layoutProvider?.resolveOptionalValue(context: context, useOnlyLinks: true) ?? .noValue }()
     let letterSpacingValue = { parent?.letterSpacing?.resolveOptionalValue(context: context) ?? .noValue }()
@@ -1395,6 +1946,7 @@ public final class DivTextTemplate: TemplateValue, @unchecked Sendable {
     let paddingsValue = { parent?.paddings?.resolveOptionalValue(context: context, useOnlyLinks: true) ?? .noValue }()
     let pressEndActionsValue = { parent?.pressEndActions?.resolveOptionalValue(context: context, useOnlyLinks: true) ?? .noValue }()
     let pressStartActionsValue = { parent?.pressStartActions?.resolveOptionalValue(context: context, useOnlyLinks: true) ?? .noValue }()
+    let rangeBuilderValue = { parent?.rangeBuilder?.resolveOptionalValue(context: context, useOnlyLinks: true) ?? .noValue }()
     let rangesValue = { parent?.ranges?.resolveOptionalValue(context: context, useOnlyLinks: true) ?? .noValue }()
     let reuseIdValue = { parent?.reuseId?.resolveOptionalValue(context: context) ?? .noValue }()
     let rowSpanValue = { parent?.rowSpan?.resolveOptionalValue(context: context, validator: ResolvedValue.rowSpanValidator) ?? .noValue }()
@@ -1455,6 +2007,7 @@ public final class DivTextTemplate: TemplateValue, @unchecked Sendable {
       hoverEndActionsValue.errorsOrWarnings?.map { .nestedObjectError(field: "hover_end_actions", error: $0) },
       hoverStartActionsValue.errorsOrWarnings?.map { .nestedObjectError(field: "hover_start_actions", error: $0) },
       idValue.errorsOrWarnings?.map { .nestedObjectError(field: "id", error: $0) },
+      imageBuilderValue.errorsOrWarnings?.map { .nestedObjectError(field: "image_builder", error: $0) },
       imagesValue.errorsOrWarnings?.map { .nestedObjectError(field: "images", error: $0) },
       layoutProviderValue.errorsOrWarnings?.map { .nestedObjectError(field: "layout_provider", error: $0) },
       letterSpacingValue.errorsOrWarnings?.map { .nestedObjectError(field: "letter_spacing", error: $0) },
@@ -1466,6 +2019,7 @@ public final class DivTextTemplate: TemplateValue, @unchecked Sendable {
       paddingsValue.errorsOrWarnings?.map { .nestedObjectError(field: "paddings", error: $0) },
       pressEndActionsValue.errorsOrWarnings?.map { .nestedObjectError(field: "press_end_actions", error: $0) },
       pressStartActionsValue.errorsOrWarnings?.map { .nestedObjectError(field: "press_start_actions", error: $0) },
+      rangeBuilderValue.errorsOrWarnings?.map { .nestedObjectError(field: "range_builder", error: $0) },
       rangesValue.errorsOrWarnings?.map { .nestedObjectError(field: "ranges", error: $0) },
       reuseIdValue.errorsOrWarnings?.map { .nestedObjectError(field: "reuse_id", error: $0) },
       rowSpanValue.errorsOrWarnings?.map { .nestedObjectError(field: "row_span", error: $0) },
@@ -1535,6 +2089,7 @@ public final class DivTextTemplate: TemplateValue, @unchecked Sendable {
       hoverEndActions: { hoverEndActionsValue.value }(),
       hoverStartActions: { hoverStartActionsValue.value }(),
       id: { idValue.value }(),
+      imageBuilder: { imageBuilderValue.value }(),
       images: { imagesValue.value }(),
       layoutProvider: { layoutProviderValue.value }(),
       letterSpacing: { letterSpacingValue.value }(),
@@ -1546,6 +2101,7 @@ public final class DivTextTemplate: TemplateValue, @unchecked Sendable {
       paddings: { paddingsValue.value }(),
       pressEndActions: { pressEndActionsValue.value }(),
       pressStartActions: { pressStartActionsValue.value }(),
+      rangeBuilder: { rangeBuilderValue.value }(),
       ranges: { rangesValue.value }(),
       reuseId: { reuseIdValue.value }(),
       rowSpan: { rowSpanValue.value }(),
@@ -1613,6 +2169,7 @@ public final class DivTextTemplate: TemplateValue, @unchecked Sendable {
     var hoverEndActionsValue: DeserializationResult<[DivAction]> = .noValue
     var hoverStartActionsValue: DeserializationResult<[DivAction]> = .noValue
     var idValue: DeserializationResult<String> = { parent?.id?.value() ?? .noValue }()
+    var imageBuilderValue: DeserializationResult<DivText.ImageBuilder> = .noValue
     var imagesValue: DeserializationResult<[DivText.Image]> = .noValue
     var layoutProviderValue: DeserializationResult<DivLayoutProvider> = .noValue
     var letterSpacingValue: DeserializationResult<Expression<Double>> = { parent?.letterSpacing?.value() ?? .noValue }()
@@ -1624,6 +2181,7 @@ public final class DivTextTemplate: TemplateValue, @unchecked Sendable {
     var paddingsValue: DeserializationResult<DivEdgeInsets> = .noValue
     var pressEndActionsValue: DeserializationResult<[DivAction]> = .noValue
     var pressStartActionsValue: DeserializationResult<[DivAction]> = .noValue
+    var rangeBuilderValue: DeserializationResult<DivText.RangeBuilder> = .noValue
     var rangesValue: DeserializationResult<[DivText.Range]> = .noValue
     var reuseIdValue: DeserializationResult<Expression<String>> = { parent?.reuseId?.value() ?? .noValue }()
     var rowSpanValue: DeserializationResult<Expression<Int>> = { parent?.rowSpan?.value() ?? .noValue }()
@@ -1813,6 +2371,11 @@ public final class DivTextTemplate: TemplateValue, @unchecked Sendable {
           }
         }()
         _ = {
+          if key == "image_builder" {
+           imageBuilderValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivTextTemplate.ImageBuilderTemplate.self).merged(with: imageBuilderValue)
+          }
+        }()
+        _ = {
           if key == "images" {
            imagesValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivTextTemplate.ImageTemplate.self).merged(with: imagesValue)
           }
@@ -1865,6 +2428,11 @@ public final class DivTextTemplate: TemplateValue, @unchecked Sendable {
         _ = {
           if key == "press_start_actions" {
            pressStartActionsValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivActionTemplate.self).merged(with: pressStartActionsValue)
+          }
+        }()
+        _ = {
+          if key == "range_builder" {
+           rangeBuilderValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivTextTemplate.RangeBuilderTemplate.self).merged(with: rangeBuilderValue)
           }
         }()
         _ = {
@@ -2163,6 +2731,11 @@ public final class DivTextTemplate: TemplateValue, @unchecked Sendable {
           }
         }()
         _ = {
+         if key == parent?.imageBuilder?.link {
+           imageBuilderValue = imageBuilderValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivTextTemplate.ImageBuilderTemplate.self) })
+          }
+        }()
+        _ = {
          if key == parent?.images?.link {
            imagesValue = imagesValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivTextTemplate.ImageTemplate.self) })
           }
@@ -2215,6 +2788,11 @@ public final class DivTextTemplate: TemplateValue, @unchecked Sendable {
         _ = {
          if key == parent?.pressStartActions?.link {
            pressStartActionsValue = pressStartActionsValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivActionTemplate.self) })
+          }
+        }()
+        _ = {
+         if key == parent?.rangeBuilder?.link {
+           rangeBuilderValue = rangeBuilderValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivTextTemplate.RangeBuilderTemplate.self) })
           }
         }()
         _ = {
@@ -2376,6 +2954,7 @@ public final class DivTextTemplate: TemplateValue, @unchecked Sendable {
       _ = { heightValue = heightValue.merged(with: { parent.height?.resolveOptionalValue(context: context, useOnlyLinks: true) }) }()
       _ = { hoverEndActionsValue = hoverEndActionsValue.merged(with: { parent.hoverEndActions?.resolveOptionalValue(context: context, useOnlyLinks: true) }) }()
       _ = { hoverStartActionsValue = hoverStartActionsValue.merged(with: { parent.hoverStartActions?.resolveOptionalValue(context: context, useOnlyLinks: true) }) }()
+      _ = { imageBuilderValue = imageBuilderValue.merged(with: { parent.imageBuilder?.resolveOptionalValue(context: context, useOnlyLinks: true) }) }()
       _ = { imagesValue = imagesValue.merged(with: { parent.images?.resolveOptionalValue(context: context, useOnlyLinks: true) }) }()
       _ = { layoutProviderValue = layoutProviderValue.merged(with: { parent.layoutProvider?.resolveOptionalValue(context: context, useOnlyLinks: true) }) }()
       _ = { longtapActionsValue = longtapActionsValue.merged(with: { parent.longtapActions?.resolveOptionalValue(context: context, useOnlyLinks: true) }) }()
@@ -2383,6 +2962,7 @@ public final class DivTextTemplate: TemplateValue, @unchecked Sendable {
       _ = { paddingsValue = paddingsValue.merged(with: { parent.paddings?.resolveOptionalValue(context: context, useOnlyLinks: true) }) }()
       _ = { pressEndActionsValue = pressEndActionsValue.merged(with: { parent.pressEndActions?.resolveOptionalValue(context: context, useOnlyLinks: true) }) }()
       _ = { pressStartActionsValue = pressStartActionsValue.merged(with: { parent.pressStartActions?.resolveOptionalValue(context: context, useOnlyLinks: true) }) }()
+      _ = { rangeBuilderValue = rangeBuilderValue.merged(with: { parent.rangeBuilder?.resolveOptionalValue(context: context, useOnlyLinks: true) }) }()
       _ = { rangesValue = rangesValue.merged(with: { parent.ranges?.resolveOptionalValue(context: context, useOnlyLinks: true) }) }()
       _ = { selectedActionsValue = selectedActionsValue.merged(with: { parent.selectedActions?.resolveOptionalValue(context: context, useOnlyLinks: true) }) }()
       _ = { textGradientValue = textGradientValue.merged(with: { parent.textGradient?.resolveOptionalValue(context: context, useOnlyLinks: true) }) }()
@@ -2431,6 +3011,7 @@ public final class DivTextTemplate: TemplateValue, @unchecked Sendable {
       hoverEndActionsValue.errorsOrWarnings?.map { .nestedObjectError(field: "hover_end_actions", error: $0) },
       hoverStartActionsValue.errorsOrWarnings?.map { .nestedObjectError(field: "hover_start_actions", error: $0) },
       idValue.errorsOrWarnings?.map { .nestedObjectError(field: "id", error: $0) },
+      imageBuilderValue.errorsOrWarnings?.map { .nestedObjectError(field: "image_builder", error: $0) },
       imagesValue.errorsOrWarnings?.map { .nestedObjectError(field: "images", error: $0) },
       layoutProviderValue.errorsOrWarnings?.map { .nestedObjectError(field: "layout_provider", error: $0) },
       letterSpacingValue.errorsOrWarnings?.map { .nestedObjectError(field: "letter_spacing", error: $0) },
@@ -2442,6 +3023,7 @@ public final class DivTextTemplate: TemplateValue, @unchecked Sendable {
       paddingsValue.errorsOrWarnings?.map { .nestedObjectError(field: "paddings", error: $0) },
       pressEndActionsValue.errorsOrWarnings?.map { .nestedObjectError(field: "press_end_actions", error: $0) },
       pressStartActionsValue.errorsOrWarnings?.map { .nestedObjectError(field: "press_start_actions", error: $0) },
+      rangeBuilderValue.errorsOrWarnings?.map { .nestedObjectError(field: "range_builder", error: $0) },
       rangesValue.errorsOrWarnings?.map { .nestedObjectError(field: "ranges", error: $0) },
       reuseIdValue.errorsOrWarnings?.map { .nestedObjectError(field: "reuse_id", error: $0) },
       rowSpanValue.errorsOrWarnings?.map { .nestedObjectError(field: "row_span", error: $0) },
@@ -2511,6 +3093,7 @@ public final class DivTextTemplate: TemplateValue, @unchecked Sendable {
       hoverEndActions: { hoverEndActionsValue.value }(),
       hoverStartActions: { hoverStartActionsValue.value }(),
       id: { idValue.value }(),
+      imageBuilder: { imageBuilderValue.value }(),
       images: { imagesValue.value }(),
       layoutProvider: { layoutProviderValue.value }(),
       letterSpacing: { letterSpacingValue.value }(),
@@ -2522,6 +3105,7 @@ public final class DivTextTemplate: TemplateValue, @unchecked Sendable {
       paddings: { paddingsValue.value }(),
       pressEndActions: { pressEndActionsValue.value }(),
       pressStartActions: { pressStartActionsValue.value }(),
+      rangeBuilder: { rangeBuilderValue.value }(),
       ranges: { rangesValue.value }(),
       reuseId: { reuseIdValue.value }(),
       rowSpan: { rowSpanValue.value }(),
@@ -2594,6 +3178,7 @@ public final class DivTextTemplate: TemplateValue, @unchecked Sendable {
       hoverEndActions: hoverEndActions ?? mergedParent.hoverEndActions,
       hoverStartActions: hoverStartActions ?? mergedParent.hoverStartActions,
       id: id ?? mergedParent.id,
+      imageBuilder: imageBuilder ?? mergedParent.imageBuilder,
       images: images ?? mergedParent.images,
       layoutProvider: layoutProvider ?? mergedParent.layoutProvider,
       letterSpacing: letterSpacing ?? mergedParent.letterSpacing,
@@ -2605,6 +3190,7 @@ public final class DivTextTemplate: TemplateValue, @unchecked Sendable {
       paddings: paddings ?? mergedParent.paddings,
       pressEndActions: pressEndActions ?? mergedParent.pressEndActions,
       pressStartActions: pressStartActions ?? mergedParent.pressStartActions,
+      rangeBuilder: rangeBuilder ?? mergedParent.rangeBuilder,
       ranges: ranges ?? mergedParent.ranges,
       reuseId: reuseId ?? mergedParent.reuseId,
       rowSpan: rowSpan ?? mergedParent.rowSpan,
@@ -2672,6 +3258,7 @@ public final class DivTextTemplate: TemplateValue, @unchecked Sendable {
       hoverEndActions: merged.hoverEndActions?.tryResolveParent(templates: templates),
       hoverStartActions: merged.hoverStartActions?.tryResolveParent(templates: templates),
       id: merged.id,
+      imageBuilder: merged.imageBuilder?.tryResolveParent(templates: templates),
       images: merged.images?.tryResolveParent(templates: templates),
       layoutProvider: merged.layoutProvider?.tryResolveParent(templates: templates),
       letterSpacing: merged.letterSpacing,
@@ -2683,6 +3270,7 @@ public final class DivTextTemplate: TemplateValue, @unchecked Sendable {
       paddings: merged.paddings?.tryResolveParent(templates: templates),
       pressEndActions: merged.pressEndActions?.tryResolveParent(templates: templates),
       pressStartActions: merged.pressStartActions?.tryResolveParent(templates: templates),
+      rangeBuilder: merged.rangeBuilder?.tryResolveParent(templates: templates),
       ranges: merged.ranges?.tryResolveParent(templates: templates),
       reuseId: merged.reuseId,
       rowSpan: merged.rowSpan,
