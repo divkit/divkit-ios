@@ -34,6 +34,7 @@ public final class DivGalleryTemplate: TemplateValue, Sendable {
   public let functions: Field<[DivFunctionTemplate]>?
   public let height: Field<DivSizeTemplate>? // default value: .divWrapContentSize(DivWrapContentSize())
   public let id: Field<String>?
+  public let infiniteScroll: Field<Expression<Bool>>? // default value: false
   public let itemBuilder: Field<DivCollectionItemBuilderTemplate>?
   public let itemSpacing: Field<Expression<Int>>? // constraint: number >= 0; default value: 8
   public let items: Field<[DivTemplate]>?
@@ -84,6 +85,7 @@ public final class DivGalleryTemplate: TemplateValue, Sendable {
       functions: dictionary.getOptionalArray("functions", templateToType: templateToType),
       height: dictionary.getOptionalField("height", templateToType: templateToType),
       id: dictionary.getOptionalField("id"),
+      infiniteScroll: dictionary.getOptionalExpressionField("infinite_scroll"),
       itemBuilder: dictionary.getOptionalField("item_builder", templateToType: templateToType),
       itemSpacing: dictionary.getOptionalExpressionField("item_spacing"),
       items: dictionary.getOptionalArray("items", templateToType: templateToType),
@@ -135,6 +137,7 @@ public final class DivGalleryTemplate: TemplateValue, Sendable {
     functions: Field<[DivFunctionTemplate]>? = nil,
     height: Field<DivSizeTemplate>? = nil,
     id: Field<String>? = nil,
+    infiniteScroll: Field<Expression<Bool>>? = nil,
     itemBuilder: Field<DivCollectionItemBuilderTemplate>? = nil,
     itemSpacing: Field<Expression<Int>>? = nil,
     items: Field<[DivTemplate]>? = nil,
@@ -183,6 +186,7 @@ public final class DivGalleryTemplate: TemplateValue, Sendable {
     self.functions = functions
     self.height = height
     self.id = id
+    self.infiniteScroll = infiniteScroll
     self.itemBuilder = itemBuilder
     self.itemSpacing = itemSpacing
     self.items = items
@@ -232,6 +236,7 @@ public final class DivGalleryTemplate: TemplateValue, Sendable {
     let functionsValue = { parent?.functions?.resolveOptionalValue(context: context, useOnlyLinks: true) ?? .noValue }()
     let heightValue = { parent?.height?.resolveOptionalValue(context: context, useOnlyLinks: true) ?? .noValue }()
     let idValue = { parent?.id?.resolveOptionalValue(context: context) ?? .noValue }()
+    let infiniteScrollValue = { parent?.infiniteScroll?.resolveOptionalValue(context: context) ?? .noValue }()
     let itemBuilderValue = { parent?.itemBuilder?.resolveOptionalValue(context: context, useOnlyLinks: true) ?? .noValue }()
     let itemSpacingValue = { parent?.itemSpacing?.resolveOptionalValue(context: context, validator: ResolvedValue.itemSpacingValidator) ?? .noValue }()
     let itemsValue = { parent?.items?.resolveOptionalValue(context: context, useOnlyLinks: true) ?? .noValue }()
@@ -279,6 +284,7 @@ public final class DivGalleryTemplate: TemplateValue, Sendable {
       functionsValue.errorsOrWarnings?.map { .nestedObjectError(field: "functions", error: $0) },
       heightValue.errorsOrWarnings?.map { .nestedObjectError(field: "height", error: $0) },
       idValue.errorsOrWarnings?.map { .nestedObjectError(field: "id", error: $0) },
+      infiniteScrollValue.errorsOrWarnings?.map { .nestedObjectError(field: "infinite_scroll", error: $0) },
       itemBuilderValue.errorsOrWarnings?.map { .nestedObjectError(field: "item_builder", error: $0) },
       itemSpacingValue.errorsOrWarnings?.map { .nestedObjectError(field: "item_spacing", error: $0) },
       itemsValue.errorsOrWarnings?.map { .nestedObjectError(field: "items", error: $0) },
@@ -327,6 +333,7 @@ public final class DivGalleryTemplate: TemplateValue, Sendable {
       functions: { functionsValue.value }(),
       height: { heightValue.value }(),
       id: { idValue.value }(),
+      infiniteScroll: { infiniteScrollValue.value }(),
       itemBuilder: { itemBuilderValue.value }(),
       itemSpacing: { itemSpacingValue.value }(),
       items: { itemsValue.value }(),
@@ -381,6 +388,7 @@ public final class DivGalleryTemplate: TemplateValue, Sendable {
     var functionsValue: DeserializationResult<[DivFunction]> = .noValue
     var heightValue: DeserializationResult<DivSize> = .noValue
     var idValue: DeserializationResult<String> = { parent?.id?.value() ?? .noValue }()
+    var infiniteScrollValue: DeserializationResult<Expression<Bool>> = { parent?.infiniteScroll?.value() ?? .noValue }()
     var itemBuilderValue: DeserializationResult<DivCollectionItemBuilder> = .noValue
     var itemSpacingValue: DeserializationResult<Expression<Int>> = { parent?.itemSpacing?.value() ?? .noValue }()
     var itemsValue: DeserializationResult<[Div]> = .noValue
@@ -506,6 +514,11 @@ public final class DivGalleryTemplate: TemplateValue, Sendable {
         _ = {
           if key == "id" {
            idValue = deserialize(__dictValue).merged(with: idValue)
+          }
+        }()
+        _ = {
+          if key == "infinite_scroll" {
+           infiniteScrollValue = deserialize(__dictValue).merged(with: infiniteScrollValue)
           }
         }()
         _ = {
@@ -644,233 +657,238 @@ public final class DivGalleryTemplate: TemplateValue, Sendable {
           }
         }()
         _ = {
-         if key == parent?.accessibility?.link {
-           accessibilityValue = accessibilityValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivAccessibilityTemplate.self) })
+         if key == parent?.accessibility?.link, context.templateData["accessibility"] == nil {
+           accessibilityValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivAccessibilityTemplate.self).merged(with: accessibilityValue)
           }
         }()
         _ = {
-         if key == parent?.alignmentHorizontal?.link {
-           alignmentHorizontalValue = alignmentHorizontalValue.merged(with: { deserialize(__dictValue) })
+         if key == parent?.alignmentHorizontal?.link, context.templateData["alignment_horizontal"] == nil {
+           alignmentHorizontalValue = deserialize(__dictValue).merged(with: alignmentHorizontalValue)
           }
         }()
         _ = {
-         if key == parent?.alignmentVertical?.link {
-           alignmentVerticalValue = alignmentVerticalValue.merged(with: { deserialize(__dictValue) })
+         if key == parent?.alignmentVertical?.link, context.templateData["alignment_vertical"] == nil {
+           alignmentVerticalValue = deserialize(__dictValue).merged(with: alignmentVerticalValue)
           }
         }()
         _ = {
-         if key == parent?.allowTapWhileScroll?.link {
-           allowTapWhileScrollValue = allowTapWhileScrollValue.merged(with: { deserialize(__dictValue) })
+         if key == parent?.allowTapWhileScroll?.link, context.templateData["allow_tap_while_scroll"] == nil {
+           allowTapWhileScrollValue = deserialize(__dictValue).merged(with: allowTapWhileScrollValue)
           }
         }()
         _ = {
-         if key == parent?.alpha?.link {
-           alphaValue = alphaValue.merged(with: { deserialize(__dictValue, validator: ResolvedValue.alphaValidator) })
+         if key == parent?.alpha?.link, context.templateData["alpha"] == nil {
+           alphaValue = deserialize(__dictValue, validator: ResolvedValue.alphaValidator).merged(with: alphaValue)
           }
         }()
         _ = {
-         if key == parent?.animators?.link {
-           animatorsValue = animatorsValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivAnimatorTemplate.self) })
+         if key == parent?.animators?.link, context.templateData["animators"] == nil {
+           animatorsValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivAnimatorTemplate.self).merged(with: animatorsValue)
           }
         }()
         _ = {
-         if key == parent?.background?.link {
-           backgroundValue = backgroundValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivBackgroundTemplate.self) })
+         if key == parent?.background?.link, context.templateData["background"] == nil {
+           backgroundValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivBackgroundTemplate.self).merged(with: backgroundValue)
           }
         }()
         _ = {
-         if key == parent?.border?.link {
-           borderValue = borderValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivBorderTemplate.self) })
+         if key == parent?.border?.link, context.templateData["border"] == nil {
+           borderValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivBorderTemplate.self).merged(with: borderValue)
           }
         }()
         _ = {
-         if key == parent?.columnCount?.link {
-           columnCountValue = columnCountValue.merged(with: { deserialize(__dictValue, validator: ResolvedValue.columnCountValidator) })
+         if key == parent?.columnCount?.link, context.templateData["column_count"] == nil {
+           columnCountValue = deserialize(__dictValue, validator: ResolvedValue.columnCountValidator).merged(with: columnCountValue)
           }
         }()
         _ = {
-         if key == parent?.columnSpan?.link {
-           columnSpanValue = columnSpanValue.merged(with: { deserialize(__dictValue, validator: ResolvedValue.columnSpanValidator) })
+         if key == parent?.columnSpan?.link, context.templateData["column_span"] == nil {
+           columnSpanValue = deserialize(__dictValue, validator: ResolvedValue.columnSpanValidator).merged(with: columnSpanValue)
           }
         }()
         _ = {
-         if key == parent?.crossContentAlignment?.link {
-           crossContentAlignmentValue = crossContentAlignmentValue.merged(with: { deserialize(__dictValue) })
+         if key == parent?.crossContentAlignment?.link, context.templateData["cross_content_alignment"] == nil {
+           crossContentAlignmentValue = deserialize(__dictValue).merged(with: crossContentAlignmentValue)
           }
         }()
         _ = {
-         if key == parent?.crossSpacing?.link {
-           crossSpacingValue = crossSpacingValue.merged(with: { deserialize(__dictValue, validator: ResolvedValue.crossSpacingValidator) })
+         if key == parent?.crossSpacing?.link, context.templateData["cross_spacing"] == nil {
+           crossSpacingValue = deserialize(__dictValue, validator: ResolvedValue.crossSpacingValidator).merged(with: crossSpacingValue)
           }
         }()
         _ = {
-         if key == parent?.defaultItem?.link {
-           defaultItemValue = defaultItemValue.merged(with: { deserialize(__dictValue, validator: ResolvedValue.defaultItemValidator) })
+         if key == parent?.defaultItem?.link, context.templateData["default_item"] == nil {
+           defaultItemValue = deserialize(__dictValue, validator: ResolvedValue.defaultItemValidator).merged(with: defaultItemValue)
           }
         }()
         _ = {
-         if key == parent?.disappearActions?.link {
-           disappearActionsValue = disappearActionsValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivDisappearActionTemplate.self) })
+         if key == parent?.disappearActions?.link, context.templateData["disappear_actions"] == nil {
+           disappearActionsValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivDisappearActionTemplate.self).merged(with: disappearActionsValue)
           }
         }()
         _ = {
-         if key == parent?.extensions?.link {
-           extensionsValue = extensionsValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivExtensionTemplate.self) })
+         if key == parent?.extensions?.link, context.templateData["extensions"] == nil {
+           extensionsValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivExtensionTemplate.self).merged(with: extensionsValue)
           }
         }()
         _ = {
-         if key == parent?.focus?.link {
-           focusValue = focusValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivFocusTemplate.self) })
+         if key == parent?.focus?.link, context.templateData["focus"] == nil {
+           focusValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivFocusTemplate.self).merged(with: focusValue)
           }
         }()
         _ = {
-         if key == parent?.functions?.link {
-           functionsValue = functionsValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivFunctionTemplate.self) })
+         if key == parent?.functions?.link, context.templateData["functions"] == nil {
+           functionsValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivFunctionTemplate.self).merged(with: functionsValue)
           }
         }()
         _ = {
-         if key == parent?.height?.link {
-           heightValue = heightValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivSizeTemplate.self) })
+         if key == parent?.height?.link, context.templateData["height"] == nil {
+           heightValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivSizeTemplate.self).merged(with: heightValue)
           }
         }()
         _ = {
-         if key == parent?.id?.link {
-           idValue = idValue.merged(with: { deserialize(__dictValue) })
+         if key == parent?.id?.link, context.templateData["id"] == nil {
+           idValue = deserialize(__dictValue).merged(with: idValue)
           }
         }()
         _ = {
-         if key == parent?.itemBuilder?.link {
-           itemBuilderValue = itemBuilderValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivCollectionItemBuilderTemplate.self) })
+         if key == parent?.infiniteScroll?.link, context.templateData["infinite_scroll"] == nil {
+           infiniteScrollValue = deserialize(__dictValue).merged(with: infiniteScrollValue)
           }
         }()
         _ = {
-         if key == parent?.itemSpacing?.link {
-           itemSpacingValue = itemSpacingValue.merged(with: { deserialize(__dictValue, validator: ResolvedValue.itemSpacingValidator) })
+         if key == parent?.itemBuilder?.link, context.templateData["item_builder"] == nil {
+           itemBuilderValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivCollectionItemBuilderTemplate.self).merged(with: itemBuilderValue)
           }
         }()
         _ = {
-         if key == parent?.items?.link {
-           itemsValue = itemsValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivTemplate.self) })
+         if key == parent?.itemSpacing?.link, context.templateData["item_spacing"] == nil {
+           itemSpacingValue = deserialize(__dictValue, validator: ResolvedValue.itemSpacingValidator).merged(with: itemSpacingValue)
           }
         }()
         _ = {
-         if key == parent?.layoutProvider?.link {
-           layoutProviderValue = layoutProviderValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivLayoutProviderTemplate.self) })
+         if key == parent?.items?.link, context.templateData["items"] == nil {
+           itemsValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivTemplate.self).merged(with: itemsValue)
           }
         }()
         _ = {
-         if key == parent?.margins?.link {
-           marginsValue = marginsValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivEdgeInsetsTemplate.self) })
+         if key == parent?.layoutProvider?.link, context.templateData["layout_provider"] == nil {
+           layoutProviderValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivLayoutProviderTemplate.self).merged(with: layoutProviderValue)
           }
         }()
         _ = {
-         if key == parent?.orientation?.link {
-           orientationValue = orientationValue.merged(with: { deserialize(__dictValue) })
+         if key == parent?.margins?.link, context.templateData["margins"] == nil {
+           marginsValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivEdgeInsetsTemplate.self).merged(with: marginsValue)
           }
         }()
         _ = {
-         if key == parent?.paddings?.link {
-           paddingsValue = paddingsValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivEdgeInsetsTemplate.self) })
+         if key == parent?.orientation?.link, context.templateData["orientation"] == nil {
+           orientationValue = deserialize(__dictValue).merged(with: orientationValue)
           }
         }()
         _ = {
-         if key == parent?.restrictParentScroll?.link {
-           restrictParentScrollValue = restrictParentScrollValue.merged(with: { deserialize(__dictValue) })
+         if key == parent?.paddings?.link, context.templateData["paddings"] == nil {
+           paddingsValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivEdgeInsetsTemplate.self).merged(with: paddingsValue)
           }
         }()
         _ = {
-         if key == parent?.reuseId?.link {
-           reuseIdValue = reuseIdValue.merged(with: { deserialize(__dictValue) })
+         if key == parent?.restrictParentScroll?.link, context.templateData["restrict_parent_scroll"] == nil {
+           restrictParentScrollValue = deserialize(__dictValue).merged(with: restrictParentScrollValue)
           }
         }()
         _ = {
-         if key == parent?.rowSpan?.link {
-           rowSpanValue = rowSpanValue.merged(with: { deserialize(__dictValue, validator: ResolvedValue.rowSpanValidator) })
+         if key == parent?.reuseId?.link, context.templateData["reuse_id"] == nil {
+           reuseIdValue = deserialize(__dictValue).merged(with: reuseIdValue)
           }
         }()
         _ = {
-         if key == parent?.scrollContentAlignment?.link {
-           scrollContentAlignmentValue = scrollContentAlignmentValue.merged(with: { deserialize(__dictValue) })
+         if key == parent?.rowSpan?.link, context.templateData["row_span"] == nil {
+           rowSpanValue = deserialize(__dictValue, validator: ResolvedValue.rowSpanValidator).merged(with: rowSpanValue)
           }
         }()
         _ = {
-         if key == parent?.scrollMode?.link {
-           scrollModeValue = scrollModeValue.merged(with: { deserialize(__dictValue) })
+         if key == parent?.scrollContentAlignment?.link, context.templateData["scroll_content_alignment"] == nil {
+           scrollContentAlignmentValue = deserialize(__dictValue).merged(with: scrollContentAlignmentValue)
           }
         }()
         _ = {
-         if key == parent?.scrollbar?.link {
-           scrollbarValue = scrollbarValue.merged(with: { deserialize(__dictValue) })
+         if key == parent?.scrollMode?.link, context.templateData["scroll_mode"] == nil {
+           scrollModeValue = deserialize(__dictValue).merged(with: scrollModeValue)
           }
         }()
         _ = {
-         if key == parent?.selectedActions?.link {
-           selectedActionsValue = selectedActionsValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivActionTemplate.self) })
+         if key == parent?.scrollbar?.link, context.templateData["scrollbar"] == nil {
+           scrollbarValue = deserialize(__dictValue).merged(with: scrollbarValue)
           }
         }()
         _ = {
-         if key == parent?.tooltips?.link {
-           tooltipsValue = tooltipsValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivTooltipTemplate.self) })
+         if key == parent?.selectedActions?.link, context.templateData["selected_actions"] == nil {
+           selectedActionsValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivActionTemplate.self).merged(with: selectedActionsValue)
           }
         }()
         _ = {
-         if key == parent?.transform?.link {
-           transformValue = transformValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivTransformTemplate.self) })
+         if key == parent?.tooltips?.link, context.templateData["tooltips"] == nil {
+           tooltipsValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivTooltipTemplate.self).merged(with: tooltipsValue)
           }
         }()
         _ = {
-         if key == parent?.transformations?.link {
-           transformationsValue = transformationsValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivTransformationTemplate.self) })
+         if key == parent?.transform?.link, context.templateData["transform"] == nil {
+           transformValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivTransformTemplate.self).merged(with: transformValue)
           }
         }()
         _ = {
-         if key == parent?.transitionChange?.link {
-           transitionChangeValue = transitionChangeValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivChangeTransitionTemplate.self) })
+         if key == parent?.transformations?.link, context.templateData["transformations"] == nil {
+           transformationsValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivTransformationTemplate.self).merged(with: transformationsValue)
           }
         }()
         _ = {
-         if key == parent?.transitionIn?.link {
-           transitionInValue = transitionInValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivAppearanceTransitionTemplate.self) })
+         if key == parent?.transitionChange?.link, context.templateData["transition_change"] == nil {
+           transitionChangeValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivChangeTransitionTemplate.self).merged(with: transitionChangeValue)
           }
         }()
         _ = {
-         if key == parent?.transitionOut?.link {
-           transitionOutValue = transitionOutValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivAppearanceTransitionTemplate.self) })
+         if key == parent?.transitionIn?.link, context.templateData["transition_in"] == nil {
+           transitionInValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivAppearanceTransitionTemplate.self).merged(with: transitionInValue)
           }
         }()
         _ = {
-         if key == parent?.transitionTriggers?.link {
-           transitionTriggersValue = transitionTriggersValue.merged(with: { deserialize(__dictValue, validator: ResolvedValue.transitionTriggersValidator) })
+         if key == parent?.transitionOut?.link, context.templateData["transition_out"] == nil {
+           transitionOutValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivAppearanceTransitionTemplate.self).merged(with: transitionOutValue)
           }
         }()
         _ = {
-         if key == parent?.variableTriggers?.link {
-           variableTriggersValue = variableTriggersValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivTriggerTemplate.self) })
+         if key == parent?.transitionTriggers?.link, context.templateData["transition_triggers"] == nil {
+           transitionTriggersValue = deserialize(__dictValue, validator: ResolvedValue.transitionTriggersValidator).merged(with: transitionTriggersValue)
           }
         }()
         _ = {
-         if key == parent?.variables?.link {
-           variablesValue = variablesValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivVariableTemplate.self) })
+         if key == parent?.variableTriggers?.link, context.templateData["variable_triggers"] == nil {
+           variableTriggersValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivTriggerTemplate.self).merged(with: variableTriggersValue)
           }
         }()
         _ = {
-         if key == parent?.visibility?.link {
-           visibilityValue = visibilityValue.merged(with: { deserialize(__dictValue) })
+         if key == parent?.variables?.link, context.templateData["variables"] == nil {
+           variablesValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivVariableTemplate.self).merged(with: variablesValue)
           }
         }()
         _ = {
-         if key == parent?.visibilityAction?.link {
-           visibilityActionValue = visibilityActionValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivVisibilityActionTemplate.self) })
+         if key == parent?.visibility?.link, context.templateData["visibility"] == nil {
+           visibilityValue = deserialize(__dictValue).merged(with: visibilityValue)
           }
         }()
         _ = {
-         if key == parent?.visibilityActions?.link {
-           visibilityActionsValue = visibilityActionsValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivVisibilityActionTemplate.self) })
+         if key == parent?.visibilityAction?.link, context.templateData["visibility_action"] == nil {
+           visibilityActionValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivVisibilityActionTemplate.self).merged(with: visibilityActionValue)
           }
         }()
         _ = {
-         if key == parent?.width?.link {
-           widthValue = widthValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivSizeTemplate.self) })
+         if key == parent?.visibilityActions?.link, context.templateData["visibility_actions"] == nil {
+           visibilityActionsValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivVisibilityActionTemplate.self).merged(with: visibilityActionsValue)
+          }
+        }()
+        _ = {
+         if key == parent?.width?.link, context.templateData["width"] == nil {
+           widthValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivSizeTemplate.self).merged(with: widthValue)
           }
         }()
       }
@@ -923,6 +941,7 @@ public final class DivGalleryTemplate: TemplateValue, Sendable {
       functionsValue.errorsOrWarnings?.map { .nestedObjectError(field: "functions", error: $0) },
       heightValue.errorsOrWarnings?.map { .nestedObjectError(field: "height", error: $0) },
       idValue.errorsOrWarnings?.map { .nestedObjectError(field: "id", error: $0) },
+      infiniteScrollValue.errorsOrWarnings?.map { .nestedObjectError(field: "infinite_scroll", error: $0) },
       itemBuilderValue.errorsOrWarnings?.map { .nestedObjectError(field: "item_builder", error: $0) },
       itemSpacingValue.errorsOrWarnings?.map { .nestedObjectError(field: "item_spacing", error: $0) },
       itemsValue.errorsOrWarnings?.map { .nestedObjectError(field: "items", error: $0) },
@@ -971,6 +990,7 @@ public final class DivGalleryTemplate: TemplateValue, Sendable {
       functions: { functionsValue.value }(),
       height: { heightValue.value }(),
       id: { idValue.value }(),
+      infiniteScroll: { infiniteScrollValue.value }(),
       itemBuilder: { itemBuilderValue.value }(),
       itemSpacing: { itemSpacingValue.value }(),
       items: { itemsValue.value }(),
@@ -1030,6 +1050,7 @@ public final class DivGalleryTemplate: TemplateValue, Sendable {
       functions: functions ?? mergedParent.functions,
       height: height ?? mergedParent.height,
       id: id ?? mergedParent.id,
+      infiniteScroll: infiniteScroll ?? mergedParent.infiniteScroll,
       itemBuilder: itemBuilder ?? mergedParent.itemBuilder,
       itemSpacing: itemSpacing ?? mergedParent.itemSpacing,
       items: items ?? mergedParent.items,
@@ -1084,6 +1105,7 @@ public final class DivGalleryTemplate: TemplateValue, Sendable {
       functions: merged.functions?.tryResolveParent(templates: templates),
       height: merged.height?.tryResolveParent(templates: templates),
       id: merged.id,
+      infiniteScroll: merged.infiniteScroll,
       itemBuilder: merged.itemBuilder?.tryResolveParent(templates: templates),
       itemSpacing: merged.itemSpacing,
       items: merged.items?.tryResolveParent(templates: templates),

@@ -55,8 +55,8 @@ public final class DivInputTemplate: TemplateValue, @unchecked Sendable {
             }
           }()
           _ = {
-           if key == parent?.color?.link {
-             colorValue = colorValue.merged(with: { deserialize(__dictValue, transform: Color.color(withHexString:)) })
+           if key == parent?.color?.link, context.templateData["color"] == nil {
+             colorValue = deserialize(__dictValue, transform: Color.color(withHexString:)).orFallback(colorValue)
             }
           }()
         }
@@ -98,6 +98,7 @@ public final class DivInputTemplate: TemplateValue, @unchecked Sendable {
   public let accessibility: Field<DivAccessibilityTemplate>?
   public let alignmentHorizontal: Field<Expression<DivAlignmentHorizontal>>?
   public let alignmentVertical: Field<Expression<DivAlignmentVertical>>?
+  public let allowSuggestionsBar: Field<Expression<Bool>>? // default value: true
   public let alpha: Field<Expression<Double>>? // constraint: number >= 0.0 && number <= 1.0; default value: 1.0
   public let animators: Field<[DivAnimatorTemplate]>?
   public let autocapitalization: Field<Expression<Autocapitalization>>? // default value: auto
@@ -118,7 +119,6 @@ public final class DivInputTemplate: TemplateValue, @unchecked Sendable {
   public let fontWeightValue: Field<Expression<Int>>? // constraint: number > 0
   public let functions: Field<[DivFunctionTemplate]>?
   public let height: Field<DivSizeTemplate>? // default value: .divWrapContentSize(DivWrapContentSize())
-  public let hideSuggestionsBar: Field<Expression<Bool>>? // default value: false
   public let highlightColor: Field<Expression<Color>>?
   public let hintColor: Field<Expression<Color>>? // default value: #73000000
   public let hintText: Field<Expression<String>>?
@@ -163,6 +163,7 @@ public final class DivInputTemplate: TemplateValue, @unchecked Sendable {
       accessibility: dictionary.getOptionalField("accessibility", templateToType: templateToType),
       alignmentHorizontal: dictionary.getOptionalExpressionField("alignment_horizontal"),
       alignmentVertical: dictionary.getOptionalExpressionField("alignment_vertical"),
+      allowSuggestionsBar: dictionary.getOptionalExpressionField("allow_suggestions_bar"),
       alpha: dictionary.getOptionalExpressionField("alpha"),
       animators: dictionary.getOptionalArray("animators", templateToType: templateToType),
       autocapitalization: dictionary.getOptionalExpressionField("autocapitalization"),
@@ -183,7 +184,6 @@ public final class DivInputTemplate: TemplateValue, @unchecked Sendable {
       fontWeightValue: dictionary.getOptionalExpressionField("font_weight_value"),
       functions: dictionary.getOptionalArray("functions", templateToType: templateToType),
       height: dictionary.getOptionalField("height", templateToType: templateToType),
-      hideSuggestionsBar: dictionary.getOptionalExpressionField("hide_suggestions_bar"),
       highlightColor: dictionary.getOptionalExpressionField("highlight_color", transform: Color.color(withHexString:)),
       hintColor: dictionary.getOptionalExpressionField("hint_color", transform: Color.color(withHexString:)),
       hintText: dictionary.getOptionalExpressionField("hint_text"),
@@ -229,6 +229,7 @@ public final class DivInputTemplate: TemplateValue, @unchecked Sendable {
     accessibility: Field<DivAccessibilityTemplate>? = nil,
     alignmentHorizontal: Field<Expression<DivAlignmentHorizontal>>? = nil,
     alignmentVertical: Field<Expression<DivAlignmentVertical>>? = nil,
+    allowSuggestionsBar: Field<Expression<Bool>>? = nil,
     alpha: Field<Expression<Double>>? = nil,
     animators: Field<[DivAnimatorTemplate]>? = nil,
     autocapitalization: Field<Expression<Autocapitalization>>? = nil,
@@ -249,7 +250,6 @@ public final class DivInputTemplate: TemplateValue, @unchecked Sendable {
     fontWeightValue: Field<Expression<Int>>? = nil,
     functions: Field<[DivFunctionTemplate]>? = nil,
     height: Field<DivSizeTemplate>? = nil,
-    hideSuggestionsBar: Field<Expression<Bool>>? = nil,
     highlightColor: Field<Expression<Color>>? = nil,
     hintColor: Field<Expression<Color>>? = nil,
     hintText: Field<Expression<String>>? = nil,
@@ -292,6 +292,7 @@ public final class DivInputTemplate: TemplateValue, @unchecked Sendable {
     self.accessibility = accessibility
     self.alignmentHorizontal = alignmentHorizontal
     self.alignmentVertical = alignmentVertical
+    self.allowSuggestionsBar = allowSuggestionsBar
     self.alpha = alpha
     self.animators = animators
     self.autocapitalization = autocapitalization
@@ -312,7 +313,6 @@ public final class DivInputTemplate: TemplateValue, @unchecked Sendable {
     self.fontWeightValue = fontWeightValue
     self.functions = functions
     self.height = height
-    self.hideSuggestionsBar = hideSuggestionsBar
     self.highlightColor = highlightColor
     self.hintColor = hintColor
     self.hintText = hintText
@@ -356,6 +356,7 @@ public final class DivInputTemplate: TemplateValue, @unchecked Sendable {
     let accessibilityValue = { parent?.accessibility?.resolveOptionalValue(context: context, useOnlyLinks: true) ?? .noValue }()
     let alignmentHorizontalValue = { parent?.alignmentHorizontal?.resolveOptionalValue(context: context) ?? .noValue }()
     let alignmentVerticalValue = { parent?.alignmentVertical?.resolveOptionalValue(context: context) ?? .noValue }()
+    let allowSuggestionsBarValue = { parent?.allowSuggestionsBar?.resolveOptionalValue(context: context) ?? .noValue }()
     let alphaValue = { parent?.alpha?.resolveOptionalValue(context: context, validator: ResolvedValue.alphaValidator) ?? .noValue }()
     let animatorsValue = { parent?.animators?.resolveOptionalValue(context: context, useOnlyLinks: true) ?? .noValue }()
     let autocapitalizationValue = { parent?.autocapitalization?.resolveOptionalValue(context: context) ?? .noValue }()
@@ -376,7 +377,6 @@ public final class DivInputTemplate: TemplateValue, @unchecked Sendable {
     let fontWeightValueValue = { parent?.fontWeightValue?.resolveOptionalValue(context: context, validator: ResolvedValue.fontWeightValueValidator) ?? .noValue }()
     let functionsValue = { parent?.functions?.resolveOptionalValue(context: context, useOnlyLinks: true) ?? .noValue }()
     let heightValue = { parent?.height?.resolveOptionalValue(context: context, useOnlyLinks: true) ?? .noValue }()
-    let hideSuggestionsBarValue = { parent?.hideSuggestionsBar?.resolveOptionalValue(context: context) ?? .noValue }()
     let highlightColorValue = { parent?.highlightColor?.resolveOptionalValue(context: context, transform: Color.color(withHexString:)) ?? .noValue }()
     let hintColorValue = { parent?.hintColor?.resolveOptionalValue(context: context, transform: Color.color(withHexString:)) ?? .noValue }()
     let hintTextValue = { parent?.hintText?.resolveOptionalValue(context: context) ?? .noValue }()
@@ -418,6 +418,7 @@ public final class DivInputTemplate: TemplateValue, @unchecked Sendable {
       accessibilityValue.errorsOrWarnings?.map { .nestedObjectError(field: "accessibility", error: $0) },
       alignmentHorizontalValue.errorsOrWarnings?.map { .nestedObjectError(field: "alignment_horizontal", error: $0) },
       alignmentVerticalValue.errorsOrWarnings?.map { .nestedObjectError(field: "alignment_vertical", error: $0) },
+      allowSuggestionsBarValue.errorsOrWarnings?.map { .nestedObjectError(field: "allow_suggestions_bar", error: $0) },
       alphaValue.errorsOrWarnings?.map { .nestedObjectError(field: "alpha", error: $0) },
       animatorsValue.errorsOrWarnings?.map { .nestedObjectError(field: "animators", error: $0) },
       autocapitalizationValue.errorsOrWarnings?.map { .nestedObjectError(field: "autocapitalization", error: $0) },
@@ -438,7 +439,6 @@ public final class DivInputTemplate: TemplateValue, @unchecked Sendable {
       fontWeightValueValue.errorsOrWarnings?.map { .nestedObjectError(field: "font_weight_value", error: $0) },
       functionsValue.errorsOrWarnings?.map { .nestedObjectError(field: "functions", error: $0) },
       heightValue.errorsOrWarnings?.map { .nestedObjectError(field: "height", error: $0) },
-      hideSuggestionsBarValue.errorsOrWarnings?.map { .nestedObjectError(field: "hide_suggestions_bar", error: $0) },
       highlightColorValue.errorsOrWarnings?.map { .nestedObjectError(field: "highlight_color", error: $0) },
       hintColorValue.errorsOrWarnings?.map { .nestedObjectError(field: "hint_color", error: $0) },
       hintTextValue.errorsOrWarnings?.map { .nestedObjectError(field: "hint_text", error: $0) },
@@ -489,6 +489,7 @@ public final class DivInputTemplate: TemplateValue, @unchecked Sendable {
       accessibility: { accessibilityValue.value }(),
       alignmentHorizontal: { alignmentHorizontalValue.value }(),
       alignmentVertical: { alignmentVerticalValue.value }(),
+      allowSuggestionsBar: { allowSuggestionsBarValue.value }(),
       alpha: { alphaValue.value }(),
       animators: { animatorsValue.value }(),
       autocapitalization: { autocapitalizationValue.value }(),
@@ -509,7 +510,6 @@ public final class DivInputTemplate: TemplateValue, @unchecked Sendable {
       fontWeightValue: { fontWeightValueValue.value }(),
       functions: { functionsValue.value }(),
       height: { heightValue.value }(),
-      hideSuggestionsBar: { hideSuggestionsBarValue.value }(),
       highlightColor: { highlightColorValue.value }(),
       hintColor: { hintColorValue.value }(),
       hintText: { hintTextValue.value }(),
@@ -558,6 +558,7 @@ public final class DivInputTemplate: TemplateValue, @unchecked Sendable {
     var accessibilityValue: DeserializationResult<DivAccessibility> = .noValue
     var alignmentHorizontalValue: DeserializationResult<Expression<DivAlignmentHorizontal>> = { parent?.alignmentHorizontal?.value() ?? .noValue }()
     var alignmentVerticalValue: DeserializationResult<Expression<DivAlignmentVertical>> = { parent?.alignmentVertical?.value() ?? .noValue }()
+    var allowSuggestionsBarValue: DeserializationResult<Expression<Bool>> = { parent?.allowSuggestionsBar?.value() ?? .noValue }()
     var alphaValue: DeserializationResult<Expression<Double>> = { parent?.alpha?.value() ?? .noValue }()
     var animatorsValue: DeserializationResult<[DivAnimator]> = .noValue
     var autocapitalizationValue: DeserializationResult<Expression<DivInput.Autocapitalization>> = { parent?.autocapitalization?.value() ?? .noValue }()
@@ -578,7 +579,6 @@ public final class DivInputTemplate: TemplateValue, @unchecked Sendable {
     var fontWeightValueValue: DeserializationResult<Expression<Int>> = { parent?.fontWeightValue?.value() ?? .noValue }()
     var functionsValue: DeserializationResult<[DivFunction]> = .noValue
     var heightValue: DeserializationResult<DivSize> = .noValue
-    var hideSuggestionsBarValue: DeserializationResult<Expression<Bool>> = { parent?.hideSuggestionsBar?.value() ?? .noValue }()
     var highlightColorValue: DeserializationResult<Expression<Color>> = { parent?.highlightColor?.value() ?? .noValue }()
     var hintColorValue: DeserializationResult<Expression<Color>> = { parent?.hintColor?.value() ?? .noValue }()
     var hintTextValue: DeserializationResult<Expression<String>> = { parent?.hintText?.value() ?? .noValue }()
@@ -634,6 +634,11 @@ public final class DivInputTemplate: TemplateValue, @unchecked Sendable {
         _ = {
           if key == "alignment_vertical" {
            alignmentVerticalValue = deserialize(__dictValue).merged(with: alignmentVerticalValue)
+          }
+        }()
+        _ = {
+          if key == "allow_suggestions_bar" {
+           allowSuggestionsBarValue = deserialize(__dictValue).merged(with: allowSuggestionsBarValue)
           }
         }()
         _ = {
@@ -734,11 +739,6 @@ public final class DivInputTemplate: TemplateValue, @unchecked Sendable {
         _ = {
           if key == "height" {
            heightValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivSizeTemplate.self).merged(with: heightValue)
-          }
-        }()
-        _ = {
-          if key == "hide_suggestions_bar" {
-           hideSuggestionsBarValue = deserialize(__dictValue).merged(with: hideSuggestionsBarValue)
           }
         }()
         _ = {
@@ -927,308 +927,308 @@ public final class DivInputTemplate: TemplateValue, @unchecked Sendable {
           }
         }()
         _ = {
-         if key == parent?.accessibility?.link {
-           accessibilityValue = accessibilityValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivAccessibilityTemplate.self) })
+         if key == parent?.accessibility?.link, context.templateData["accessibility"] == nil {
+           accessibilityValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivAccessibilityTemplate.self).orFallback(accessibilityValue)
           }
         }()
         _ = {
-         if key == parent?.alignmentHorizontal?.link {
-           alignmentHorizontalValue = alignmentHorizontalValue.merged(with: { deserialize(__dictValue) })
+         if key == parent?.alignmentHorizontal?.link, context.templateData["alignment_horizontal"] == nil {
+           alignmentHorizontalValue = deserialize(__dictValue).orFallback(alignmentHorizontalValue)
           }
         }()
         _ = {
-         if key == parent?.alignmentVertical?.link {
-           alignmentVerticalValue = alignmentVerticalValue.merged(with: { deserialize(__dictValue) })
+         if key == parent?.alignmentVertical?.link, context.templateData["alignment_vertical"] == nil {
+           alignmentVerticalValue = deserialize(__dictValue).orFallback(alignmentVerticalValue)
           }
         }()
         _ = {
-         if key == parent?.alpha?.link {
-           alphaValue = alphaValue.merged(with: { deserialize(__dictValue, validator: ResolvedValue.alphaValidator) })
+         if key == parent?.allowSuggestionsBar?.link, context.templateData["allow_suggestions_bar"] == nil {
+           allowSuggestionsBarValue = deserialize(__dictValue).orFallback(allowSuggestionsBarValue)
           }
         }()
         _ = {
-         if key == parent?.animators?.link {
-           animatorsValue = animatorsValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivAnimatorTemplate.self) })
+         if key == parent?.alpha?.link, context.templateData["alpha"] == nil {
+           alphaValue = deserialize(__dictValue, validator: ResolvedValue.alphaValidator).orFallback(alphaValue)
           }
         }()
         _ = {
-         if key == parent?.autocapitalization?.link {
-           autocapitalizationValue = autocapitalizationValue.merged(with: { deserialize(__dictValue) })
+         if key == parent?.animators?.link, context.templateData["animators"] == nil {
+           animatorsValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivAnimatorTemplate.self).orFallback(animatorsValue)
           }
         }()
         _ = {
-         if key == parent?.background?.link {
-           backgroundValue = backgroundValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivBackgroundTemplate.self) })
+         if key == parent?.autocapitalization?.link, context.templateData["autocapitalization"] == nil {
+           autocapitalizationValue = deserialize(__dictValue).orFallback(autocapitalizationValue)
           }
         }()
         _ = {
-         if key == parent?.border?.link {
-           borderValue = borderValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivBorderTemplate.self) })
+         if key == parent?.background?.link, context.templateData["background"] == nil {
+           backgroundValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivBackgroundTemplate.self).orFallback(backgroundValue)
           }
         }()
         _ = {
-         if key == parent?.columnSpan?.link {
-           columnSpanValue = columnSpanValue.merged(with: { deserialize(__dictValue, validator: ResolvedValue.columnSpanValidator) })
+         if key == parent?.border?.link, context.templateData["border"] == nil {
+           borderValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivBorderTemplate.self).orFallback(borderValue)
           }
         }()
         _ = {
-         if key == parent?.disappearActions?.link {
-           disappearActionsValue = disappearActionsValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivDisappearActionTemplate.self) })
+         if key == parent?.columnSpan?.link, context.templateData["column_span"] == nil {
+           columnSpanValue = deserialize(__dictValue, validator: ResolvedValue.columnSpanValidator).orFallback(columnSpanValue)
           }
         }()
         _ = {
-         if key == parent?.enterKeyActions?.link {
-           enterKeyActionsValue = enterKeyActionsValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivActionTemplate.self) })
+         if key == parent?.disappearActions?.link, context.templateData["disappear_actions"] == nil {
+           disappearActionsValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivDisappearActionTemplate.self).orFallback(disappearActionsValue)
           }
         }()
         _ = {
-         if key == parent?.enterKeyType?.link {
-           enterKeyTypeValue = enterKeyTypeValue.merged(with: { deserialize(__dictValue) })
+         if key == parent?.enterKeyActions?.link, context.templateData["enter_key_actions"] == nil {
+           enterKeyActionsValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivActionTemplate.self).orFallback(enterKeyActionsValue)
           }
         }()
         _ = {
-         if key == parent?.extensions?.link {
-           extensionsValue = extensionsValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivExtensionTemplate.self) })
+         if key == parent?.enterKeyType?.link, context.templateData["enter_key_type"] == nil {
+           enterKeyTypeValue = deserialize(__dictValue).orFallback(enterKeyTypeValue)
           }
         }()
         _ = {
-         if key == parent?.filters?.link {
-           filtersValue = filtersValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivInputFilterTemplate.self) })
+         if key == parent?.extensions?.link, context.templateData["extensions"] == nil {
+           extensionsValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivExtensionTemplate.self).orFallback(extensionsValue)
           }
         }()
         _ = {
-         if key == parent?.focus?.link {
-           focusValue = focusValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivFocusTemplate.self) })
+         if key == parent?.filters?.link, context.templateData["filters"] == nil {
+           filtersValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivInputFilterTemplate.self).orFallback(filtersValue)
           }
         }()
         _ = {
-         if key == parent?.fontFamily?.link {
-           fontFamilyValue = fontFamilyValue.merged(with: { deserialize(__dictValue) })
+         if key == parent?.focus?.link, context.templateData["focus"] == nil {
+           focusValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivFocusTemplate.self).orFallback(focusValue)
           }
         }()
         _ = {
-         if key == parent?.fontSize?.link {
-           fontSizeValue = fontSizeValue.merged(with: { deserialize(__dictValue, validator: ResolvedValue.fontSizeValidator) })
+         if key == parent?.fontFamily?.link, context.templateData["font_family"] == nil {
+           fontFamilyValue = deserialize(__dictValue).orFallback(fontFamilyValue)
           }
         }()
         _ = {
-         if key == parent?.fontSizeUnit?.link {
-           fontSizeUnitValue = fontSizeUnitValue.merged(with: { deserialize(__dictValue) })
+         if key == parent?.fontSize?.link, context.templateData["font_size"] == nil {
+           fontSizeValue = deserialize(__dictValue, validator: ResolvedValue.fontSizeValidator).orFallback(fontSizeValue)
           }
         }()
         _ = {
-         if key == parent?.fontVariationSettings?.link {
-           fontVariationSettingsValue = fontVariationSettingsValue.merged(with: { deserialize(__dictValue) })
+         if key == parent?.fontSizeUnit?.link, context.templateData["font_size_unit"] == nil {
+           fontSizeUnitValue = deserialize(__dictValue).orFallback(fontSizeUnitValue)
           }
         }()
         _ = {
-         if key == parent?.fontWeight?.link {
-           fontWeightValue = fontWeightValue.merged(with: { deserialize(__dictValue) })
+         if key == parent?.fontVariationSettings?.link, context.templateData["font_variation_settings"] == nil {
+           fontVariationSettingsValue = deserialize(__dictValue).orFallback(fontVariationSettingsValue)
           }
         }()
         _ = {
-         if key == parent?.fontWeightValue?.link {
-           fontWeightValueValue = fontWeightValueValue.merged(with: { deserialize(__dictValue, validator: ResolvedValue.fontWeightValueValidator) })
+         if key == parent?.fontWeight?.link, context.templateData["font_weight"] == nil {
+           fontWeightValue = deserialize(__dictValue).orFallback(fontWeightValue)
           }
         }()
         _ = {
-         if key == parent?.functions?.link {
-           functionsValue = functionsValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivFunctionTemplate.self) })
+         if key == parent?.fontWeightValue?.link, context.templateData["font_weight_value"] == nil {
+           fontWeightValueValue = deserialize(__dictValue, validator: ResolvedValue.fontWeightValueValidator).orFallback(fontWeightValueValue)
           }
         }()
         _ = {
-         if key == parent?.height?.link {
-           heightValue = heightValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivSizeTemplate.self) })
+         if key == parent?.functions?.link, context.templateData["functions"] == nil {
+           functionsValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivFunctionTemplate.self).orFallback(functionsValue)
           }
         }()
         _ = {
-         if key == parent?.hideSuggestionsBar?.link {
-           hideSuggestionsBarValue = hideSuggestionsBarValue.merged(with: { deserialize(__dictValue) })
+         if key == parent?.height?.link, context.templateData["height"] == nil {
+           heightValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivSizeTemplate.self).orFallback(heightValue)
           }
         }()
         _ = {
-         if key == parent?.highlightColor?.link {
-           highlightColorValue = highlightColorValue.merged(with: { deserialize(__dictValue, transform: Color.color(withHexString:)) })
+         if key == parent?.highlightColor?.link, context.templateData["highlight_color"] == nil {
+           highlightColorValue = deserialize(__dictValue, transform: Color.color(withHexString:)).orFallback(highlightColorValue)
           }
         }()
         _ = {
-         if key == parent?.hintColor?.link {
-           hintColorValue = hintColorValue.merged(with: { deserialize(__dictValue, transform: Color.color(withHexString:)) })
+         if key == parent?.hintColor?.link, context.templateData["hint_color"] == nil {
+           hintColorValue = deserialize(__dictValue, transform: Color.color(withHexString:)).orFallback(hintColorValue)
           }
         }()
         _ = {
-         if key == parent?.hintText?.link {
-           hintTextValue = hintTextValue.merged(with: { deserialize(__dictValue) })
+         if key == parent?.hintText?.link, context.templateData["hint_text"] == nil {
+           hintTextValue = deserialize(__dictValue).orFallback(hintTextValue)
           }
         }()
         _ = {
-         if key == parent?.id?.link {
-           idValue = idValue.merged(with: { deserialize(__dictValue) })
+         if key == parent?.id?.link, context.templateData["id"] == nil {
+           idValue = deserialize(__dictValue).orFallback(idValue)
           }
         }()
         _ = {
-         if key == parent?.isEnabled?.link {
-           isEnabledValue = isEnabledValue.merged(with: { deserialize(__dictValue) })
+         if key == parent?.isEnabled?.link, context.templateData["is_enabled"] == nil {
+           isEnabledValue = deserialize(__dictValue).orFallback(isEnabledValue)
           }
         }()
         _ = {
-         if key == parent?.keyboardType?.link {
-           keyboardTypeValue = keyboardTypeValue.merged(with: { deserialize(__dictValue) })
+         if key == parent?.keyboardType?.link, context.templateData["keyboard_type"] == nil {
+           keyboardTypeValue = deserialize(__dictValue).orFallback(keyboardTypeValue)
           }
         }()
         _ = {
-         if key == parent?.layoutProvider?.link {
-           layoutProviderValue = layoutProviderValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivLayoutProviderTemplate.self) })
+         if key == parent?.layoutProvider?.link, context.templateData["layout_provider"] == nil {
+           layoutProviderValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivLayoutProviderTemplate.self).orFallback(layoutProviderValue)
           }
         }()
         _ = {
-         if key == parent?.letterSpacing?.link {
-           letterSpacingValue = letterSpacingValue.merged(with: { deserialize(__dictValue) })
+         if key == parent?.letterSpacing?.link, context.templateData["letter_spacing"] == nil {
+           letterSpacingValue = deserialize(__dictValue).orFallback(letterSpacingValue)
           }
         }()
         _ = {
-         if key == parent?.lineHeight?.link {
-           lineHeightValue = lineHeightValue.merged(with: { deserialize(__dictValue, validator: ResolvedValue.lineHeightValidator) })
+         if key == parent?.lineHeight?.link, context.templateData["line_height"] == nil {
+           lineHeightValue = deserialize(__dictValue, validator: ResolvedValue.lineHeightValidator).orFallback(lineHeightValue)
           }
         }()
         _ = {
-         if key == parent?.margins?.link {
-           marginsValue = marginsValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivEdgeInsetsTemplate.self) })
+         if key == parent?.margins?.link, context.templateData["margins"] == nil {
+           marginsValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivEdgeInsetsTemplate.self).orFallback(marginsValue)
           }
         }()
         _ = {
-         if key == parent?.mask?.link {
-           maskValue = maskValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivInputMaskTemplate.self) })
+         if key == parent?.mask?.link, context.templateData["mask"] == nil {
+           maskValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivInputMaskTemplate.self).orFallback(maskValue)
           }
         }()
         _ = {
-         if key == parent?.maxLength?.link {
-           maxLengthValue = maxLengthValue.merged(with: { deserialize(__dictValue, validator: ResolvedValue.maxLengthValidator) })
+         if key == parent?.maxLength?.link, context.templateData["max_length"] == nil {
+           maxLengthValue = deserialize(__dictValue, validator: ResolvedValue.maxLengthValidator).orFallback(maxLengthValue)
           }
         }()
         _ = {
-         if key == parent?.maxVisibleLines?.link {
-           maxVisibleLinesValue = maxVisibleLinesValue.merged(with: { deserialize(__dictValue, validator: ResolvedValue.maxVisibleLinesValidator) })
+         if key == parent?.maxVisibleLines?.link, context.templateData["max_visible_lines"] == nil {
+           maxVisibleLinesValue = deserialize(__dictValue, validator: ResolvedValue.maxVisibleLinesValidator).orFallback(maxVisibleLinesValue)
           }
         }()
         _ = {
-         if key == parent?.nativeInterface?.link {
-           nativeInterfaceValue = nativeInterfaceValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivInputTemplate.NativeInterfaceTemplate.self) })
+         if key == parent?.nativeInterface?.link, context.templateData["native_interface"] == nil {
+           nativeInterfaceValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivInputTemplate.NativeInterfaceTemplate.self).orFallback(nativeInterfaceValue)
           }
         }()
         _ = {
-         if key == parent?.paddings?.link {
-           paddingsValue = paddingsValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivEdgeInsetsTemplate.self) })
+         if key == parent?.paddings?.link, context.templateData["paddings"] == nil {
+           paddingsValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivEdgeInsetsTemplate.self).orFallback(paddingsValue)
           }
         }()
         _ = {
-         if key == parent?.reuseId?.link {
-           reuseIdValue = reuseIdValue.merged(with: { deserialize(__dictValue) })
+         if key == parent?.reuseId?.link, context.templateData["reuse_id"] == nil {
+           reuseIdValue = deserialize(__dictValue).orFallback(reuseIdValue)
           }
         }()
         _ = {
-         if key == parent?.rowSpan?.link {
-           rowSpanValue = rowSpanValue.merged(with: { deserialize(__dictValue, validator: ResolvedValue.rowSpanValidator) })
+         if key == parent?.rowSpan?.link, context.templateData["row_span"] == nil {
+           rowSpanValue = deserialize(__dictValue, validator: ResolvedValue.rowSpanValidator).orFallback(rowSpanValue)
           }
         }()
         _ = {
-         if key == parent?.selectAllOnFocus?.link {
-           selectAllOnFocusValue = selectAllOnFocusValue.merged(with: { deserialize(__dictValue) })
+         if key == parent?.selectAllOnFocus?.link, context.templateData["select_all_on_focus"] == nil {
+           selectAllOnFocusValue = deserialize(__dictValue).orFallback(selectAllOnFocusValue)
           }
         }()
         _ = {
-         if key == parent?.selectedActions?.link {
-           selectedActionsValue = selectedActionsValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivActionTemplate.self) })
+         if key == parent?.selectedActions?.link, context.templateData["selected_actions"] == nil {
+           selectedActionsValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivActionTemplate.self).orFallback(selectedActionsValue)
           }
         }()
         _ = {
-         if key == parent?.textAlignmentHorizontal?.link {
-           textAlignmentHorizontalValue = textAlignmentHorizontalValue.merged(with: { deserialize(__dictValue) })
+         if key == parent?.textAlignmentHorizontal?.link, context.templateData["text_alignment_horizontal"] == nil {
+           textAlignmentHorizontalValue = deserialize(__dictValue).orFallback(textAlignmentHorizontalValue)
           }
         }()
         _ = {
-         if key == parent?.textAlignmentVertical?.link {
-           textAlignmentVerticalValue = textAlignmentVerticalValue.merged(with: { deserialize(__dictValue) })
+         if key == parent?.textAlignmentVertical?.link, context.templateData["text_alignment_vertical"] == nil {
+           textAlignmentVerticalValue = deserialize(__dictValue).orFallback(textAlignmentVerticalValue)
           }
         }()
         _ = {
-         if key == parent?.textColor?.link {
-           textColorValue = textColorValue.merged(with: { deserialize(__dictValue, transform: Color.color(withHexString:)) })
+         if key == parent?.textColor?.link, context.templateData["text_color"] == nil {
+           textColorValue = deserialize(__dictValue, transform: Color.color(withHexString:)).orFallback(textColorValue)
           }
         }()
         _ = {
-         if key == parent?.textVariable?.link {
-           textVariableValue = textVariableValue.merged(with: { deserialize(__dictValue) })
+         if key == parent?.textVariable?.link, context.templateData["text_variable"] == nil {
+           textVariableValue = deserialize(__dictValue).orFallback(textVariableValue)
           }
         }()
         _ = {
-         if key == parent?.tooltips?.link {
-           tooltipsValue = tooltipsValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivTooltipTemplate.self) })
+         if key == parent?.tooltips?.link, context.templateData["tooltips"] == nil {
+           tooltipsValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivTooltipTemplate.self).orFallback(tooltipsValue)
           }
         }()
         _ = {
-         if key == parent?.transform?.link {
-           transformValue = transformValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivTransformTemplate.self) })
+         if key == parent?.transform?.link, context.templateData["transform"] == nil {
+           transformValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivTransformTemplate.self).orFallback(transformValue)
           }
         }()
         _ = {
-         if key == parent?.transformations?.link {
-           transformationsValue = transformationsValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivTransformationTemplate.self) })
+         if key == parent?.transformations?.link, context.templateData["transformations"] == nil {
+           transformationsValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivTransformationTemplate.self).orFallback(transformationsValue)
           }
         }()
         _ = {
-         if key == parent?.transitionChange?.link {
-           transitionChangeValue = transitionChangeValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivChangeTransitionTemplate.self) })
+         if key == parent?.transitionChange?.link, context.templateData["transition_change"] == nil {
+           transitionChangeValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivChangeTransitionTemplate.self).orFallback(transitionChangeValue)
           }
         }()
         _ = {
-         if key == parent?.transitionIn?.link {
-           transitionInValue = transitionInValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivAppearanceTransitionTemplate.self) })
+         if key == parent?.transitionIn?.link, context.templateData["transition_in"] == nil {
+           transitionInValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivAppearanceTransitionTemplate.self).orFallback(transitionInValue)
           }
         }()
         _ = {
-         if key == parent?.transitionOut?.link {
-           transitionOutValue = transitionOutValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivAppearanceTransitionTemplate.self) })
+         if key == parent?.transitionOut?.link, context.templateData["transition_out"] == nil {
+           transitionOutValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivAppearanceTransitionTemplate.self).orFallback(transitionOutValue)
           }
         }()
         _ = {
-         if key == parent?.transitionTriggers?.link {
-           transitionTriggersValue = transitionTriggersValue.merged(with: { deserialize(__dictValue, validator: ResolvedValue.transitionTriggersValidator) })
+         if key == parent?.transitionTriggers?.link, context.templateData["transition_triggers"] == nil {
+           transitionTriggersValue = deserialize(__dictValue, validator: ResolvedValue.transitionTriggersValidator).orFallback(transitionTriggersValue)
           }
         }()
         _ = {
-         if key == parent?.validators?.link {
-           validatorsValue = validatorsValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivInputValidatorTemplate.self) })
+         if key == parent?.validators?.link, context.templateData["validators"] == nil {
+           validatorsValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivInputValidatorTemplate.self).orFallback(validatorsValue)
           }
         }()
         _ = {
-         if key == parent?.variableTriggers?.link {
-           variableTriggersValue = variableTriggersValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivTriggerTemplate.self) })
+         if key == parent?.variableTriggers?.link, context.templateData["variable_triggers"] == nil {
+           variableTriggersValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivTriggerTemplate.self).orFallback(variableTriggersValue)
           }
         }()
         _ = {
-         if key == parent?.variables?.link {
-           variablesValue = variablesValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivVariableTemplate.self) })
+         if key == parent?.variables?.link, context.templateData["variables"] == nil {
+           variablesValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivVariableTemplate.self).orFallback(variablesValue)
           }
         }()
         _ = {
-         if key == parent?.visibility?.link {
-           visibilityValue = visibilityValue.merged(with: { deserialize(__dictValue) })
+         if key == parent?.visibility?.link, context.templateData["visibility"] == nil {
+           visibilityValue = deserialize(__dictValue).orFallback(visibilityValue)
           }
         }()
         _ = {
-         if key == parent?.visibilityAction?.link {
-           visibilityActionValue = visibilityActionValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivVisibilityActionTemplate.self) })
+         if key == parent?.visibilityAction?.link, context.templateData["visibility_action"] == nil {
+           visibilityActionValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivVisibilityActionTemplate.self).orFallback(visibilityActionValue)
           }
         }()
         _ = {
-         if key == parent?.visibilityActions?.link {
-           visibilityActionsValue = visibilityActionsValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivVisibilityActionTemplate.self) })
+         if key == parent?.visibilityActions?.link, context.templateData["visibility_actions"] == nil {
+           visibilityActionsValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivVisibilityActionTemplate.self).orFallback(visibilityActionsValue)
           }
         }()
         _ = {
-         if key == parent?.width?.link {
-           widthValue = widthValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivSizeTemplate.self) })
+         if key == parent?.width?.link, context.templateData["width"] == nil {
+           widthValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivSizeTemplate.self).orFallback(widthValue)
           }
         }()
       }
@@ -1268,6 +1268,7 @@ public final class DivInputTemplate: TemplateValue, @unchecked Sendable {
       accessibilityValue.errorsOrWarnings?.map { .nestedObjectError(field: "accessibility", error: $0) },
       alignmentHorizontalValue.errorsOrWarnings?.map { .nestedObjectError(field: "alignment_horizontal", error: $0) },
       alignmentVerticalValue.errorsOrWarnings?.map { .nestedObjectError(field: "alignment_vertical", error: $0) },
+      allowSuggestionsBarValue.errorsOrWarnings?.map { .nestedObjectError(field: "allow_suggestions_bar", error: $0) },
       alphaValue.errorsOrWarnings?.map { .nestedObjectError(field: "alpha", error: $0) },
       animatorsValue.errorsOrWarnings?.map { .nestedObjectError(field: "animators", error: $0) },
       autocapitalizationValue.errorsOrWarnings?.map { .nestedObjectError(field: "autocapitalization", error: $0) },
@@ -1288,7 +1289,6 @@ public final class DivInputTemplate: TemplateValue, @unchecked Sendable {
       fontWeightValueValue.errorsOrWarnings?.map { .nestedObjectError(field: "font_weight_value", error: $0) },
       functionsValue.errorsOrWarnings?.map { .nestedObjectError(field: "functions", error: $0) },
       heightValue.errorsOrWarnings?.map { .nestedObjectError(field: "height", error: $0) },
-      hideSuggestionsBarValue.errorsOrWarnings?.map { .nestedObjectError(field: "hide_suggestions_bar", error: $0) },
       highlightColorValue.errorsOrWarnings?.map { .nestedObjectError(field: "highlight_color", error: $0) },
       hintColorValue.errorsOrWarnings?.map { .nestedObjectError(field: "hint_color", error: $0) },
       hintTextValue.errorsOrWarnings?.map { .nestedObjectError(field: "hint_text", error: $0) },
@@ -1339,6 +1339,7 @@ public final class DivInputTemplate: TemplateValue, @unchecked Sendable {
       accessibility: { accessibilityValue.value }(),
       alignmentHorizontal: { alignmentHorizontalValue.value }(),
       alignmentVertical: { alignmentVerticalValue.value }(),
+      allowSuggestionsBar: { allowSuggestionsBarValue.value }(),
       alpha: { alphaValue.value }(),
       animators: { animatorsValue.value }(),
       autocapitalization: { autocapitalizationValue.value }(),
@@ -1359,7 +1360,6 @@ public final class DivInputTemplate: TemplateValue, @unchecked Sendable {
       fontWeightValue: { fontWeightValueValue.value }(),
       functions: { functionsValue.value }(),
       height: { heightValue.value }(),
-      hideSuggestionsBar: { hideSuggestionsBarValue.value }(),
       highlightColor: { highlightColorValue.value }(),
       hintColor: { hintColorValue.value }(),
       hintText: { hintTextValue.value }(),
@@ -1413,6 +1413,7 @@ public final class DivInputTemplate: TemplateValue, @unchecked Sendable {
       accessibility: accessibility ?? mergedParent.accessibility,
       alignmentHorizontal: alignmentHorizontal ?? mergedParent.alignmentHorizontal,
       alignmentVertical: alignmentVertical ?? mergedParent.alignmentVertical,
+      allowSuggestionsBar: allowSuggestionsBar ?? mergedParent.allowSuggestionsBar,
       alpha: alpha ?? mergedParent.alpha,
       animators: animators ?? mergedParent.animators,
       autocapitalization: autocapitalization ?? mergedParent.autocapitalization,
@@ -1433,7 +1434,6 @@ public final class DivInputTemplate: TemplateValue, @unchecked Sendable {
       fontWeightValue: fontWeightValue ?? mergedParent.fontWeightValue,
       functions: functions ?? mergedParent.functions,
       height: height ?? mergedParent.height,
-      hideSuggestionsBar: hideSuggestionsBar ?? mergedParent.hideSuggestionsBar,
       highlightColor: highlightColor ?? mergedParent.highlightColor,
       hintColor: hintColor ?? mergedParent.hintColor,
       hintText: hintText ?? mergedParent.hintText,
@@ -1482,6 +1482,7 @@ public final class DivInputTemplate: TemplateValue, @unchecked Sendable {
       accessibility: merged.accessibility?.tryResolveParent(templates: templates),
       alignmentHorizontal: merged.alignmentHorizontal,
       alignmentVertical: merged.alignmentVertical,
+      allowSuggestionsBar: merged.allowSuggestionsBar,
       alpha: merged.alpha,
       animators: merged.animators?.tryResolveParent(templates: templates),
       autocapitalization: merged.autocapitalization,
@@ -1502,7 +1503,6 @@ public final class DivInputTemplate: TemplateValue, @unchecked Sendable {
       fontWeightValue: merged.fontWeightValue,
       functions: merged.functions?.tryResolveParent(templates: templates),
       height: merged.height?.tryResolveParent(templates: templates),
-      hideSuggestionsBar: merged.hideSuggestionsBar,
       highlightColor: merged.highlightColor,
       hintColor: merged.hintColor,
       hintText: merged.hintText,

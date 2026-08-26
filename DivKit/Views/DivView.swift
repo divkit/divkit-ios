@@ -262,8 +262,7 @@ public final class DivView: VisibleBoundsTrackingView {
   }
 
   private func update(block: Block) {
-    let renderingDelegate: RenderingDelegate? = if blockProvider?.id != nil,
-                                                   let divCardId = blockProvider?.cardId {
+    let renderingDelegate: RenderingDelegate? = if let divCardId = blockProvider?.cardId {
       divKitComponents.renderingDelegate(for: divCardId)
     } else {
       nil
@@ -312,8 +311,7 @@ extension DivView: ElementStateObserver {
 
   public func clearFocus() {
     let blockStateStorage = divKitComponents.blockStateStorage
-    let focusedElement = blockStateStorage.getFocusedElement()
-    guard focusedElement != nil else {
+    guard blockStateStorage.focusedElement != nil else {
       return
     }
     blockStateStorage.clearFocus()

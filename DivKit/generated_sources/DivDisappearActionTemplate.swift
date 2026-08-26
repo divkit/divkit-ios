@@ -63,7 +63,7 @@ public final class DivDisappearActionTemplate: TemplateValue, @unchecked Sendabl
     let disappearDurationValue = { parent?.disappearDuration?.resolveOptionalValue(context: context, validator: ResolvedValue.disappearDurationValidator) ?? .noValue }()
     let downloadCallbacksValue = { parent?.downloadCallbacks?.resolveOptionalValue(context: context, useOnlyLinks: true) ?? .noValue }()
     let isEnabledValue = { parent?.isEnabled?.resolveOptionalValue(context: context) ?? .noValue }()
-    let logIdValue = { parent?.logId?.resolveValue(context: context) ?? .noValue }()
+    let logIdValue = { parent?.logId?.resolveOptionalValue(context: context) ?? .noValue }()
     let logLimitValue = { parent?.logLimit?.resolveOptionalValue(context: context, validator: ResolvedValue.logLimitValidator) ?? .noValue }()
     let payloadValue = { parent?.payload?.resolveOptionalValue(context: context) ?? .noValue }()
     let refererValue = { parent?.referer?.resolveOptionalValue(context: context, transform: URL.makeFromNonEncodedString) ?? .noValue }()
@@ -71,7 +71,7 @@ public final class DivDisappearActionTemplate: TemplateValue, @unchecked Sendabl
     let typedValue = { parent?.typed?.resolveOptionalValue(context: context, useOnlyLinks: true) ?? .noValue }()
     let urlValue = { parent?.url?.resolveOptionalValue(context: context, transform: URL.makeFromNonEncodedString) ?? .noValue }()
     let visibilityPercentageValue = { parent?.visibilityPercentage?.resolveOptionalValue(context: context, validator: ResolvedValue.visibilityPercentageValidator) ?? .noValue }()
-    var errors = mergeErrors(
+    let errors = mergeErrors(
       disappearDurationValue.errorsOrWarnings?.map { .nestedObjectError(field: "disappear_duration", error: $0) },
       downloadCallbacksValue.errorsOrWarnings?.map { .nestedObjectError(field: "download_callbacks", error: $0) },
       isEnabledValue.errorsOrWarnings?.map { .nestedObjectError(field: "is_enabled", error: $0) },
@@ -84,19 +84,11 @@ public final class DivDisappearActionTemplate: TemplateValue, @unchecked Sendabl
       urlValue.errorsOrWarnings?.map { .nestedObjectError(field: "url", error: $0) },
       visibilityPercentageValue.errorsOrWarnings?.map { .nestedObjectError(field: "visibility_percentage", error: $0) }
     )
-    if case .noValue = logIdValue {
-      errors.append(.requiredFieldIsMissing(field: "log_id"))
-    }
-    guard
-      let logIdNonNil = logIdValue.value
-    else {
-      return .failure(NonEmptyArray(errors)!)
-    }
     let result = DivDisappearAction(
       disappearDuration: { disappearDurationValue.value }(),
       downloadCallbacks: { downloadCallbacksValue.value }(),
       isEnabled: { isEnabledValue.value }(),
-      logId: { logIdNonNil }(),
+      logId: { logIdValue.value }(),
       logLimit: { logLimitValue.value }(),
       payload: { payloadValue.value }(),
       referer: { refererValue.value }(),
@@ -184,58 +176,58 @@ public final class DivDisappearActionTemplate: TemplateValue, @unchecked Sendabl
           }
         }()
         _ = {
-         if key == parent?.disappearDuration?.link {
-           disappearDurationValue = disappearDurationValue.merged(with: { deserialize(__dictValue, validator: ResolvedValue.disappearDurationValidator) })
+         if key == parent?.disappearDuration?.link, context.templateData["disappear_duration"] == nil {
+           disappearDurationValue = deserialize(__dictValue, validator: ResolvedValue.disappearDurationValidator).orFallback(disappearDurationValue)
           }
         }()
         _ = {
-         if key == parent?.downloadCallbacks?.link {
-           downloadCallbacksValue = downloadCallbacksValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivDownloadCallbacksTemplate.self) })
+         if key == parent?.downloadCallbacks?.link, context.templateData["download_callbacks"] == nil {
+           downloadCallbacksValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivDownloadCallbacksTemplate.self).orFallback(downloadCallbacksValue)
           }
         }()
         _ = {
-         if key == parent?.isEnabled?.link {
-           isEnabledValue = isEnabledValue.merged(with: { deserialize(__dictValue) })
+         if key == parent?.isEnabled?.link, context.templateData["is_enabled"] == nil {
+           isEnabledValue = deserialize(__dictValue).orFallback(isEnabledValue)
           }
         }()
         _ = {
-         if key == parent?.logId?.link {
-           logIdValue = logIdValue.merged(with: { deserialize(__dictValue) })
+         if key == parent?.logId?.link, context.templateData["log_id"] == nil {
+           logIdValue = deserialize(__dictValue).orFallback(logIdValue)
           }
         }()
         _ = {
-         if key == parent?.logLimit?.link {
-           logLimitValue = logLimitValue.merged(with: { deserialize(__dictValue, validator: ResolvedValue.logLimitValidator) })
+         if key == parent?.logLimit?.link, context.templateData["log_limit"] == nil {
+           logLimitValue = deserialize(__dictValue, validator: ResolvedValue.logLimitValidator).orFallback(logLimitValue)
           }
         }()
         _ = {
-         if key == parent?.payload?.link {
-           payloadValue = payloadValue.merged(with: { deserialize(__dictValue) })
+         if key == parent?.payload?.link, context.templateData["payload"] == nil {
+           payloadValue = deserialize(__dictValue).orFallback(payloadValue)
           }
         }()
         _ = {
-         if key == parent?.referer?.link {
-           refererValue = refererValue.merged(with: { deserialize(__dictValue, transform: URL.makeFromNonEncodedString) })
+         if key == parent?.referer?.link, context.templateData["referer"] == nil {
+           refererValue = deserialize(__dictValue, transform: URL.makeFromNonEncodedString).orFallback(refererValue)
           }
         }()
         _ = {
-         if key == parent?.scopeId?.link {
-           scopeIdValue = scopeIdValue.merged(with: { deserialize(__dictValue) })
+         if key == parent?.scopeId?.link, context.templateData["scope_id"] == nil {
+           scopeIdValue = deserialize(__dictValue).orFallback(scopeIdValue)
           }
         }()
         _ = {
-         if key == parent?.typed?.link {
-           typedValue = typedValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivActionTypedTemplate.self) })
+         if key == parent?.typed?.link, context.templateData["typed"] == nil {
+           typedValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivActionTypedTemplate.self).orFallback(typedValue)
           }
         }()
         _ = {
-         if key == parent?.url?.link {
-           urlValue = urlValue.merged(with: { deserialize(__dictValue, transform: URL.makeFromNonEncodedString) })
+         if key == parent?.url?.link, context.templateData["url"] == nil {
+           urlValue = deserialize(__dictValue, transform: URL.makeFromNonEncodedString).orFallback(urlValue)
           }
         }()
         _ = {
-         if key == parent?.visibilityPercentage?.link {
-           visibilityPercentageValue = visibilityPercentageValue.merged(with: { deserialize(__dictValue, validator: ResolvedValue.visibilityPercentageValidator) })
+         if key == parent?.visibilityPercentage?.link, context.templateData["visibility_percentage"] == nil {
+           visibilityPercentageValue = deserialize(__dictValue, validator: ResolvedValue.visibilityPercentageValidator).orFallback(visibilityPercentageValue)
           }
         }()
       }
@@ -244,7 +236,7 @@ public final class DivDisappearActionTemplate: TemplateValue, @unchecked Sendabl
       _ = { downloadCallbacksValue = downloadCallbacksValue.merged(with: { parent.downloadCallbacks?.resolveOptionalValue(context: context, useOnlyLinks: true) }) }()
       _ = { typedValue = typedValue.merged(with: { parent.typed?.resolveOptionalValue(context: context, useOnlyLinks: true) }) }()
     }
-    var errors = mergeErrors(
+    let errors = mergeErrors(
       disappearDurationValue.errorsOrWarnings?.map { .nestedObjectError(field: "disappear_duration", error: $0) },
       downloadCallbacksValue.errorsOrWarnings?.map { .nestedObjectError(field: "download_callbacks", error: $0) },
       isEnabledValue.errorsOrWarnings?.map { .nestedObjectError(field: "is_enabled", error: $0) },
@@ -257,19 +249,11 @@ public final class DivDisappearActionTemplate: TemplateValue, @unchecked Sendabl
       urlValue.errorsOrWarnings?.map { .nestedObjectError(field: "url", error: $0) },
       visibilityPercentageValue.errorsOrWarnings?.map { .nestedObjectError(field: "visibility_percentage", error: $0) }
     )
-    if case .noValue = logIdValue {
-      errors.append(.requiredFieldIsMissing(field: "log_id"))
-    }
-    guard
-      let logIdNonNil = logIdValue.value
-    else {
-      return .failure(NonEmptyArray(errors)!)
-    }
     let result = DivDisappearAction(
       disappearDuration: { disappearDurationValue.value }(),
       downloadCallbacks: { downloadCallbacksValue.value }(),
       isEnabled: { isEnabledValue.value }(),
-      logId: { logIdNonNil }(),
+      logId: { logIdValue.value }(),
       logLimit: { logLimitValue.value }(),
       payload: { payloadValue.value }(),
       referer: { refererValue.value }(),

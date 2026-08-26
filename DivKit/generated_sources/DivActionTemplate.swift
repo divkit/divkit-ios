@@ -81,18 +81,18 @@ public final class DivActionTemplate: TemplateValue, @unchecked Sendable {
             }
           }()
           _ = {
-           if key == parent?.action?.link {
-             actionValue = actionValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivActionTemplate.self) })
+           if key == parent?.action?.link, context.templateData["action"] == nil {
+             actionValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivActionTemplate.self).orFallback(actionValue)
             }
           }()
           _ = {
-           if key == parent?.actions?.link {
-             actionsValue = actionsValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivActionTemplate.self) })
+           if key == parent?.actions?.link, context.templateData["actions"] == nil {
+             actionsValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivActionTemplate.self).orFallback(actionsValue)
             }
           }()
           _ = {
-           if key == parent?.text?.link {
-             textValue = textValue.merged(with: { deserialize(__dictValue) })
+           if key == parent?.text?.link, context.templateData["text"] == nil {
+             textValue = deserialize(__dictValue).orFallback(textValue)
             }
           }()
         }
@@ -190,7 +190,7 @@ public final class DivActionTemplate: TemplateValue, @unchecked Sendable {
   private static func resolveOnlyLinks(context: TemplatesContext, parent: DivActionTemplate?) -> DeserializationResult<DivAction> {
     let downloadCallbacksValue = { parent?.downloadCallbacks?.resolveOptionalValue(context: context, useOnlyLinks: true) ?? .noValue }()
     let isEnabledValue = { parent?.isEnabled?.resolveOptionalValue(context: context) ?? .noValue }()
-    let logIdValue = { parent?.logId?.resolveValue(context: context) ?? .noValue }()
+    let logIdValue = { parent?.logId?.resolveOptionalValue(context: context) ?? .noValue }()
     let logUrlValue = { parent?.logUrl?.resolveOptionalValue(context: context, transform: URL.makeFromNonEncodedString) ?? .noValue }()
     let menuItemsValue = { parent?.menuItems?.resolveOptionalValue(context: context, useOnlyLinks: true) ?? .noValue }()
     let payloadValue = { parent?.payload?.resolveOptionalValue(context: context) ?? .noValue }()
@@ -198,7 +198,7 @@ public final class DivActionTemplate: TemplateValue, @unchecked Sendable {
     let scopeIdValue = { parent?.scopeId?.resolveOptionalValue(context: context) ?? .noValue }()
     let typedValue = { parent?.typed?.resolveOptionalValue(context: context, useOnlyLinks: true) ?? .noValue }()
     let urlValue = { parent?.url?.resolveOptionalValue(context: context, transform: URL.makeFromNonEncodedString) ?? .noValue }()
-    var errors = mergeErrors(
+    let errors = mergeErrors(
       downloadCallbacksValue.errorsOrWarnings?.map { .nestedObjectError(field: "download_callbacks", error: $0) },
       isEnabledValue.errorsOrWarnings?.map { .nestedObjectError(field: "is_enabled", error: $0) },
       logIdValue.errorsOrWarnings?.map { .nestedObjectError(field: "log_id", error: $0) },
@@ -210,18 +210,10 @@ public final class DivActionTemplate: TemplateValue, @unchecked Sendable {
       typedValue.errorsOrWarnings?.map { .nestedObjectError(field: "typed", error: $0) },
       urlValue.errorsOrWarnings?.map { .nestedObjectError(field: "url", error: $0) }
     )
-    if case .noValue = logIdValue {
-      errors.append(.requiredFieldIsMissing(field: "log_id"))
-    }
-    guard
-      let logIdNonNil = logIdValue.value
-    else {
-      return .failure(NonEmptyArray(errors)!)
-    }
     let result = DivAction(
       downloadCallbacks: { downloadCallbacksValue.value }(),
       isEnabled: { isEnabledValue.value }(),
-      logId: { logIdNonNil }(),
+      logId: { logIdValue.value }(),
       logUrl: { logUrlValue.value }(),
       menuItems: { menuItemsValue.value }(),
       payload: { payloadValue.value }(),
@@ -303,53 +295,53 @@ public final class DivActionTemplate: TemplateValue, @unchecked Sendable {
           }
         }()
         _ = {
-         if key == parent?.downloadCallbacks?.link {
-           downloadCallbacksValue = downloadCallbacksValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivDownloadCallbacksTemplate.self) })
+         if key == parent?.downloadCallbacks?.link, context.templateData["download_callbacks"] == nil {
+           downloadCallbacksValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivDownloadCallbacksTemplate.self).orFallback(downloadCallbacksValue)
           }
         }()
         _ = {
-         if key == parent?.isEnabled?.link {
-           isEnabledValue = isEnabledValue.merged(with: { deserialize(__dictValue) })
+         if key == parent?.isEnabled?.link, context.templateData["is_enabled"] == nil {
+           isEnabledValue = deserialize(__dictValue).orFallback(isEnabledValue)
           }
         }()
         _ = {
-         if key == parent?.logId?.link {
-           logIdValue = logIdValue.merged(with: { deserialize(__dictValue) })
+         if key == parent?.logId?.link, context.templateData["log_id"] == nil {
+           logIdValue = deserialize(__dictValue).orFallback(logIdValue)
           }
         }()
         _ = {
-         if key == parent?.logUrl?.link {
-           logUrlValue = logUrlValue.merged(with: { deserialize(__dictValue, transform: URL.makeFromNonEncodedString) })
+         if key == parent?.logUrl?.link, context.templateData["log_url"] == nil {
+           logUrlValue = deserialize(__dictValue, transform: URL.makeFromNonEncodedString).orFallback(logUrlValue)
           }
         }()
         _ = {
-         if key == parent?.menuItems?.link {
-           menuItemsValue = menuItemsValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivActionTemplate.MenuItemTemplate.self) })
+         if key == parent?.menuItems?.link, context.templateData["menu_items"] == nil {
+           menuItemsValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivActionTemplate.MenuItemTemplate.self).orFallback(menuItemsValue)
           }
         }()
         _ = {
-         if key == parent?.payload?.link {
-           payloadValue = payloadValue.merged(with: { deserialize(__dictValue) })
+         if key == parent?.payload?.link, context.templateData["payload"] == nil {
+           payloadValue = deserialize(__dictValue).orFallback(payloadValue)
           }
         }()
         _ = {
-         if key == parent?.referer?.link {
-           refererValue = refererValue.merged(with: { deserialize(__dictValue, transform: URL.makeFromNonEncodedString) })
+         if key == parent?.referer?.link, context.templateData["referer"] == nil {
+           refererValue = deserialize(__dictValue, transform: URL.makeFromNonEncodedString).orFallback(refererValue)
           }
         }()
         _ = {
-         if key == parent?.scopeId?.link {
-           scopeIdValue = scopeIdValue.merged(with: { deserialize(__dictValue) })
+         if key == parent?.scopeId?.link, context.templateData["scope_id"] == nil {
+           scopeIdValue = deserialize(__dictValue).orFallback(scopeIdValue)
           }
         }()
         _ = {
-         if key == parent?.typed?.link {
-           typedValue = typedValue.merged(with: { deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivActionTypedTemplate.self) })
+         if key == parent?.typed?.link, context.templateData["typed"] == nil {
+           typedValue = deserialize(__dictValue, templates: context.templates, templateToType: context.templateToType, type: DivActionTypedTemplate.self).orFallback(typedValue)
           }
         }()
         _ = {
-         if key == parent?.url?.link {
-           urlValue = urlValue.merged(with: { deserialize(__dictValue, transform: URL.makeFromNonEncodedString) })
+         if key == parent?.url?.link, context.templateData["url"] == nil {
+           urlValue = deserialize(__dictValue, transform: URL.makeFromNonEncodedString).orFallback(urlValue)
           }
         }()
       }
@@ -359,7 +351,7 @@ public final class DivActionTemplate: TemplateValue, @unchecked Sendable {
       _ = { menuItemsValue = menuItemsValue.merged(with: { parent.menuItems?.resolveOptionalValue(context: context, useOnlyLinks: true) }) }()
       _ = { typedValue = typedValue.merged(with: { parent.typed?.resolveOptionalValue(context: context, useOnlyLinks: true) }) }()
     }
-    var errors = mergeErrors(
+    let errors = mergeErrors(
       downloadCallbacksValue.errorsOrWarnings?.map { .nestedObjectError(field: "download_callbacks", error: $0) },
       isEnabledValue.errorsOrWarnings?.map { .nestedObjectError(field: "is_enabled", error: $0) },
       logIdValue.errorsOrWarnings?.map { .nestedObjectError(field: "log_id", error: $0) },
@@ -371,18 +363,10 @@ public final class DivActionTemplate: TemplateValue, @unchecked Sendable {
       typedValue.errorsOrWarnings?.map { .nestedObjectError(field: "typed", error: $0) },
       urlValue.errorsOrWarnings?.map { .nestedObjectError(field: "url", error: $0) }
     )
-    if case .noValue = logIdValue {
-      errors.append(.requiredFieldIsMissing(field: "log_id"))
-    }
-    guard
-      let logIdNonNil = logIdValue.value
-    else {
-      return .failure(NonEmptyArray(errors)!)
-    }
     let result = DivAction(
       downloadCallbacks: { downloadCallbacksValue.value }(),
       isEnabled: { isEnabledValue.value }(),
-      logId: { logIdNonNil }(),
+      logId: { logIdValue.value }(),
       logUrl: { logUrlValue.value }(),
       menuItems: { menuItemsValue.value }(),
       payload: { payloadValue.value }(),

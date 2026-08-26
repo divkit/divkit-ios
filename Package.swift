@@ -5,7 +5,7 @@ import PackageDescription
 let vgsl = (
   url: "https://github.com/yandex/vgsl.git",
   packageName: "vgsl",
-  version: Version("7.25.1")
+  versionRange: Version("7.25.1")..<Version("9.0.0")
 )
 
 let package = Package(
@@ -23,7 +23,7 @@ let package = Package(
   dependencies: [
     .package(
       url: vgsl.url,
-      from: vgsl.version
+      vgsl.versionRange
     ),
     .package(url: "https://github.com/apple/swift-markdown.git", exact: "0.6.0"),
   ],

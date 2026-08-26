@@ -53,6 +53,7 @@ extension DivInput: DivBlockModeling {
 
     let hintValue = resolveHintText(expressionResolver) ?? ""
     let keyboardType = resolveKeyboardType(expressionResolver)
+    let allowSuggestionsBar = resolveAllowSuggestionsBar(expressionResolver)
     let autocapitalizationType = resolveAutocapitalization(expressionResolver)
 
     let onFocusActions = focus?.onFocus?.uiActions(context: context) ?? []
@@ -68,7 +69,8 @@ extension DivInput: DivBlockModeling {
       blockStateStorage.map { !$0.isInputFocused } ?? true
     }
 
-    let viewState: TextInputViewState? = blockStateStorage.takePendingState(context.path) as? TextInputViewState
+    let viewState: TextInputViewState? = blockStateStorage
+      .takePendingState(context.path) as? TextInputViewState
 
     return TextInputBlock(
       widthTrait: resolveWidthTrait(context),
@@ -100,8 +102,9 @@ extension DivInput: DivBlockModeling {
       isEnabled: resolveIsEnabled(expressionResolver),
       maxLength: resolveMaxLength(expressionResolver),
       shouldClearFocus: shouldClearFocus,
-      autocorrection: keyboardType.autocorrection,
+      autocorrection: allowSuggestionsBar ? keyboardType.autocorrection : false,
       isSecure: keyboardType.isSecure,
+      spellChecking: allowSuggestionsBar ? nil : false,
       viewState: viewState
     )
   }
@@ -122,8 +125,7 @@ extension DivInput: DivBlockModeling {
           validator: { $0.fullMatchesRegex(regex) },
           message: makeMessage(
             from: regexValidator.resolveLabelId(expressionResolver),
-            storage: context.blockStateStorage,
-            cardId: context.cardId
+            context: context
           )
         )
       case let .divInputValidatorExpression(expressionValidator):
@@ -136,8 +138,7 @@ extension DivInput: DivBlockModeling {
           validator: { _ in expressionValidator.resolveCondition(expressionResolver) ?? true },
           message: makeMessage(
             from: expressionValidator.resolveLabelId(expressionResolver),
-            storage: context.blockStateStorage,
-            cardId: context.cardId
+            context: context
           )
         )
       }
@@ -167,18 +168,29 @@ extension DivInput: DivBlockModeling {
 
   private func makeMessage(
     from labelId: String?,
-    storage: DivBlockStateStorage,
-    cardId: DivCardID
+    context: DivBlockModelingContext
   ) -> () -> String? {
-    {
+    let storage = context.blockStateStorage
+    let pathResolver = PathResolver(idToPath: context.idToPath)
+    let cardId = context.cardId
+    return {
       guard let labelId else {
         return nil
       }
-      guard let state: TextBlockViewState = storage.getState(labelId, cardId: cardId) else {
+      switch pathResolver.resolvePath(id: labelId, cardId: cardId, divTypes: [DivText.type]) {
+      case let .resolved(path):
+        guard let state: TextBlockViewState = storage.getState(path) else {
+          DivKitLogger.error("Text with id '\(labelId)' has no state")
+          return nil
+        }
+        return state.text
+      case .notFound:
         DivKitLogger.error("Can't find text with id '\(labelId)'")
         return nil
+      case .ambiguous:
+        DivKitLogger.error("Text with id '\(labelId)' is ambiguous")
+        return nil
       }
-      return state.text
     }
   }
 }

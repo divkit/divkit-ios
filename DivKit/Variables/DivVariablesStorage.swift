@@ -563,6 +563,7 @@ private func parseCollectionVar<T>(_ val: String) -> T? {
 }
 
 extension Collection<DivVariable> {
+  @_spi(Legacy)
   public func extractDivVariableValues(
     _ resolver: ExpressionResolver? = nil
   ) -> DivVariables {
