@@ -222,6 +222,14 @@ public final class GalleryView: BlockView {
     }
   }
 
+  func reusingDefaultLayout(model: GalleryViewModel, boundsSize: CGSize) -> GalleryViewLayout {
+    if let layout = layout as? GalleryViewLayout,
+       layout.isEqual(to: model, boundsSize: boundsSize) {
+      return layout
+    }
+    return GalleryViewLayout(model: model, boundsSize: boundsSize)
+  }
+
   private func configureByNewModel(
     isLayoutDirectionChanged: Bool,
     isItemsNumberChanged: Bool
@@ -514,6 +522,29 @@ private final class GalleryDataSource: NSObject, UICollectionViewDataSource {
       renderingDelegate: renderingDelegate
     )
     return cell
+  }
+}
+
+extension GalleryDataSource: CollectionViewAccessibilityElementProviding {
+  func collectionView(
+    _: UICollectionView,
+    accessibilityElementFor cell: UICollectionViewCell,
+    at _: IndexPath
+  ) -> Any? {
+    let elements = topLevelAccessibilityViews(in: cell.contentView)
+    return elements.count == 1 ? elements[0] : nil
+  }
+
+  private func topLevelAccessibilityViews(in view: UIView) -> [UIView] {
+    guard !view.isHidden,
+          view.alpha > 0.01,
+          !view.accessibilityElementsHidden else {
+      return []
+    }
+    if view.isAccessibilityElement {
+      return [view]
+    }
+    return view.subviews.flatMap(topLevelAccessibilityViews(in:))
   }
 }
 
