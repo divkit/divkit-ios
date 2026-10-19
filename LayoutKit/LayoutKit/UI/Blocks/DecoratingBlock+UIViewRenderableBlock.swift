@@ -106,7 +106,7 @@ extension LongTapActions {
 }
 
 private final class DecoratingView: UIControl, BlockViewProtocol, VisibleBoundsTrackingContainer,
-  TooltipProtocol, DecoratingViewProtocol {
+  DecoratingViewProtocol {
   enum HighlightState {
     case normal
     case highlighted
@@ -612,6 +612,13 @@ private final class DecoratingView: UIControl, BlockViewProtocol, VisibleBoundsT
     model.actions?
       .forEach { applyAccessibility($0.accessibilityElement) }
 
+    if #available(iOS 17.0, *), EnvironmentVars.isUITesting {
+      // Expose the child to XCTest without changing the wrapper's VoiceOver semantics.
+      automationElements = accessibilityElementsHidden
+        ? nil
+        : childView.asArray()
+    }
+
     hasFocused = oldModel?.isFocused == false && model.isFocused == true
     updateVoiceOverFocus()
 
@@ -651,24 +658,6 @@ private final class DecoratingView: UIControl, BlockViewProtocol, VisibleBoundsT
     } else {
       onVisibleBoundsChangedInternal(from: from, to: to)
     }
-  }
-
-  func makeTooltipEvent(with info: TooltipInfo) -> TooltipEvent? {
-    guard let tooltipModel = model.tooltips.first(where: { $0.id == info.id }), let window else {
-      return nil
-    }
-    let tooltipView = tooltipModel.block.makeBlockView()
-    tooltipView.frame = tooltipModel.calculateFrame(
-      targeting: convert(bounds, to: nil),
-      constrainedBy: window.bounds,
-      useLegacyWidth: tooltipModel.useLegacyWidth
-    )
-    return TooltipEvent(
-      info: info,
-      params: tooltipModel.params,
-      tooltipView: tooltipView,
-      tooltipAnchorView: self
-    )
   }
 
   /// Reuses the border layer and its clip mask across layout passes, updating

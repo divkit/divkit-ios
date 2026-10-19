@@ -465,13 +465,19 @@ extension TransitioningBlock: CustomDebugStringConvertible {
 
 extension BlockTooltip: CustomDebugStringConvertible {
   public var debugDescription: String {
-    """
+    let contentDescription = switch viewSource {
+    case let .block(block):
+      block.debugDescription.indented()
+    case .factory:
+      "factory"
+    }
+    return """
     BlockTooltip {
       id: \(id)
       duration: \(params.duration)
       offset: \(offset.x) x \(offset.y)
       position: \(position.rawValue)
-      block: \(block.debugDescription.indented())
+      block: \(contentDescription)
     }
     """
   }

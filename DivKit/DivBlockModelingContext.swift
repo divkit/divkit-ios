@@ -26,6 +26,7 @@ public struct DivBlockModelingContext {
   private(set) var cardLogId: String?
   private(set) var parentDivStatePath: DivStatePath?
   private(set) var parentVisibility: DivVisibility = .visible
+  private(set) var videoPagerPath: UIElementPath?
   let stateManager: DivStateManager
   let visibilityCounter: DivVisibilityCounter
   let lastVisibleBoundsCache: DivLastVisibleBoundsCache
@@ -62,6 +63,9 @@ public struct DivBlockModelingContext {
     viewId.cardId
   }
 
+  /// - Parameter additionalId: When `nil`, the host card context. Otherwise, an additional card
+  ///   view whose path root is `card/tooltip#<additionalId>`. Registrations owned by that view
+  ///   are dropped by ``DivKitComponents/reset(cardId:)``.
   @_spi(Internal)
   public init(
     cardId: DivCardID,
@@ -135,7 +139,7 @@ public struct DivBlockModelingContext {
     animatorController: DivAnimatorController?
   ) {
     self.viewId = viewId
-    let path = makePath(viewId: viewId)
+    let path = viewId.path
     self.path = path
     self.stateManager = stateManager
     self.actionHandler = actionHandler
@@ -301,11 +305,23 @@ public struct DivBlockModelingContext {
     return context
   }
 
+  func withVideoPager(path: UIElementPath) -> Self {
+    var context = self
+    context.videoPagerPath = path
+    return context
+  }
+
+  /// `path` at this point is the anchor's own path - the tooltip is being modeled while walking
+  /// the element that declares it - so it is exactly the discriminator `DivViewId.Tooltip` needs.
   func cloneForTooltip(tooltipId: String) -> Self {
     var context = self
-    let viewId = DivViewId(cardId: cardId, additionalId: tooltipId)
-    context.viewId = DivViewId(cardId: cardId, additionalId: tooltipId)
-    context.path = makePath(viewId: viewId)
+    let viewId = DivViewId(
+      cardId: cardId,
+      tooltip: DivViewId.Tooltip(id: tooltipId, anchorPath: path)
+    )
+    context.viewId = viewId
+    context.path = viewId.path
+    context.videoPagerPath = nil
     return context
   }
 }
@@ -343,15 +359,6 @@ private func makeExpressionResolver(
       errorsStorage.add(DivExpressionError(error, path: path))
     }
   )
-}
-
-private func makePath(viewId: DivViewId) -> UIElementPath {
-  let cardIdPath = UIElementPath(viewId.cardId.rawValue)
-  return if let additionalId = viewId.additionalId {
-    cardIdPath + additionalId
-  } else {
-    cardIdPath
-  }
 }
 
 extension [DivExtensionHandler] {

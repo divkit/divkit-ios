@@ -160,18 +160,21 @@ extension DivBase {
     setupContextWithVariablesAndFunctions(context: context)
 
     let path = context.path
-    context.triggersStorage?.setIfNeeded(
-      path: path,
-      triggers: variableTriggers ?? []
-    )
-
+    // Registered before triggers, because they may run actions scoped to this element right away.
     if let id = context.currentDivId {
       context.idToPath.add(
         path,
-        forId: path.cardId.path + id,
+        forId: id,
+        viewId: context.viewId,
         divType: context.currentDivType
       )
     }
+
+    context.triggersStorage?.setIfNeeded(
+      path: path,
+      triggers: variableTriggers ?? [],
+      viewId: context.viewId
+    )
 
     animators?.forEach { animator in
       context.animatorController?.initializeIfNeeded(

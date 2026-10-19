@@ -3,7 +3,7 @@ import Foundation
 import VGSL
 
 #if os(iOS)
-public typealias TooltipViewFactory = () async -> VisibleBoundsTrackingView?
+public typealias TooltipViewFactory = () async -> VisibleBoundsTrackingView
 #else
 public typealias TooltipViewFactory = () async -> ViewType?
 #endif
@@ -26,14 +26,31 @@ public struct BlockTooltip: Equatable {
     case nonModal
   }
 
-  public let params: BlockTooltipParams
+  public enum ViewSource: Equatable {
+    case block(Block)
+    case factory(key: any Equatable, TooltipViewFactory)
 
-  public let block: Block
+    public static func ==(
+      lhs: BlockTooltip.ViewSource,
+      rhs: BlockTooltip.ViewSource
+    ) -> Bool {
+      switch (lhs, rhs) {
+      case let (.block(lhsBlock), .block(rhsBlock)):
+        lhsBlock.equals(rhsBlock)
+      case let (.factory(lhsKey, _), .factory(rhsKey, _)):
+        lhsKey.isEqual(to: rhsKey)
+      default:
+        false
+      }
+    }
+  }
+
+  public let params: BlockTooltipParams
+  public let viewSource: ViewSource
   public let offset: CGPoint
   public let position: Position
   public let useLegacyWidth: Bool
   public let bringToTopId: String?
-  public let tooltipViewFactory: TooltipViewFactory?
   public let substrateViewFactory: TooltipViewFactory?
 
   public var id: String {
@@ -41,20 +58,18 @@ public struct BlockTooltip: Equatable {
   }
 
   public init(
-    block: Block,
+    viewSource: ViewSource,
     params: BlockTooltipParams,
     offset: CGPoint,
     position: BlockTooltip.Position,
     useLegacyWidth: Bool = true,
     bringToTopId: String? = nil,
-    tooltipViewFactory: TooltipViewFactory? = nil,
     substrateViewFactory: TooltipViewFactory? = nil
   ) {
-    self.block = block
+    self.viewSource = viewSource
     self.offset = offset
     self.position = position
     self.useLegacyWidth = useLegacyWidth
-    self.tooltipViewFactory = tooltipViewFactory
     self.bringToTopId = bringToTopId
     self.substrateViewFactory = substrateViewFactory
     self.params = params
@@ -66,6 +81,28 @@ public struct BlockTooltip: Equatable {
       lhs.position == rhs.position &&
       lhs.useLegacyWidth == rhs.useLegacyWidth &&
       lhs.bringToTopId == rhs.bringToTopId &&
-      lhs.block.equals(rhs.block)
+      lhs.viewSource == rhs.viewSource
   }
+}
+
+extension Equatable {
+  fileprivate func isEqual(to other: any Equatable) -> Bool {
+    type(of: other) == Self.self && (other as? Self) == self
+  }
+}
+
+/// Supplies the size of a tooltip view that was created by a `TooltipViewFactory`, since the
+/// tooltip model carries no block for it. Returns nil while the size is not known yet. A tooltip
+/// whose content size is empty is not shown unless it has a substrate.
+public protocol TooltipContentSizeProviding {
+  func tooltipContentSize(
+    constrainedBy size: CGSize,
+    useLegacyWidth: Bool
+  ) -> CGSize?
+}
+
+/// Notifies content created by a tooltip view factory that it has been closed or discarded
+/// without being shown.
+public protocol TooltipContentClosing {
+  func tooltipDidClose()
 }

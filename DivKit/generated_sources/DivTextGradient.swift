@@ -8,12 +8,15 @@ import VGSL
 public enum DivTextGradient: Sendable {
   case divLinearGradient(DivLinearGradient)
   case divRadialGradient(DivRadialGradient)
+  case divAnimatedTextGradient(DivAnimatedTextGradient)
 
   public var value: Serializable {
     switch self {
     case let .divLinearGradient(value):
       return value
     case let .divRadialGradient(value):
+      return value
+    case let .divAnimatedTextGradient(value):
       return value
     }
   }
@@ -28,6 +31,8 @@ extension DivTextGradient {
       self = .divLinearGradient(try DivLinearGradient(dictionary: dictionary, context: context))
     case DivRadialGradient.type:
       self = .divRadialGradient(try DivRadialGradient(dictionary: dictionary, context: context))
+    case DivAnimatedTextGradient.type:
+      self = .divAnimatedTextGradient(try DivAnimatedTextGradient(dictionary: dictionary, context: context))
     default:
       throw DeserializationError.requiredFieldIsMissing(field: "type")
     }
@@ -41,6 +46,8 @@ extension DivTextGradient: Equatable {
     case let (.divLinearGradient(l), .divLinearGradient(r)):
       return l == r
     case let (.divRadialGradient(l), .divRadialGradient(r)):
+      return l == r
+    case let (.divAnimatedTextGradient(l), .divAnimatedTextGradient(r)):
       return l == r
     default:
       return false

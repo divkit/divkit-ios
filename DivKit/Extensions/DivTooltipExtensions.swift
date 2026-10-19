@@ -4,30 +4,26 @@ import VGSL
 
 extension DivTooltip {
   fileprivate func makeTooltip(
-    context: DivBlockModelingContext
+    context: DivBlockModelingContext,
+    anchorPath: UIElementPath
   ) throws -> BlockTooltip? {
     let expressionResolver = context.expressionResolver
     guard let position = resolvePosition(expressionResolver)?.cast() else {
       return nil
     }
 
-    let tooltipViewFactory: TooltipViewFactory = { [weak self] in
-      guard let self, let tooltipViewFactory = context.tooltipViewFactory else {
+    let tooltipRef = DivViewId.Tooltip(id: id, anchorPath: anchorPath)
+
+    let substrateViewFactory: TooltipViewFactory? = {
+      guard let substrateDiv,
+            let factory = context.tooltipViewFactory else {
         return nil
       }
-      return await tooltipViewFactory.makeView(div: self.div, tooltipId: self.id)
-    }
 
-    let substrateViewFactory: TooltipViewFactory? = if let substrateDiv = self.substrateDiv {
-      { [weak self] in
-        guard let self, let tooltipViewFactory = context.tooltipViewFactory else {
-          return nil
-        }
-        return await tooltipViewFactory.makeSubstrateView(div: substrateDiv, tooltipId: self.id)
+      return {
+        await factory.makeSubstrateView(div: substrateDiv, tooltip: tooltipRef)
       }
-    } else {
-      nil
-    }
+    }()
 
     let mode: BlockTooltip.Mode = switch mode {
     case .divTooltipModeModal:
@@ -36,9 +32,22 @@ extension DivTooltip {
       .nonModal
     }
 
-    return try BlockTooltip(
-      // Legacy behavior. Views should be created with tooltipViewFactory.
-      block: div.value.makeBlock(context: context),
+    let viewSource: BlockTooltip.ViewSource = if let factory = context.tooltipViewFactory {
+      .factory(
+        key: FactoryKey(
+          div: div.value as AnyObject,
+          substrateDiv: substrateDiv.map { $0.value as AnyObject },
+          tooltip: tooltipRef
+        )
+      ) { [div] in
+        await factory.makeView(div: div, tooltip: tooltipRef)
+      }
+    } else {
+      try .block(div.value.makeBlock(context: context))
+    }
+
+    return BlockTooltip(
+      viewSource: viewSource,
       params: BlockTooltipParams(
         id: id,
         mode: mode,
@@ -61,9 +70,18 @@ extension DivTooltip {
       position: position,
       useLegacyWidth: context.flagsInfo.useTooltipLegacyWidth,
       bringToTopId: bringToTopId,
-      tooltipViewFactory: tooltipViewFactory,
       substrateViewFactory: substrateViewFactory
     )
+  }
+}
+
+private struct FactoryKey: Equatable {
+  let div: AnyObject
+  let substrateDiv: AnyObject?
+  let tooltip: DivViewId.Tooltip
+
+  static func ==(lhs: FactoryKey, rhs: FactoryKey) -> Bool {
+    lhs.div === rhs.div && lhs.substrateDiv === rhs.substrateDiv && lhs.tooltip == rhs.tooltip
   }
 }
 
@@ -98,9 +116,10 @@ extension [DivTooltip]? {
       return []
     }
 
+    let anchorPath = context.path
     return try items.compactMap {
       let tooltipContext = context.cloneForTooltip(tooltipId: $0.id)
-      return try $0.makeTooltip(context: tooltipContext)
+      return try $0.makeTooltip(context: tooltipContext, anchorPath: anchorPath)
     }
   }
 }
